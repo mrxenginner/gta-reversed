@@ -3,6 +3,8 @@
 #include "World.h"
 #include "EntryExitManager.h"
 
+constexpr static CVector NULL_VEC{ 0.f, 0.f, 0.f };
+
 // inlined
 CPlayerInfo& FindPlayerInfo(int32 playerId) {
     return CWorld::Players[playerId < 0 ? CWorld::PlayerInFocus : playerId];
