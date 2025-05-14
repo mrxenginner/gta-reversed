@@ -82,27 +82,23 @@ const CVector& FindPlayerCentreOfWorld(int32 playerId) {
 // Returns player coords with skipping sniper shift
 // 0x56E320
 const CVector& FindPlayerCentreOfWorld_NoSniperShift(int32 playerId) {
-    //return plugin::CallAndReturn<const CVector&, 0x56E320, int32>(playerId);
-
+   
     // TODO: I'm too lazy to look for a corresponding function, originally R* uses a NullVec!
-    static const CVector NullVec{ 0.0f, 0.0f, 0.0f };
+    static const CVector NullVec { 0.0f, 0.0f, 0.0f };
 
-    // TODO: I had to do this, the compiler keeps giving a warning, sorry I haven't slept yet
-    const int32 validPlayerId = playerId;
-
-    if (validPlayerId < 0 || validPlayerId >= MAX_PLAYERS) {
+    if (playerId < 0 || playerId >= MAX_PLAYERS) {
         return NullVec;
     }
 
-    CCamera* cameraTarget = nullptr;
+    CCamera* target = nullptr;
 
     if (CCarCtrl::bCarsGeneratedAroundCamera) {
-        cameraTarget = &TheCamera;
+        target = &TheCamera;
     } else {
-        cameraTarget = reinterpret_cast<CCamera*>(CWorld::Players[validPlayerId].m_pRemoteVehicle);
+        target = reinterpret_cast<CCamera*>(CWorld::Players[playerId].m_pRemoteVehicle);
 
-        if (!cameraTarget) {
-            int32 effectivePlayerIndex = (validPlayerId >= 0) ? validPlayerId : CWorld::PlayerInFocus;
+        if (!target) {
+            int32 effectivePlayerIndex = (playerId >= 0) ? playerId : CWorld::PlayerInFocus;
 
             if (effectivePlayerIndex < 0 || effectivePlayerIndex >= MAX_PLAYERS) {
                 return NullVec;
@@ -111,21 +107,19 @@ const CVector& FindPlayerCentreOfWorld_NoSniperShift(int32 playerId) {
             auto ped = CWorld::Players[effectivePlayerIndex].m_pPed;
 
             if (ped && ped->IsInVehicle()) {
-                cameraTarget = reinterpret_cast<CCamera*>(ped->m_pVehicle);
+                target = reinterpret_cast<CCamera*>(ped->m_pVehicle);
             }
 
-            if (!cameraTarget) {
-                cameraTarget = reinterpret_cast<CCamera*>(CWorld::Players[validPlayerId].m_pPed);
-                if (!cameraTarget) {
+            if (!target) {
+                target = reinterpret_cast<CCamera*>(CWorld::Players[playerId].m_pPed);
+                if (!target) {
                     return NullVec;
                 }
             }
         }
     }
 
-    return cameraTarget->m_matrix
-        ? cameraTarget->m_matrix->GetPosition()
-        : cameraTarget->m_placement.m_vPosn;
+    return target->GetPosition();
 }
 
 // Returns player coords with skipping interior shift
