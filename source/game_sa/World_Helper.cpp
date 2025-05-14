@@ -82,44 +82,19 @@ const CVector& FindPlayerCentreOfWorld(int32 playerId) {
 // Returns player coords with skipping sniper shift
 // 0x56E320
 const CVector& FindPlayerCentreOfWorld_NoSniperShift(int32 playerId) {
-   
-    // TODO: I'm too lazy to look for a corresponding function, originally R* uses a NullVec!
-    static const CVector NullVec { 0.0f, 0.0f, 0.0f };
-
-    if (playerId < 0 || playerId >= MAX_PLAYERS) {
-        return NullVec;
-    }
-
-    CCamera* target = nullptr;
-
     if (CCarCtrl::bCarsGeneratedAroundCamera) {
-        target = &TheCamera;
-    } else {
-        target = reinterpret_cast<CCamera*>(CWorld::Players[playerId].m_pRemoteVehicle);
-
-        if (!target) {
-            int32 effectivePlayerIndex = (playerId >= 0) ? playerId : CWorld::PlayerInFocus;
-
-            if (effectivePlayerIndex < 0 || effectivePlayerIndex >= MAX_PLAYERS) {
-                return NullVec;
-            }
-
-            auto ped = CWorld::Players[effectivePlayerIndex].m_pPed;
-
-            if (ped && ped->IsInVehicle()) {
-                target = reinterpret_cast<CCamera*>(ped->m_pVehicle);
-            }
-
-            if (!target) {
-                target = reinterpret_cast<CCamera*>(CWorld::Players[playerId].m_pPed);
-                if (!target) {
-                    return NullVec;
-                }
-            }
-        }
+        return TheCamera.GetPosition();
     }
-
-    return target->GetPosition();
+    if (const auto* const veh = FindPlayerInfo(playerId).m_pRemoteVehicle) {
+        return veh->GetPosition();
+    }
+    if (const auto* const player = FindPlayerPed(playerId)) {
+        if (const auto* const veh = player->GetVehicleIfInOne()) {
+            return veh->GetPosition();
+        }
+        return player->GetPosition();
+    }
+    return NULL_VEC;
 }
 
 // Returns player coords with skipping interior shift
