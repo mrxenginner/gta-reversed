@@ -268,7 +268,7 @@ public:
     RpClump*            m_pWeaponObject;
     RwFrame*            m_pGunflashObject; // A frame in the Clump `m_pWeaponObject`
     RpClump*            m_pGogglesObject;
-    bool*               m_pGogglesState;           // Stores a pointer to either `CPostEffects::m_bInfraredVision` or `m_bNightVision`, see \r PutOnGoggles and \r AddGogglesModel
+    bool*               m_pGogglesState;           // Stores a pointer to either `CPostEffects::m_bInfraredVision` or `m_bNightVision`, see PutOnGoggles and AddGogglesModel
 
     int16               m_nWeaponGunflashAlphaMP1; // AKA m_nWeaponGunflashStateRightHand
     int16               m_nWeaponGunFlashAlphaProgMP1;
@@ -586,6 +586,8 @@ public:
     auto&& GetAE(this auto&& self)    { return self.m_pedAudio; }
     auto&& GetSpeechAE(this auto&& self) { return self.m_pedSpeech; }
     auto&& GetWeaponAE(this auto&& self) { return self.m_weaponAudio; }
+
+    CVector GetSeatPositionInVehicle() const;
 
     /*!
      * @notsa

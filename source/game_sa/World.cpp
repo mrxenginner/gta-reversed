@@ -121,7 +121,7 @@ void CWorld::InjectHooks() {
     RH_ScopedGlobalInstall(FindPlayerTrain, 0x56E160);
     RH_ScopedGlobalInstall(FindPlayerCentreOfWorld, 0x56E250);
     RH_ScopedGlobalInstall(FindPlayerCentreOfWorld_NoSniperShift, 0x56E320);
-    RH_ScopedGlobalInstall(FindPlayerCentreOfWorldForMap, 0x56E400, {.reversed=false});
+    RH_ScopedGlobalInstall(FindPlayerCentreOfWorldForMap, 0x56E400);
     RH_ScopedGlobalInstall(FindPlayerHeading, 0x56E450);
     RH_ScopedGlobalInstall(FindPlayerPed, 0x56E210);
     RH_ScopedGlobalInstall(FindPlayerVehicle, 0x56E0D0);
@@ -257,7 +257,7 @@ void CWorld::ProcessPedsAfterPreRender() {
 
 // 0x563470
 void CWorld::ClearScanCodes() {
-    const auto ProcessList = []<typename PtrListType>(PtrListType list) {
+    const auto ProcessList = []<typename PtrListType>(PtrListType& list) {
         for (auto* const entity : list) {
             entity->SetScanCode(0);
         }
@@ -450,7 +450,7 @@ void CWorld::TestForBuildingsOnTopOfEachOther(PtrListType& ptrList) {
                 if (fabsf(pos1.x - pos2.x) < 0.01f
                     && fabsf(pos1.y - pos2.y) < 0.01f
                     && fabsf(pos1.z - pos2.z) < 0.01f) {
-                    NOTSA_LOG_DEBUG("Two {} at position {},{},{}", CModelInfo::GetModelInfo(modelIndex1)->GetModelName(), pos1.x, pos1.y, pos1.z); // R* log
+                    NOTSA_LOG_WARN("Two {} at position {:4f},{:4f},{:4f}", CModelInfo::GetModelInfo(modelIndex1)->GetModelNameAsString(), pos1.x, pos1.y, pos1.z); // R* log
                 }
             }
         }
@@ -1320,7 +1320,7 @@ void CWorld::RemoveFallenPeds() {
         if (vecPedPos.z > MAP_Z_LOW_LIMIT) {
             continue;
         }
-        NOTSA_LOG_DEBUG("&&&&&&Another ped has fallen through the map&&&&&&&&&& {} {} {}", vecPedPos.x, vecPedPos.y, vecPedPos.z); // R* log
+        NOTSA_LOG_WARN("&&&&&&Another ped has fallen through the map&&&&&&&&&& {:4f} {:4f} {:4f}", vecPedPos.x, vecPedPos.y, vecPedPos.z); // R* log
         if (!ped->IsCreatedBy(ePedCreatedBy::PED_GAME) || ped->IsPlayer()) {
             CNodeAddress pathNodeAddress = ThePaths.FindNodeClosestToCoors(vecPedPos, PATH_TYPE_PED, 1000000.0f, 0, 0, 0, 0, 0);
             if (pathNodeAddress.IsValid()) {
@@ -1350,7 +1350,7 @@ void CWorld::RemoveFallenCars() {
             continue;
         }
 
-        NOTSA_LOG_DEBUG("&&&&&&Another vehicle has fallen through the map&&&&&&&&&& {} {} {}", vecPos.x, vecPos.y, vecPos.z); // R* log
+        NOTSA_LOG_WARN("&&&&&&Another vehicle has fallen through the map&&&&&&&&&& {:4f} {:4f} {:4f}", vecPos.x, vecPos.y, vecPos.z); // R* log
 
         const auto ShouldWeKeepIt = [vehicle]() {
             if (vehicle->IsCreatedBy(eVehicleCreatedBy::MISSION_VEHICLE) && !vehicle->physicalFlags.bRenderScorched) {
@@ -1550,7 +1550,7 @@ void CWorld::TestForUnusedModels() {
         if (usageModelCounts[i] == 0) {
             CBaseModelInfo* mi = CModelInfo::GetModelInfo(i);
             if (mi) {
-                NOTSA_LOG_DEBUG("{} is not used", mi->GetModelName()); // R* log
+                NOTSA_LOG_WARN("{} is not used", mi->GetModelNameAsString()); // R* log
             }
         }
     }
@@ -1700,7 +1700,7 @@ CPed* CWorld::FindUnsuspectingTargetPed(CVector point, CVector playerPosn) {
 // 0x566EE0
 template<typename PtrListType>
 bool CWorld::ProcessLineOfSightSectorList(PtrListType& ptrList, const CColLine& colLine, CColPoint& outColPoint, float& minTouchDistance, CEntity*& outEntity, bool doSeeThroughCheck, bool doIgnoreCameraCheck, bool doShootThroughCheck) {
-    if (!ptrList.m_node) {
+    if (!ptrList.m_Head) {
         return false;
     }
 
