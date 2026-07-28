@@ -117,6 +117,7 @@ template<typename... Ts>
 #define NOTSA_UNREACHABLE(...) UNREACHABLE_INTRINSIC()
 #endif
 #define NOTSA_UNUSED_FUNCTION() NOTSA_UNREACHABLE("Unused Function")
+#define NOTSA_UNREACHABLE_CASE(val) NOTSA_UNREACHABLE("Unreachable switch case with value: {}", val)
 
 #ifdef _DEBUG
 #define NOTSA_DEBUG_BREAK() __debugbreak()
@@ -156,7 +157,17 @@ template<typename... Ts>
 */
 template<typename T>
 T& StaticRef(uintptr addr) {
+#ifdef NOTSA_DUMP_HOOKS_ONLY
+    // NOTE/BUG:
+    // In NOTSA_DUMP_HOOKS_ONLY, StaticRef() returns a single per-type static buffer for all addresses.
+    // That aliases unrelated globals of the same type (e.g., many StaticRef<int32>(...)), so writes intended for one address will overwrite the dummy storage for another.
+    // This can corrupt state during hook registration and make dump output unreliable/non-deterministic.
+    // It can be easily fixed by putting the address in the template too, but we're not doing that yet because I guess it would impact compile times + it'd be a big diff in terms of code for now
+    alignas(alignof(T)) static uint8 buf[sizeof(T)]{};
+    return *reinterpret_cast<T*>(buf);
+#else
     return *reinterpret_cast<T*>(addr);
+#endif
 }
 
 /*!
@@ -178,12 +189,6 @@ T& ScopedStaticRef(uintptr varAddr, uintptr flagsAddr, uint32 flagsMask, T&& ini
         var    = initVal;
     }
     return var;
-}
-
-// TODO: Replace this with the one above
-template<typename T, uintptr Addr>
-T& StaticRef() {
-    return StaticRef<T>(Addr);
 }
 
 template<typename T>

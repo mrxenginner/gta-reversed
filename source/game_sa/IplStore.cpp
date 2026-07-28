@@ -15,7 +15,7 @@ auto& ms_pQuadTree = StaticRef<IplTreeNode*>(0x8E3FAC);
 
 auto& ms_pPool = StaticRef<CIplPool*>(0x8E3FB0);
 
-int32& ms_currentIPLAreaCode = *(int32*)0x8E3EF8;
+auto& ms_currentIPLAreaCode = StaticRef<int32>(0x8E3EF8);
 
 /*!
  * @addr 0x405EC0
@@ -316,7 +316,7 @@ void CIplStore::LoadAllRemainingIpls() {
 
 /*!
  * @addr 0x406080
- * @NOTSA Originally took `uchar*`, but for simplicity's sake we're going to use `char*`. Makes no difference.
+ * @notsa Originally took `uchar*`, but for simplicity's sake we're going to use `char*`. Makes no difference.
  */
 bool CIplStore::LoadIpl(int32 iplSlotIndex, char* data, int32 dataSize) {
     auto& def = *GetInSlot(iplSlotIndex);
@@ -413,7 +413,7 @@ bool CIplStore::LoadIpl(int32 iplSlotIndex, char* data, int32 dataSize) {
  * @addr 0x405C00
  * @brief Nearly 100% same as `LoadIpl`, but it modifies `ppCurrIplInstance`, and calculates bounding box of the IPL. Unsure honestly.
  * @returns Always true
- * @NOTSA Originally took `uchar*`, but for simplicity's sake we're going to use `char*`. Makes no difference.
+ * @notsa Originally took `uchar*`, but for simplicity's sake we're going to use `char*`. Makes no difference.
  */
 bool CIplStore::LoadIplBoundingBox(int32 iplSlotIndex, char* data, int32 dataSize) {
     auto& def = *GetInSlot(iplSlotIndex);
@@ -505,7 +505,7 @@ void CIplStore::LoadIpls(CVector posn, bool bAvoidLoadInPlayerVehicleMovingDirec
     }
 
     const auto ProcessEntity = [](CPhysical* e) {
-        if (e->m_pAttachedTo || e->physicalFlags.bDontApplySpeed || e->physicalFlags.b15) {
+        if (e->m_pAttachedTo || e->physicalFlags.bDontApplySpeed || e->physicalFlags.bDontLoadCollision) {
             return;
         }
         ms_currentIPLAreaCode = e->GetAreaCode();
