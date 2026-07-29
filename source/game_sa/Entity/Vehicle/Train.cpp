@@ -299,7 +299,7 @@ CTrain* CTrain::FindCarriage(CTrain* train, uint8 carriage) {
     uint32 n = 0;
     for (auto* it = train; it; it = it->m_pNextCarriage) {
         if (++n >= carriage) {
-             return it;
+            return it;
         }
     }
     return nullptr;
