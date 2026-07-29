@@ -146,6 +146,7 @@ ModelIndices,MatchAllModelStrings,0x005B57C0,1,0,S
 IKChain_c,ClampLimits,0x00618520,1,0,S
 IKChain_c,Exit,0x00617870,1,0,S
 IKChain_c,GetBoneNodeFromTag,0x00617C60,1,0,S
+IKChain_c,GetBoneSpeed,0x00618630,1,0,S
 IKChain_c,GetLimits,0x00618590,1,0,S
 IKChain_c,GetPriority,0x00617C50,1,0,S
 IKChain_c,Init,0x00618370,1,0,S
@@ -153,6 +154,8 @@ IKChain_c,IsAtTarget,0x00617F30,1,0,S
 IKChain_c,IsFacingTarget,0x00617E60,1,0,S
 IKChain_c,MoveBonesToTarget,0x006178B0,1,0,S
 IKChain_c,SetBlend,0x00617C10,1,0,S
+IKChain_c,SetBoneSpeed,0x00618680,1,0,S
+IKChain_c,SetLimits,0x006185E0,1,0,S
 IKChain_c,SetOffsetBoneTag,0x00617C20,1,0,S
 IKChain_c,SetOffsetPos,0x00617C30,1,0,S
 IKChain_c,SetupBones,0x00617CA0,1,0,S
@@ -3093,6 +3096,8 @@ BoneNode_c,Limit,0x00617650,1,0,S
 BoneNode_c,QuatToEuler,0x00617080,1,0,S
 BoneNode_c,SetLimits,0x00616C50,1,0,S
 BoneNode_c,SetSpeed,0x00616CC0,1,0,S
+BoneNodeManager_c,Constructor,0x00617330,1,0,S
+BoneNodeManager_c,Destructor,0x00617390,1,0,S
 BoneNodeManager_c,Exit,0x00617420,1,0,S
 BoneNodeManager_c,GetBoneNode,0x00617460,1,0,S
 BoneNodeManager_c,GetNumBoneNodesLeft,0x00617480,1,0,S

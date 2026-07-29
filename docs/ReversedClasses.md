@@ -1,7 +1,11 @@
-# Reversed Classes [As of Jul 27, 2026, 19:49:04 UTC]
+# Reversed Classes progress
+This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed classes in the project.
+
+Last update was at Jul 29, 2026 at 10:31:56 UTC triggered by [46e56238963d177eef7fe7c29529771eaf4699c4](None/commit/46e56238963d177eef7fe7c29529771eaf4699c4) 
+
 ## Disclaimer
 The percentages and the number of classes shown here may not be completely accurate, because not all classes and functions are documented yet.
-## Stats (7997 functions, 700 classes)
+## Stats (8002 functions, 700 classes)
 
 #### Completely reversed classes (580/700) [83%]
 
@@ -18,7 +22,7 @@ The percentages and the number of classes shown here may not be completely accur
 - Rs (27)<br />
 - RenderBuffer (4)<br />
 - ModelIndices (2)<br />
-- IKChain_c (17)<br />
+- IKChain_c (20)<br />
 - IKChainManager_c (17)<br />
 - CdStream (9)<br />
 - CWorld (94)<br />
@@ -163,7 +167,7 @@ The percentages and the number of classes shown here may not be completely accur
 - BreakObject_c (9)<br />
 - BreakManager_c (6)<br />
 - BoneNode_c (17)<br />
-- BoneNodeManager_c (6)<br />
+- BoneNodeManager_c (8)<br />
 - CEventVehicleToSteal (2)<br />
 - CEventVehicleOnFire (3)<br />
 - CEventVehicleHitAndRun (3)<br />
