@@ -1,7 +1,7 @@
 # Reversed Classes progress
 This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed classes in the project.
 
-Last update was at Jul 29, 2026 at 10:31:56 UTC triggered by [46e56238963d177eef7fe7c29529771eaf4699c4](None/commit/46e56238963d177eef7fe7c29529771eaf4699c4) 
+Last update was at Jul 30, 2026 at 08:40:50 UTC triggered by [cceabd089b7a295d163f7d8313ec1b1012f0e62c](None/commit/cceabd089b7a295d163f7d8313ec1b1012f0e62c) 
 
 ## Disclaimer
 The percentages and the number of classes shown here may not be completely accurate, because not all classes and functions are documented yet.
@@ -644,7 +644,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CPlane (14/23) [61%]<br />
 - CMonsterTruck (5/11) [45%]<br />
 - CBmx (7/10) [70%]<br />
-- CBike (21/40) [52%]<br />
+- CBike (22/40) [55%]<br />
 - FxSystem_c (31/35) [89%]<br />
 - FxPrimBP_c (1/2) [50%]<br />
 - FxManager_c (24/25) [96%]<br />

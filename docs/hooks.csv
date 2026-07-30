@@ -3897,7 +3897,7 @@ CBike,BlowUpCar,0x00000000,0,1,V
 CBike,BurstTyre,0x00000000,0,1,V
 CBike,CalculateLeanMatrix,0x006B7150,1,0,S
 CBike,Constructor,0x006BF430,1,0,S
-CBike,DamageKnockOffRider,0x006B5A10,0,1,S
+CBike,DamageKnockOffRider,0x006B5A10,1,0,S
 CBike,DebugCode,0x006B67A0,1,0,S
 CBike,Destructor,0x006B57A0,1,0,S
 CBike,DoBurstAndSoftGroundRatios,0x00000000,0,1,V
