@@ -1,13 +1,13 @@
 # Reversed Classes progress
 This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed classes in the project.
 
-Last update was at Jul 30, 2026 at 08:40:50 UTC triggered by [cceabd089b7a295d163f7d8313ec1b1012f0e62c](None/commit/cceabd089b7a295d163f7d8313ec1b1012f0e62c) 
+Last update was at Jul 30, 2026 at 23:24:19 UTC triggered by [9a44ef97d99cae10f312b3d21e1a591ae6ce8f65](https://github.com/gta-reversed/gta-reversed/commit/9a44ef97d99cae10f312b3d21e1a591ae6ce8f65) 
 
 ## Disclaimer
 The percentages and the number of classes shown here may not be completely accurate, because not all classes and functions are documented yet.
-## Stats (8002 functions, 700 classes)
+## Stats (8014 functions, 701 classes)
 
-#### Completely reversed classes (580/700) [83%]
+#### Completely reversed classes (580/701) [83%]
 
 <details>
 <summary>See list of classes</summary>- cTransmission (4)<br />
@@ -593,7 +593,7 @@ The percentages and the number of classes shown here may not be completely accur
 
 </details>
 
-#### Partially reversed classes (117/700) [17%]
+#### Partially reversed classes (118/701) [17%]
 
 <details>
 <summary>See list of classes</summary>- C_PcSave (4/5) [80%]<br />
@@ -606,6 +606,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CRopes (9/11) [82%]<br />
 - CRope (5/7) [71%]<br />
 - CRoadBlocks (7/8) [88%]<br />
+- CProjectileInfo (1/12) [8%]<br />
 - CPostEffects (35/38) [92%]<br />
 - CPopulation (64/66) [97%]<br />
 - CPopCycle (14/15) [93%]<br />
@@ -716,7 +717,7 @@ The percentages and the number of classes shown here may not be completely accur
 
 </details>
 
-#### Not-at-all reversed classes (3/700) [0%]
+#### Not-at-all reversed classes (3/701) [0%]
 
 <details>
 <summary>See list of classes</summary>- CTaskComplexGangFollower (7)<br />
