@@ -1,9 +1,13 @@
-# Reversed Classes [As of Jul 27, 2026, 19:49:04 UTC]
+# Reversed Classes progress
+This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed classes in the project.
+
+Last update was at Sep 21, 2026 at 19:13:40 UTC triggered by [4f8d7dad398798d88bf945061d79f60ce899c758](https://github.com/gta-reversed/gta-reversed/commit/4f8d7dad398798d88bf945061d79f60ce899c758) 
+
 ## Disclaimer
 The percentages and the number of classes shown here may not be completely accurate, because not all classes and functions are documented yet.
-## Stats (7997 functions, 700 classes)
+## Stats (8014 functions, 701 classes)
 
-#### Completely reversed classes (580/700) [83%]
+#### Completely reversed classes (584/701) [83%]
 
 <details>
 <summary>See list of classes</summary>- cTransmission (4)<br />
@@ -18,7 +22,7 @@ The percentages and the number of classes shown here may not be completely accur
 - Rs (27)<br />
 - RenderBuffer (4)<br />
 - ModelIndices (2)<br />
-- IKChain_c (17)<br />
+- IKChain_c (20)<br />
 - IKChainManager_c (17)<br />
 - CdStream (9)<br />
 - CWorld (94)<br />
@@ -47,6 +51,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CStencilShadowObject (3)<br />
 - CStats (32)<br />
 - CSprite2d (33)<br />
+- CSprite (15)<br />
 - CSpecialPlateHandler (4)<br />
 - CSpecialFX (7)<br />
 - CSkidmarks (7)<br />
@@ -92,6 +97,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CMotionBlurStreaks (4)<br />
 - CMirrors (8)<br />
 - CMessages (28)<br />
+- CMenuManager (61)<br />
 - CLocalisation (18)<br />
 - CLoadingScreen (20)<br />
 - CLoadedCarGroup (8)<br />
@@ -144,6 +150,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CControllerConfigManager (58)<br />
 - CCompressedMatrixNotAligned (2)<br />
 - CColourSet (2)<br />
+- CCollision (59)<br />
 - CClock (9)<br />
 - CCheckpoints (8)<br />
 - CCheckpoint (1)<br />
@@ -163,7 +170,7 @@ The percentages and the number of classes shown here may not be completely accur
 - BreakObject_c (9)<br />
 - BreakManager_c (6)<br />
 - BoneNode_c (17)<br />
-- BoneNodeManager_c (6)<br />
+- BoneNodeManager_c (8)<br />
 - CEventVehicleToSteal (2)<br />
 - CEventVehicleOnFire (3)<br />
 - CEventVehicleHitAndRun (3)<br />
@@ -281,6 +288,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CAEUserRadioTrackManager (15)<br />
 - CAESoundManager (14)<br />
 - CAECutsceneTrackManager (8)<br />
+- CAEAudioHardware (54)<br />
 - CAEAudioChannel (12)<br />
 - CAudioZones (5)<br />
 - CAudioEngine (82)<br />
@@ -559,14 +567,14 @@ The percentages and the number of classes shown here may not be completely accur
 - CAnimBlendClumpData (6)<br />
 - CAnimBlendAssociation (20)<br />
 - CAnimBlendAssocGroup (15)<br />
-- CTheScripts (69)<br />
-- CStreamedScripts (12)<br />
 - InteriorManager_c (21)<br />
 - FurnitureManager_c (7)<br />
 - FurnitureGroup_c (6)<br />
 - CStaticShadow (1)<br />
 - CShadowCamera (19)<br />
 - CRealTimeShadow (8)<br />
+- CTheScripts (69)<br />
+- CStreamedScripts (12)<br />
 - VideoPlayer (6)<br />
 - Light (27)<br />
 - Input (5)<br />
@@ -589,7 +597,7 @@ The percentages and the number of classes shown here may not be completely accur
 
 </details>
 
-#### Partially reversed classes (117/700) [17%]
+#### Partially reversed classes (114/701) [16%]
 
 <details>
 <summary>See list of classes</summary>- C_PcSave (4/5) [80%]<br />
@@ -598,10 +606,10 @@ The percentages and the number of classes shown here may not be completely accur
 - CWeapon (35/41) [85%]<br />
 - CWaterLevel (25/30) [83%]<br />
 - CStencilShadows (9/13) [69%]<br />
-- CSprite (9/15) [60%]<br />
 - CRopes (9/11) [82%]<br />
 - CRope (5/7) [71%]<br />
 - CRoadBlocks (7/8) [88%]<br />
+- CProjectileInfo (1/12) [8%]<br />
 - CPostEffects (35/38) [92%]<br />
 - CPopulation (64/66) [97%]<br />
 - CPopCycle (14/15) [93%]<br />
@@ -615,7 +623,6 @@ The percentages and the number of classes shown here may not be completely accur
 - CPedDamageResponseCalculator (2/7) [29%]<br />
 - CPathFind (54/56) [96%]<br />
 - CMenuSystem (20/21) [95%]<br />
-- CMenuManager (60/61) [98%]<br />
 - CInterestingEvents (2/7) [29%]<br />
 - CGenericGameStorage (5/19) [26%]<br />
 - CGangWars (32/35) [91%]<br />
@@ -624,7 +631,6 @@ The percentages and the number of classes shown here may not be completely accur
 - CEntryExit (10/11) [91%]<br />
 - CEntityScanner (3/4) [75%]<br />
 - CCustomBuildingRenderer (3/7) [43%]<br />
-- CCollision (58/59) [98%]<br />
 - CClouds (20/21) [95%]<br />
 - CClothesBuilder (15/23) [65%]<br />
 - CClothes (10/11) [91%]<br />
@@ -634,13 +640,13 @@ The percentages and the number of classes shown here may not be completely accur
 - CGroupEventHandler (30/32) [94%]<br />
 - CEventHandler (69/72) [96%]<br />
 - CBaseModelInfo (33/34) [97%]<br />
-- CVehicle (140/142) [99%]<br />
+- CVehicle (141/142) [99%]<br />
 - CTrain (20/40) [50%]<br />
 - CQuadBike (11/12) [92%]<br />
 - CPlane (14/23) [61%]<br />
 - CMonsterTruck (5/11) [45%]<br />
 - CBmx (7/10) [70%]<br />
-- CBike (21/40) [52%]<br />
+- CBike (22/40) [55%]<br />
 - FxSystem_c (31/35) [89%]<br />
 - FxPrimBP_c (1/2) [50%]<br />
 - FxManager_c (24/25) [96%]<br />
@@ -656,7 +662,6 @@ The percentages and the number of classes shown here may not be completely accur
 - CAEAmbienceTrackManager (6/7) [86%]<br />
 - CAEStreamingChannel (21/24) [88%]<br />
 - CAEStaticChannel (7/8) [88%]<br />
-- CAEAudioHardware (53/54) [98%]<br />
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskSimpleUseGun (18/19) [95%]<br />
 - CTaskSimpleRunNamedAnim (4/7) [57%]<br />
@@ -701,18 +706,18 @@ The percentages and the number of classes shown here may not be completely accur
 - CPlayerPed (50/51) [98%]<br />
 - CPed (137/145) [94%]<br />
 - RpAnimBlend (42/43) [98%]<br />
-- CScripted2dEffects (4/5) [80%]<br />
-- CScriptResourceManager (1/4) [25%]<br />
-- CRunningScript (24/39) [62%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CShadows (21/31) [68%]<br />
 - CRealTimeShadowManager (5/7) [71%]<br />
+- CScripted2dEffects (4/5) [80%]<br />
+- CScriptResourceManager (1/4) [25%]<br />
+- CRunningScript (24/39) [62%]<br />
 - CConversations (10/11) [91%]<br />
 - CCam (14/44) [32%]<br />
 
 </details>
 
-#### Not-at-all reversed classes (3/700) [0%]
+#### Not-at-all reversed classes (3/701) [0%]
 
 <details>
 <summary>See list of classes</summary>- CTaskComplexGangFollower (7)<br />

@@ -139,10 +139,10 @@
 #include "InteriorManager_c.h"
 #include "Checkpoint.h"
 #include "Checkpoints.h"
-#include "IKChain_c.h"
-#include "IKChainManager_c.h"
-#include "BoneNode_c.h"
-#include "BoneNodeManager_c.h"
+#include "Ragdoll/IKChain.h"
+#include "Ragdoll/IKChainManager.h"
+#include "Ragdoll/BoneNode.h"
+#include "Ragdoll/BoneNodeManager.h"
 #include "TheScripts.h"
 #include "RunningScript.h"
 #include "Scripted2dEffects.h"
@@ -294,6 +294,7 @@
 #include "TaskSimpleGiveCPR.h"
 #include "TaskSimpleCarSetPedInAsPassenger.h"
 #include "TaskComplexDriveFireTruck.h"
+#include "Interior/TaskInteriorLieInBed.h"
 #include "TaskSimpleSwim.h"
 #include "TaskComplexWalkRoundObject.h"
 #include "TaskSimplePause.h"
@@ -513,6 +514,7 @@
 #include "EventAreaCodes.h"
 #include "EventLeaderEntryExit.h"
 #include "Formation.h"
+#include "ProjectileInfo.h"
 
 #include "Plugins/BreakablePlugin/BreakablePlugin.h"
 
@@ -834,6 +836,7 @@ void InjectHooksMain() {
     CCustomBuildingDNPipeline::InjectHooks();
     CCustomCarEnvMapPipeline::InjectHooks();
     CConversations::InjectHooks();
+    CProjectileInfo::InjectHooks();
 
     const auto Pools = [] {
         CPools::InjectHooks();
@@ -955,7 +958,7 @@ void InjectHooksMain() {
             CTaskInteriorBeInOffice::InjectHooks();
             CTaskInteriorBeInShop::InjectHooks();
             CTaskInteriorGoToInfo::InjectHooks();
-        // CTaskInteriorLieInBed::InjectHooks();
+            CTaskInteriorLieInBed::InjectHooks();
             CTaskInteriorShopKeeper::InjectHooks();
             CTaskInteriorSitAtDesk::InjectHooks();
         // CTaskInteriorSitInChair::InjectHooks();
