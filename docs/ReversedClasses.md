@@ -1,13 +1,13 @@
 # Reversed Classes progress
 This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed classes in the project.
 
-Last update was at Aug 19, 2026 at 09:13:31 UTC triggered by [7a95a39da90295ba89619679010c0a16c9ce92e5](https://github.com/gta-reversed/gta-reversed/commit/7a95a39da90295ba89619679010c0a16c9ce92e5) 
+Last update was at Sep 21, 2026 at 19:13:40 UTC triggered by [4f8d7dad398798d88bf945061d79f60ce899c758](https://github.com/gta-reversed/gta-reversed/commit/4f8d7dad398798d88bf945061d79f60ce899c758) 
 
 ## Disclaimer
 The percentages and the number of classes shown here may not be completely accurate, because not all classes and functions are documented yet.
 ## Stats (8014 functions, 701 classes)
 
-#### Completely reversed classes (582/701) [83%]
+#### Completely reversed classes (584/701) [83%]
 
 <details>
 <summary>See list of classes</summary>- cTransmission (4)<br />
@@ -51,6 +51,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CStencilShadowObject (3)<br />
 - CStats (32)<br />
 - CSprite2d (33)<br />
+- CSprite (15)<br />
 - CSpecialPlateHandler (4)<br />
 - CSpecialFX (7)<br />
 - CSkidmarks (7)<br />
@@ -287,6 +288,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CAEUserRadioTrackManager (15)<br />
 - CAESoundManager (14)<br />
 - CAECutsceneTrackManager (8)<br />
+- CAEAudioHardware (54)<br />
 - CAEAudioChannel (12)<br />
 - CAudioZones (5)<br />
 - CAudioEngine (82)<br />
@@ -565,14 +567,14 @@ The percentages and the number of classes shown here may not be completely accur
 - CAnimBlendClumpData (6)<br />
 - CAnimBlendAssociation (20)<br />
 - CAnimBlendAssocGroup (15)<br />
-- CTheScripts (69)<br />
-- CStreamedScripts (12)<br />
 - InteriorManager_c (21)<br />
 - FurnitureManager_c (7)<br />
 - FurnitureGroup_c (6)<br />
 - CStaticShadow (1)<br />
 - CShadowCamera (19)<br />
 - CRealTimeShadow (8)<br />
+- CTheScripts (69)<br />
+- CStreamedScripts (12)<br />
 - VideoPlayer (6)<br />
 - Light (27)<br />
 - Input (5)<br />
@@ -595,7 +597,7 @@ The percentages and the number of classes shown here may not be completely accur
 
 </details>
 
-#### Partially reversed classes (116/701) [17%]
+#### Partially reversed classes (114/701) [16%]
 
 <details>
 <summary>See list of classes</summary>- C_PcSave (4/5) [80%]<br />
@@ -604,7 +606,6 @@ The percentages and the number of classes shown here may not be completely accur
 - CWeapon (35/41) [85%]<br />
 - CWaterLevel (25/30) [83%]<br />
 - CStencilShadows (9/13) [69%]<br />
-- CSprite (9/15) [60%]<br />
 - CRopes (9/11) [82%]<br />
 - CRope (5/7) [71%]<br />
 - CRoadBlocks (7/8) [88%]<br />
@@ -639,7 +640,7 @@ The percentages and the number of classes shown here may not be completely accur
 - CGroupEventHandler (30/32) [94%]<br />
 - CEventHandler (69/72) [96%]<br />
 - CBaseModelInfo (33/34) [97%]<br />
-- CVehicle (140/142) [99%]<br />
+- CVehicle (141/142) [99%]<br />
 - CTrain (20/40) [50%]<br />
 - CQuadBike (11/12) [92%]<br />
 - CPlane (14/23) [61%]<br />
@@ -661,7 +662,6 @@ The percentages and the number of classes shown here may not be completely accur
 - CAEAmbienceTrackManager (6/7) [86%]<br />
 - CAEStreamingChannel (21/24) [88%]<br />
 - CAEStaticChannel (7/8) [88%]<br />
-- CAEAudioHardware (53/54) [98%]<br />
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskSimpleUseGun (18/19) [95%]<br />
 - CTaskSimpleRunNamedAnim (4/7) [57%]<br />
@@ -706,12 +706,12 @@ The percentages and the number of classes shown here may not be completely accur
 - CPlayerPed (50/51) [98%]<br />
 - CPed (137/145) [94%]<br />
 - RpAnimBlend (42/43) [98%]<br />
-- CScripted2dEffects (4/5) [80%]<br />
-- CScriptResourceManager (1/4) [25%]<br />
-- CRunningScript (24/39) [62%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CShadows (21/31) [68%]<br />
 - CRealTimeShadowManager (5/7) [71%]<br />
+- CScripted2dEffects (4/5) [80%]<br />
+- CScriptResourceManager (1/4) [25%]<br />
+- CRunningScript (24/39) [62%]<br />
 - CConversations (10/11) [91%]<br />
 - CCam (14/44) [32%]<br />
 
