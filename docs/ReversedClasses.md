@@ -1,8 +1,8 @@
 # Reimplementation progress
 This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 02, 2026 at 18:03:20 UTC
-(Triggered by commit [3f920b0c](https://github.com/gta-reversed/gta-reversed/commit/3f920b0cee7295346315e8be51ddcd1436e39bbf))
+Last update was at Oct 02, 2026 at 18:21:02 UTC
+(Triggered by commit [2b8f7b97](https://github.com/gta-reversed/gta-reversed/commit/2b8f7b976a951dd2e3e0f7c0bb751b154aa612b9))
 
 ## Disclaimer
 The percentages and the number of categories shown here may not be completely accurate, because not all categories and functions are documented yet.
