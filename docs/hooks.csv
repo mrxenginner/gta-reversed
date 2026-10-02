@@ -290,7 +290,7 @@ CWorld,TriggerExplosionSectorList<CPtrListDoubleLink<CPhysical*>>,0x00567750,1,0
 CWorld,UseDetonator,0x005660B0,1,0,S
 CWindModifiers,FindWindModifier,0x0072C950,1,0,S
 CWindModifiers,RegisterOne,0x0072C8B0,1,0,S
-CWeather,AddRain,0x0072A9A0,0,1,S
+CWeather,AddRain,0x0072A9A0,1,0,S
 CWeather,AddSandStormParticles,0x0072A820,1,0,S
 CWeather,FindWeatherTypesList,0x0072A520,1,0,S
 CWeather,ForceWeather,0x0072A4E0,1,0,S
