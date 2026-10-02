@@ -1,15 +1,15 @@
 # Reimplementation progress
 This file is updated automatically every time the hooks.csv file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 02, 2026 at 17:11:14 UTC
-(Triggered by commit [c4f0776c](https://github.com/gta-reversed/gta-reversed/commit/c4f0776c0419a9d1d0700abbfa213c77abb57215))
+Last update was at Oct 02, 2026 at 18:03:20 UTC
+(Triggered by commit [3f920b0c](https://github.com/gta-reversed/gta-reversed/commit/3f920b0cee7295346315e8be51ddcd1436e39bbf))
 
 ## Disclaimer
 The percentages and the number of categories shown here may not be completely accurate, because not all categories and functions are documented yet.
 
 ## Stats (8025 functions, 702 categories)
 
-#### Completely reversed categories (585/702) [83%]
+#### Completely reversed categories (586/702) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -148,6 +148,7 @@ The percentages and the number of categories shown here may not be completely ac
 - CTxdStore (26)<br />
 - CPedType (13)<br />
 - CAcquaintance (5)<br />
+- CWeather (13)<br />
 - CPathNode (1)<br />
 - CLoadMonitor (7)<br />
 - CPedStats (4)<br />
@@ -601,7 +602,7 @@ The percentages and the number of categories shown here may not be completely ac
 
 </details>
 
-#### Partially reversed categories (114/702) [16%]
+#### Partially reversed categories (113/702) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -635,7 +636,6 @@ The percentages and the number of categories shown here may not be completely ac
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
 - CEntityScanner (3/4) [75%]<br />
-- CWeather (11/13) [85%]<br />
 - CPathFind (54/56) [96%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
 - CPickups (35/37) [95%]<br />
