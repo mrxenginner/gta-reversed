@@ -1299,6 +1299,13 @@ CPools,SaveObjectPool,0x005D4940,0,1,S
 CPools,SavePedPool,0x005D4B40,0,1,S
 CPools,SaveVehiclePool,0x005D4800,0,1,S
 CPools,ShutDown,0x005519F0,1,0,S
+CPointLights,AddLight,0x007000E0,1,0,S
+CPointLights,GenerateLightsAffectingObject,0x006FFBB0,1,0,S
+CPointLights,GetLightMultiplier,0x006FFE70,1,0,S
+CPointLights,Init,0x006FFB40,1,0,S
+CPointLights,ProcessVerticalLineUsingCache,0x006FFFF0,1,0,S
+CPointLights,RemoveLightsAffectingObject,0x006FFFE0,1,0,S
+CPointLights,RenderFogEffect,0x007002D0,1,0,S
 CPlayerPedData,AllocateData,0x00571880,1,0,S
 CPlayerPedData,Constructor,0x0056F810,1,0,S
 CPlayerPedData,DeAllocateData,0x0056F890,1,0,S
