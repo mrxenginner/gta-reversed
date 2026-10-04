@@ -97,8 +97,12 @@ def main() -> None:
             partially.append(cat)
     num_total_categories = len(partially) + len(completely) + len(not_at_all)
 
+    total_num_fn = sum(k.num_fn for k in category_info.values())
+    total_num_re = sum(k.num_reversed for k in category_info.values())
+    overall_progress = total_num_re / total_num_fn
+
     with open(args.output, "w", encoding="utf8", newline="\n") as outf:
-        outf.write("# Reimplementation progress\n")
+        outf.write(f"# Reimplementation progress (*): {overall_progress:.0%}\n")
         outf.write(
             "This file is updated automatically every time the `hooks.json` file is updated "
             "(which happens every time there are changes to hooks made by a commit), "
@@ -117,22 +121,26 @@ def main() -> None:
 
         outf.write("\n")
 
-        outf.write("## Disclaimer\n")
+        outf.write("## (*) Disclaimers\n")
         outf.write(
-            "The percentages and the number of categories shown here may not be "
+            "**The progress** is based on the number of functions we have documented and reimplemented, "
+            "so it might not completely reflect the actual progress, it's meant to be a rough estimate.\n"
+            "\n"
+            "**The percentages and the number of categories** shown here may not be "
             "completely accurate, because not all categories and functions "
             "are documented yet.\n"
             "\n"
         )
-
+        
         outf.write(
-            f"## Stats ({sum(k.num_fn for k in category_info.values())} functions, {len(category_info)} categories)\n"
+            f"## Stats ({total_num_re} out of {total_num_fn} functions done in {len(category_info)} categories)\n"
         )
 
         def write_header(title: str, klasses: list[HookCategory]):
+            progress = len(klasses) / num_total_categories
             outf.write("\n")
             outf.write(
-                f"#### {title} ({len(klasses)}/{num_total_categories}) [{len(klasses) / num_total_categories:.0%}]\n"
+                f"#### {title} ({len(klasses)}/{num_total_categories}) [{progress:.{1 if progress < 0.01 and progress > 0 else 0}%}]\n"
             )
             outf.write("\n")
 
@@ -159,7 +167,6 @@ def main() -> None:
         with class_list_spoiler():
             for cat in not_at_all:
                 outf.write(f"- {cat.name} ({cat.num_fn})<br />\n")
-
 
 if __name__ == "__main__":
     main()
