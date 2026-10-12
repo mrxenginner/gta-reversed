@@ -10,7 +10,12 @@ on:
     paths:
       - 'source/**'
       - '.claude/skills/review-reversal/scripts/check_hooks.py'
+      - '.claude/skills/validate-against-binary/scripts/asm_validate.py'
       - '.github/workflows/hook-registration.yml'
+
+# Read-only: the job only checks out the code and reads it.
+permissions:
+  contents: read
 
 jobs:
   check-hooks:
@@ -19,12 +24,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Check hook registration of changed files
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          git fetch origin "${{ github.base_ref }}" --depth=1
-          python .claude/skills/review-reversal/scripts/check_hooks.py --base "origin/${{ github.base_ref }}"
+          git fetch origin "$BASE_REF" --depth=1
+          python .claude/skills/review-reversal/scripts/check_hooks.py --base "origin/$BASE_REF"
