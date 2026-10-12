@@ -49,9 +49,14 @@ from pathlib import Path
 try:
     import capstone
     from capstone import x86
-except ImportError:  # pragma: no cover
-    sys.stderr.write("error: capstone is required: pip install capstone\n")
-    sys.exit(2)
+except ImportError:  # pragma: no cover - only disassembling needs it; the repo index/PE reader are used without it
+    capstone = x86 = None
+
+
+def require_capstone() -> None:
+    if capstone is None:
+        sys.stderr.write("error: capstone is required: pip install capstone\n")
+        sys.exit(2)
 
 EXPECTED_COMPACT_SIZE = 5_189_632
 CRT_START = 0x820000  # statically linked MSVC CRT/library code lives above this in gta_sa.exe (rand, _ftol, memcpy, ...)
@@ -582,6 +587,7 @@ def classify_crt(pe: PEImage, addr: int) -> str:
 
 def ctor_dtor_vtable(pe: PEImage, addr: int) -> int | None:
     """If the function at `addr` stores a vtable into `[reg]` near its start, it's a ctor/dtor -> that vtable."""
+    require_capstone()
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
     md.detail = True
     code = pe.read(addr, 0x60) or b""
@@ -596,6 +602,7 @@ def ctor_dtor_vtable(pe: PEImage, addr: int) -> int | None:
 
 
 def disassemble(pe: PEImage, start: int, max_insns: int = 20000, forced_size: int | None = None) -> Fingerprint:
+    require_capstone()
     sec = pe.section_of(start)
     if not sec or not sec.executable:
         raise ValueError(f"0x{start:X} is not in an executable section")
@@ -1105,6 +1112,7 @@ def addresses_in_file(repo: Repo, rel: str) -> list[int]:
 
 
 def main() -> None:
+    require_capstone()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("target", nargs="?", help="GTA address (0x53CB00) or C++ name (CGeneral::LimitAngle)")
     ap.add_argument("--file", help="validate every reversed hook installed in this .cpp (summary mode)")
