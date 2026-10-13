@@ -1,7 +1,7 @@
 # Collision/ — col shapes, col models and the CCollision tests
 
-No dedicated subsystem guide. Closest: [../../../docs/subsystems/WorldStreamingPools.md](../../../docs/subsystems/WorldStreamingPools.md)
-(entity collision passes, `CPhysical::ProcessCollision`, streaming of col files). Physics response lives in
+Full guide: [../../../docs/subsystems/CollisionPhysics.md](../../../docs/subsystems/CollisionPhysics.md) (col models,
+Test vs Process, `CPhysical` response, the `CWorld::Process` collision loop, open bugs). Physics response lives in
 `../Entity/Physical.cpp`, not here.
 
 ## Files to look at first

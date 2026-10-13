@@ -1,6 +1,6 @@
 # Animation/ — anim blend system (CAnimManager and friends)
 
-No dedicated subsystem guide; `README.md` in this folder explains the object model, and
+Full guide: [../../../docs/subsystems/Animation.md](../../../docs/subsystems/Animation.md). `README.md` in this folder explains the object model, and
 [../../../docs/subsystems/Peds.md](../../../docs/subsystems/Peds.md) §6 "Animation hookup" shows how peds use it.
 The clump-level API is the RpAnimBlend plugin in `../Plugins/RpAnimBlendPlugin/RpAnimBlend.h`
 (`RpAnimBlendClumpGetAssociation`, `RpAnimBlendClumpGetData`, ...).

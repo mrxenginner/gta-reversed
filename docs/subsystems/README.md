@@ -15,6 +15,12 @@ the page for the area you are about to touch before opening IDA.
 | [Rendering.md](Rendering.md) | Frame draw order, where RenderWare takes over, pipelines, visibility | `Renderer*`, `Pipelines/`, `Fx/` |
 | [Audio.md](Audio.md) | The AE engine: audio hardware, entities, banks, per-frame servicing | `Audio/` |
 | [Scripts.md](Scripts.md) | SCM script engine: `main.scm` loading, `CRunningScript`/`CTheScripts`, command dispatch and argument parsing, script brains, what is left | `Scripts/`, `ScriptsForBrains*` |
+| [CollisionPhysics.md](CollisionPhysics.md) | Col models and `CColStore`, `CCollision` Test/Process functions, `CPhysical` forces and collision response, the `CWorld::Process` collision loop, surfaces, buoyancy | `Collision/`, `Entity/Physical*`, `SurfaceInfos_c*`, `Buoyancy*` |
+| [Animation.md](Animation.md) | `CAnimManager`, groups/blocks/IFP, blend associations and callbacks, the RpAnimBlend per-frame update, anim block streaming | `Animation/` |
+| [PathFind.md](PathFind.md) | Path node areas and streaming, node/link layout, closest-node queries, `DoPathSearch`, road switches, how cars and peds follow paths | `PathFind*`, `CarCtrl*`, `AutoPilot*`, `Tasks/` (route tasks) |
+| [Weapons.md](Weapons.md) | `CWeapon` firing pipeline, `weapon.dat`/`CWeaponInfo`, projectiles, bullets, explosions, fire, damage events | `Weapon*`, `Projectile*`, `BulletInfo*`, `Explosion*`, `Fire*` |
+| [HudFrontend.md](HudFrontend.md) | `CHud` (and why it is not registered), radar drawing, `CFont`, GXT text, `CMessages`, the front-end menu, widescreen | `Hud*`, `Radar*`, `Font*`, `Text/`, `Messages*`, `MenuManager*` |
+| [SaveLoad.md](SaveLoad.md) | `CGenericGameStorage` and `C_PcSave`, the save file format and the 28 blocks, how to verify a Load/Save pair | `GenericGameStorage*`, `C_PcSave*`, each class's `Load`/`Save` |
 
 ## Conventions used by these pages
 
