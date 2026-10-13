@@ -23,6 +23,10 @@ runs the DLL, so your priority order is:
 3. **Memory layout safety** (offsets, sizes, `StaticRef` addresses)
 4. **Coding guidelines / style** (lowest, but still report)
 
+Review against `docs/ReversingRules.md` and cite the rule number for every finding (eg. "R9: stub installed as
+reversed"). `docs/ai/CaseStudies.md` lists mistakes that already slipped through review once; check for them
+explicitly.
+
 ## Procedure
 
 1. **Scope.** Determine what to review: the files given by the caller, otherwise

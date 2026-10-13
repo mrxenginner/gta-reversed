@@ -48,6 +48,8 @@ Also available:
   `.claude/settings.json`) and on PRs (`.github/workflows/hook-registration.yml`). It checks that
   `RH_ScopedVMTInstall` addresses are in the class vtable: a wrong one throws in `InjectHooksMain`.
 
+The checklist below follows `docs/ReversingRules.md`; cite rule numbers (R1-R20) in the report.
+
 ## 2. Manual checklist
 
 ### Fidelity (most important)

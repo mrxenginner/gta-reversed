@@ -5,6 +5,7 @@ functions at runtime; every reversed function must behave exactly like the origi
 switchable bug fix (`notsa::bugfixes`) says otherwise.
 
 ## Read first
+- `docs/ReversingRules.md` — **the rules every reversal must follow (R1-R20)**, each with why and how to check; cite them in reviews
 - `docs/Architecture.md` — build, startup flow, hook system internals, source tree, debug UI, script engine, CI
 - `docs/ReversingGuide.md` — end-to-end workflow: read the original, write C++, register, **validate against the binary**
 - `docs/BinaryMap.md` — gta_sa.exe layout (game code vs RenderWare/D3DX/CRT), key globals, real coverage of game methods
@@ -12,7 +13,9 @@ switchable bug fix (`notsa::bugfixes`) says otherwise.
 - `docs/HookRegistration.md` — InjectHooks / InjectHooksMain / `.Reversed = false` rules
 - `docs/ai/TipsAndTricks.md` — engine quirks, IDA idioms, known wrong addresses, recovered enums
 - `docs/ScriptCommandReversing.md` — script command argument conventions
-- `docs/subsystems/README.md` — per-subsystem guides (world/streaming/pools, peds, tasks, events, vehicles, camera, rendering, audio, scripts); most `source/game_sa/` subfolders also have a short `CLAUDE.md` that loads automatically
+- `docs/subsystems/README.md` — per-subsystem guides (world/streaming/pools, peds, tasks, events, vehicles, camera, rendering, audio, scripts, collision/physics, animation, pathfinding, weapons, HUD/frontend, save/load); most `source/game_sa/` subfolders also have a short `CLAUDE.md` that loads automatically
+- `docs/ai/CaseStudies.md` — 10 real reversal mistakes (branching, operation order, x87, type vs sub-type, VMT, recursion...) and their lessons
+- `docs/Glossary.md` — project, compiler, engine and script terms
 - `docs/ai/InlineCatalogue.md` — functions the compiler inlined, small helpers, CRT calls, globals without StaticRef, known precision diffs
 - Generated lookup catalogues in `docs/ai/` (large: **grep them, don't read them whole**): `Vtables.md` (vtable
   address, slots and per-slot status of every virtual class), `Globals.md` (address/type/users of every game global,
@@ -62,8 +65,8 @@ runs one `gta-reverser` per function in its own worktree/branch, then `gta-rever
 - Validation against the original code: `asm_validate.py` (exe path in `.claude/gtasa_exe_path.txt`; `--dump` gives
   annotated disassembly without IDA) and differential tests in `source/difftests/` (F7 → Tools → Diff tests, or
   `--run-difftests[=filter] --difftests-exit`; the report goes to `<game>/scripts/difftests.log` because the ASI loader
-  sets the working dir to `scripts/`). `PI`/`TWO_PI` in `common.h` are the game's exact float constants (`3.1415927f`);
-  never write `3.14159f`. The original keeps x87 extended precision: accumulate loops in `double`, compare float
+  sets the working dir to `scripts/`). `PI`/`TWO_PI` in `common.h` are rounded (`3.14159f`/`6.28318f`) and are NOT the game's
+  constants (`3.1415927f`/`6.2831855f`, 11 ULP apart): where the original loads the exact value, write it as a literal. The original keeps x87 extended precision: accumulate loops in `double`, compare float
   results with ULP tolerance (`CompareFloats`).
 - IDA Pro is reachable through the `ida-pro-mcp` plugin (`mcp__plugin_ida-pro-mcp_idalib__*`); open the user's
   IDB (`gta_sa.i64` of the 1.0 US compact exe) with `idb_open` if `idb_list` is empty. For bulk

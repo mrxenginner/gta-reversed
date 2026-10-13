@@ -48,8 +48,9 @@ Using other (than the ones we've tested) plugins is strongly discouraged and we 
 ## Contributing
 
 ### Coding/Contributing Guidelines
-Before you start writing code, please make sure to read the [coding guidelines](docs/CodingGuidelines.MD) for this project. These docs are also useful:
+Before you start writing code, please make sure to read the [coding guidelines](docs/CodingGuidelines.md) for this project. These docs are also useful:
 * [Architecture](docs/Architecture.md): how the DLL is built and injected, how hooks work, where things live
+* [Reversing rules](docs/ReversingRules.md): the rules every reversed function must follow, with how to check each one
 * [Reversing guide](docs/ReversingGuide.md): how to reverse a function and validate it against the original binary (static checks and differential tests)
 * [Binary map](docs/BinaryMap.md) and [subsystem docs](docs/subsystems/): layout of the executable and how each game system works
 

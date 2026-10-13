@@ -6,6 +6,9 @@ validated, reviewable change. It complements:
 - [BinaryMap.md](BinaryMap.md): layout of gta_sa.exe and real coverage of the game's methods
 - [CodingGuidelines.md](CodingGuidelines.md): style rules (mandatory)
 - [HookRegistration.md](HookRegistration.md): hook registration rules (mandatory)
+- [ReversingRules.md](ReversingRules.md): the rules every reversal must follow (R1-R20)
+- [ai/CaseStudies.md](ai/CaseStudies.md): real reversal mistakes and their lessons
+- [Glossary.md](Glossary.md): terms used in the code and the docs
 - [ai/TipsAndTricks.md](ai/TipsAndTricks.md): engine quirks, IDA idioms, recovered enums and structs
 - [ScriptCommandReversing.md](ScriptCommandReversing.md): script command argument conventions
 
@@ -90,8 +93,8 @@ Follow the translation patterns in `.claude/skills/ida-to-cpp/SKILL.md` and the 
 are the points that most often break fidelity:
 
 1. **Same side effects, same order.** Every call, write and early return stays.
-2. **Same constants, bit for bit.** Use the value the binary loads. `PI` in `common.h` is the exact `3.1415927f`; a
-   rounded literal such as `3.14159f` is 11 ULP off, and `asm_validate.py` reports it as `PRECISION MISMATCH`.
+2. **Same constants, bit for bit.** Use the value the binary loads. `PI` in `common.h` is `3.14159f`, while the game
+   uses `3.1415927f`. That is an 11-ULP difference, and `asm_validate.py` reports it as `PRECISION MISMATCH`.
 3. **Same comparisons.** Copy them from the decoded `--dump`, not from the pseudocode.
 4. **Same integer widths.** Truncation (`_ftol`), `int8`/`uint16` members, signed vs unsigned.
 5. **Same RNG calls**, in the same number and order.

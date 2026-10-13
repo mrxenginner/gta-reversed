@@ -80,8 +80,10 @@ How to read this:
   **63% of the game's methods (59% of the bytes)** are reversed.
 - **`stub` covers 23% of the bytes, so the largest functions are still stubs.** Examples: `CRunningScript`, `CCam`,
   `Interior_c` and `CPedGeometryAnalyser`.
-- **`dormant` (109 functions) is reversed code that never runs**, because its class's `InjectHooks()` is never
-  called. The 5 classes left this way on purpose are listed in a comment in `InjectHooksMain.cpp`: `CHud`, `CMaths`,
+- **`dormant` (109 functions) is reversed code with no hook**, because its class's `InjectHooks()` is never
+  called. Original code that calls such a function still runs the original; only our own C++ callers reach the
+  reversed version (eg. `CHud::Draw` runs every frame because our `Render2dStuff` calls it directly), and it can't
+  be toggled in the F7 menu. The 5 classes left this way on purpose are listed in a comment in `InjectHooksMain.cpp`: `CHud`, `CMaths`,
   `CPedAttractor`, `CPedShelterAttractor` and `CConversationNode`. `CLodTimeModelInfo` is also left out, because its
   vtable is wrong.
 - **`nohook` (117 functions) breaks the rule in `HookRegistration.md`.** These are `plugin::Call` stubs without an
@@ -208,23 +210,36 @@ Summary: repo VALIDATE_SIZE: 745 types (613 also in the IDB); IDB structs/unions
 | OFFSET | `CAEAudioChannel` | `m_nBufferFrequency` @ 0x4B: no IDB member starts there (inside IDB member `m_wFrequencyMult` +0x4A size 2) | `source/game_sa/Audio/Hardware/AEAudioChannel.h:86` |
 | OFFSET | `CAEAudioChannel` | `m_wFrequencyMult` @ 0x49: no IDB member starts there (inside IDB member `field_47` +0x48 size 2) | `source/game_sa/Audio/Hardware/AEAudioChannel.h:87` |
 
-## 4. Bugs found while building this tooling (fixed on 2026-10-12)
+## 4. Bugs found while building this tooling
+
+### 4.1 Fixed (hook registration and startup)
 
 | Where | Problem | How it was found |
 |---|---|---|
-| `common.h` `PI`, `TWO_PI`, `SQRT_2`, `LOG2_E`, `FRAC_*` | 5-6 digit roundings (`3.14159f`). The game only ever uses the exact float values, so reversed code computed different results | `asm_validate` precision check: 108 mismatches dropped to 16 |
-| `CGeneral::SolveQuadratic` | Different operation order (`1/(2a)` instead of `(1/a)*0.5`) | difftest |
-| `CGeneral::LimitRadianAngle` | Loop rounded to float on every step, while the original keeps x87 extended precision. Now uses `double` | difftest |
-| `CMatrix::ConvertToEulerAngles` | Wrong index (`m[j][k]` instead of `m[j][i]`) in the `EULER_ANGLES` branch | difftest + decompilation |
-| `CCam::ClipBeta` | Subtracted 2π whenever β ≥ −π | subsystem doc review + `--dump` (static check was clean) |
-| `CPedIntelligence::GetActivePrimaryTask` | Loop variable unused, so it always read slot 0 | subsystem doc review + `--dump` |
-| `CVehicle::IsSubFlyingVehicle` | `&&` instead of `\|\|`, so it was always false (`CGangWars::Update`) | subsystem doc review + `--dump` |
-| `CTaskSimpleCarJumpOut` door timing | `IsPlane()` (type) instead of `IsSubPlane()` (sub type) | subsystem doc review + `--dump` |
 | `CWorld` hooks | `FindPlayerSlotWithVehiclePointer` was installed at the address of `FindPlayerSlotWithRemoteVehiclePointer` | subsystem doc review + IDB |
 | `CTaskInteriorLieInBed::InjectHooks` | Static `FinishAnimCB` was registered with `RH_ScopedVMTInstall`. The throw inside `DllMain` hung the game at startup | in-game run, stack sampling, then the new vtable check in `check_hooks.py` |
 | 4 hooks (`CCamera::TakeControlAttachToEntity`, `CConversationForPed::IsPlayerInPositionForConversation`, `CDecision::Set`, `CTheScripts::ScriptDebugCircle2D`) | Installed as reversed while still calling `plugin::Call` on their own address | `check_hooks.py` |
 | 209 stubs | Had no hook registration (or a commented-out one); now registered as `{ .Reversed = false }` | `add_missing_hooks.py` |
-| 14 classes | Reversed code that never ran, because `InjectHooks()` was never called | `check_hooks.py` |
+| 14 classes | Hooks never installed, because `InjectHooks()` was never called (original callers ran the original code) | `check_hooks.py` |
+
+### 4.2 Behaviour differences found, not fixed yet
+
+Our C++ differs from the original in these places. The fixes change game code, so they belong in their own pull
+requests. Five difftests fail until they are fixed: `LimitRadianAngle` and
+`ConvertToEulerAngles`, plus `GetATanOfXY`, `GetRadianAngleBetweenPoints` and `GetAngleBetweenPoints`, which differ
+because of the rounded `PI`.
+[ai/CaseStudies.md](ai/CaseStudies.md) shows each fix.
+
+| Where | Problem | How it was found |
+|---|---|---|
+| `common.h` `PI`, `TWO_PI`, `SQRT_2`, `LOG2_E`, `FRAC_*` | 5-6 digit roundings (`3.14159f`). The game only ever uses the exact float values, so reversed code computes different results | `asm_validate` precision check (most of the `PRECISION MISMATCH` findings) |
+| `CGeneral::SolveQuadratic` | Different operation order (`1/(2a)` instead of `(1/a)*0.5`) | difftest |
+| `CGeneral::LimitRadianAngle` | Loop rounded to float on every step, while the original keeps x87 extended precision | difftest |
+| `CMatrix::ConvertToEulerAngles` | Wrong index (`m[j][k]` instead of `m[j][i]`) in the `EULER_ANGLES` branch | difftest + decompilation |
+| `CCam::ClipBeta` | Subtracts 2π whenever β ≥ −π | subsystem doc review + `--dump` (static check was clean) |
+| `CPedIntelligence::GetActivePrimaryTask` | Loop variable unused, so it always reads the same slot | subsystem doc review + `--dump` |
+| `CVehicle::IsSubFlyingVehicle` | `&&` instead of `\|\|`, so it is always false (`CGangWars::Update`) | subsystem doc review + `--dump` |
+| `CTaskSimpleCarJumpOut` door timing | `IsPlane()` (type) instead of `IsSubPlane()` (sub type) | subsystem doc review + `--dump` |
 
 ---
 

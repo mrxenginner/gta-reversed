@@ -63,6 +63,9 @@ For globals and enums the function touches, grep `docs/ai/Globals.md` (address, 
 Before translating, check `docs/ai/InlineCatalogue.md` (functions MSVC inlines, helpers missing from the repo, globals
 without `StaticRef`) and the subsystem guide in `docs/subsystems/` for the area.
 
+Rules R1-R7 of `docs/ReversingRules.md` (fidelity) apply to every line; `docs/ai/CaseStudies.md` shows how each
+one was broken before.
+
 ## Phase 3 — Write the C++
 
 Use the **ida-to-cpp** skill as the translation reference. Checklist while writing:

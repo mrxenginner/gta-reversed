@@ -55,6 +55,8 @@ it correctly so it can be toggled in-game, and leave the project in a state that
 ## 1. Knowledge you must load before writing code
 
 Read (once per session, they are short) and obey:
+- `docs/ReversingRules.md` — rules R1-R20 (fidelity, hooks, addresses/layout, validation, scope). Non-negotiable.
+- `docs/ai/CaseStudies.md` — mistakes that already happened once; don't repeat them.
 - `docs/CodingGuidelines.md` — naming (`m_`, `ms_`, `s_`, `g_`), `auto` rules, `rng::`/`rngv::`, `f` suffix,
   `StaticRef`, `std::array`, const-correctness, ternary preference, etc.
 - `docs/HookRegistration.md` — InjectHooks / InjectHooksMain / `.Reversed = false` checklist.
