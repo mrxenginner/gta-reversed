@@ -7,6 +7,7 @@
 #include "StdInc.h"
 
 #include <numbers>
+#include <reversiblebugfixes/Bugs.hpp>
 
 #include "Radar.h"
 #include "EntryExitManager.h"
@@ -1196,13 +1197,22 @@ int32 CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in) {
                 }
             }
 
+            // BUG: When a point lies exactly on the box's edge, no side the polygon entered through
+            //      is found and `from` is still -1 here. The original then reads the corner before
+            //      its table: two stack pointers, which as floats are a point at about the radar's
+            //      centre, so the area gets a spike to the middle.
+            if (from == -1 && notsa::bugfixes::CRadar_ClipRadarPoly_NoEntrySide) {
+                from = left; // Insert no corners
+            }
+
             // The corners between the two crossings go in ahead of the leaving point, which is
             // pushed along to make room for them
             const auto leave = *leavePoint;
             auto*      write = leavePoint;
             for (auto c = from; c != left; c = (c + 1) & 3) {
+                assert(c >= -1 && c < 4);
                 numOut++;
-                *write++ = CORNERS[c];
+                *write++ = c != -1 ? CORNERS[c] : CVector2D{}; // -1 only with the bugfix off, see above
             }
             out[numOut] = leave;
         }
