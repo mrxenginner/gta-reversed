@@ -88,17 +88,17 @@ CColModel (0x30)                       CCollisionData (0x30)
 - **Face groups**: if `bHasFaceGroups` is set, a `uint32` count and a `FaceGroup[]` array sit right *before*
   `m_pTriangles`, with no pointer to them (long comment in `CollisionData.h`). Only valid for single-allocation models.
 - **Triangle planes** (`CColTrianglePlane`: compressed normal + distance + orientation) are computed on demand by
-  `CCollision::CalculateTrianglePlanes(CCollisionData*)` (`0x416330`, `Collision.cpp:60`). The computed planes are kept
+  `CCollision::CalculateTrianglePlanes(CCollisionData*)` (`0x416330`). The computed planes are kept
   in an LRU cache `ms_colModelCache` (`0x96592C`, 50 links, `CCollision::Init` `0x416260`). When the cache is full the
   least recently used model loses its planes (`RemoveTrianglePlanes`). Any code that reads `m_pTrianglePlanes` must call
-  `CalculateTrianglePlanes` first, as `ProcessLineOfSight` does (`Collision.cpp:1756`).
+  `CalculateTrianglePlanes` first, as `ProcessLineOfSight` does.
 - `m_pLines` and `m_pDisks` share storage. `bUsesDisks` is always false in SA files; `ProcessColModels` skips the disk
-  code (comment at `Collision.cpp:1903`). Vehicles use the lines as wheel suspension rays (see `CPhysical::ProcessCollision`
-  ghost branch, `Physical.cpp:271`, and Vehicles.md 3.3).
+  code (see the comment in `ProcessColModels`). Vehicles use the lines as wheel suspension rays (see the ghost branch of
+  `CPhysical::ProcessCollision`, and "Wheels, suspension and colpoints" in [Vehicles.md](Vehicles.md)).
 
 ### 3.2 Compressed vectors
 
-`CompressedVector` is `FixedVector<int16, 128.0f>` (`CompressedVector.h:4`). Use its conversions (`CVector{cv}`,
+`CompressedVector` is `FixedVector<int16, 128.0f>` (`CompressedVector.h`). Use its conversions (`CVector{cv}`,
 `CompressedVector{v}`), not the `[[deprecated]]` `CompressVector`/`UncompressVector` helpers. Other fixed-point flavours
 in the same header: `CompressedLargeVector` (/8), `CompressedUnitVector` (/4096), `CompressedFxVector` (/32767).
 `CCollisionData::GetTrianglePoint` (`0x40F5E0`) and `GetShadTrianglePoint` (`0x40F640`) return uncompressed corners.
@@ -107,22 +107,22 @@ in the same header: `CompressedLargeVector` (/8), `CompressedUnitVector` (/4096)
 
 - Format per model: `FileHeader` (fourcc `COLL`/`COL2`/`COL3`/`COL4`, size, 22-char name, model id), then a version
   specific header (`ColHelpers.h`, structs `TSphere`, `TBox`, `TFace`, `TVertex`...).
-- `CFileLoader::LoadCollisionFile(uint8*, uint32, uint8 colId)` (`0x538440`, `FileLoader.cpp:492`) walks a buffer that
+- `CFileLoader::LoadCollisionFile(uint8*, uint32, uint8 colId)` (`0x538440`) walks a buffer that
   holds many models, finds the model info by id or by name inside the `ColDef`'s model range, creates a `CColModel` if
   needed and dispatches to `LoadCollisionModel` (COLL), `LoadCollisionModelVer2` (`0x537EE0`), `Ver3` (`0x537CE0`),
   `Ver4` (`0x537AE0`). It sets `m_nColSlot = colId`.
 - `LoadCollisionFileFirstTime` (`0x5B5000`) is used while the level loads to fill the `ColDef` bounds.
-- The `COLFILE` line of `gta.dat` loads a col file directly (`FileLoader.cpp:1386`).
+- The `COLFILE` line of `gta.dat` loads a col file directly (`CFileLoader::LoadLevel`).
 
 ### 3.4 Streaming: `CColStore`
 
-- One `ColDef` per `.col` (`ColStore.h:10`): `m_Area` (bounds of everything in it), name, model id range
+- One `ColDef` per `.col` (`ColStore.h`): `m_Area` (bounds of everything in it), name, model id range
   (`m_nModelIdStart/End`), ref count, `m_bActive`, `m_bCollisionIsRequired`, `m_bProcedural`, `m_bInterior`.
-- Col files live in the streaming id range `RESOURCE_ID_COL` (25000, 255 ids, `Streaming.h:48`).
+- Col files live in the streaming id range `RESOURCE_ID_COL` (25000, 255 ids, `Streaming.h`).
 - `CColStore::LoadCollision(pos, bIgnorePlayerVeh)` (`0x410860`) and `EnsureCollisionIsInMemory(pos)` (`0x410AD0`) are
-  called from `CStreaming::Update` around the player (`Streaming.cpp:3732-3742`); they request/remove col files whose
+  called from `CStreaming::Update` around the player (and around the vehicle being removed); they request/remove col files whose
   `m_Area` is near the position. `SetCollisionRequired` / `AddCollisionNeededAtPosn` let scripts and interiors force
-  collision at another point (`EntryExit.cpp:362`).
+  collision at another point (e.g. `CEntryExit` before a teleport).
 - `CCollision::SortOutCollisionAfterLoad` (`0x411E30`) loads collision around the camera after a save is loaded.
 - `CCollision::Update` (`0x411E20`) is empty but still called from the main loop.
 
@@ -135,7 +135,7 @@ in the same header: `CompressedLargeVector` (/8), `CompressedUnitVector` (/4096)
 | `Test*` | `bool TestAB(const A&, const B&)` | Only says whether they touch. No output, no early-out state |
 | `Process*` | `bool ProcessAB(const A&, const B&, CColPoint& out, float& maxTouchDistance)` | Fills `out` **only if** the contact is closer than `maxTouchDistance` (or deeper than the current depth for sphere pairs), then shrinks `maxTouchDistance`. Call it repeatedly with the same float to keep the nearest hit |
 
-Shape pairs (addresses from `Collision.cpp:3389-3459`):
+Shape pairs (addresses from `CCollision::InjectHooks`):
 
 | Pair | Test | Process |
 |---|---|---|
@@ -149,15 +149,15 @@ Shape pairs (addresses from `Collision.cpp:3389-3459`):
 
 Model level:
 
-- **`ProcessColModels`** (`0x4185C0`, `Collision.cpp:1919`): A's bounding sphere is moved into B's space and tested
+- **`ProcessColModels`** (`0x4185C0`): A's bounding sphere is moved into B's space and tested
   against B's box; then A's spheres against B's spheres/boxes/triangles, B's spheres against A's triangles, and A's
-  lines against B's spheres/boxes/triangles (matrix in the doc comment at `Collision.cpp:1894`). Box-box and
-  triangle-triangle are **not** supported (`s_DebugSettings` table, `Collision.h:50`). Returns the number of sphere
+  lines against B's spheres/boxes/triangles (matrix in the doc comment above `ProcessColModels`). Box-box and
+  triangle-triangle are **not** supported (`s_DebugSettings` table in `Collision.h`). Returns the number of sphere
   colpoints, at most 31: each accepted contact also writes `m_fDepth = -1` into the next slot, so the 32-slot array
   must keep one spare. Line results go to `lineCPs` with per-line `maxTouchDistances` (wheels).
-  Buffer sizes in our code (`Collision.cpp:1962-1965`): 128 spheres, 64 boxes, 600 triangles colliding with the other
+  Buffer sizes in our code: 128 spheres, 64 boxes, 600 triangles colliding with the other
   bounding box, 16 lines.
-- **Line of sight**: `TestLineOfSight` (`0x417730`), `ProcessLineOfSight` (`0x417950`, `Collision.cpp:1716`) and
+- **Line of sight**: `TestLineOfSight` (`0x417730`), `ProcessLineOfSight` (`0x417950`) and
   `ProcessVerticalLine` (`0x417BF0`) transform the line into model space, test the bounding box, then spheres, boxes and
   triangles. `doSeeThroughCheck` / `doShootThroughCheck` skip materials that `g_surfaceInfos` marks as see/shoot-through.
   `ProcessVerticalLine` can cache the hit triangle in a `CStoredCollPoly` (checked by
@@ -166,20 +166,20 @@ Model level:
   `TestSphereAgainstWorld` (all in `World.cpp`), each calling the `*SectorList` templates.
 - **Camera**: `CameraConeCastVsWorldCollision` (`0x41B000`) builds a cache of nearby polys
   (`BuildCacheOfCameraCollision` `0x41AC40`, `CheckCameraCollisionBuildings/Vehicles/Objects/Peds`) and sphere-casts
-  against it (`SphereCastVsCaches` `0x4181B0`, `SphereCastVsEntity` `0x419F00`). Used by `CCam`, see Camera.md.
+  against it (`SphereCastVsCaches` `0x4181B0`, `SphereCastVsEntity` `0x419F00`). Used by `CCam`, see [Camera.md](Camera.md).
 
 ---
 
 ## 5. `CPhysical`
 
-### 5.1 State (`Physical.h:64-140`)
+### 5.1 State (`Physical.h`)
 
 | Field | Meaning |
 |---|---|
 | `m_vecMoveSpeed`, `m_vecTurnSpeed` | Linear speed (units per time step, not per second) and angular speed (axis * rad per step) |
 | `m_vecFrictionMoveSpeed`, `m_vecFrictionTurnSpeed` | Friction impulses gathered during collision; added to the speeds at the start of the next `ProcessControl` (`ApplyFriction()` `0x5483D0`) |
 | `m_vecForce`, `m_vecTorque` | Present but cleared only; the game applies impulses directly to the speeds |
-| `m_fMass`, `m_fTurnMass` | Mass and moment of inertia (scalar). Peds get `70.0` (`Ped.cpp:239`); vehicles and objects set theirs from their data files |
+| `m_fMass`, `m_fTurnMass` | Mass and moment of inertia (scalar). Peds get `70.0` (`CPed` constructor); vehicles and objects set theirs from their data files |
 | `m_fAirResistance` | `<= 0.1` (or any vehicle): quadratic drag `speed *= (1 - |v| * k)^step`; otherwise a per-step multiplier (`ApplyAirResistance` `0x544C40`) |
 | `m_fElasticity` | Restitution used by `ApplyCollision*`. Temporarily scaled by `HIGHSPEED_ELASTICITY_MULT_COPCAR` (`0x8CD784`) for cop cars in `ProcessCollision` |
 | `m_fBuoyancyConstant` | Passed to `cBuoyancy::ProcessBuoyancy` |
@@ -192,10 +192,10 @@ Model level:
 | `m_pAttachedTo`, `m_vecAttachOffset`, `m_qAttachedEntityRotation` | Attachment, positioned by `PositionAttachedEntity` (`0x546FF0`) from `CWorld::ProcessAttachedEntities` |
 | `m_pEntityIgnoredCollision` | One entity this physical does not collide with (cleared once they stop touching) |
 
-Mass helpers: `GetMass(pos, dir)` (`Physical.h:241`) is the effective mass at a point along a direction,
+Mass helpers: `GetMass(pos, dir)` is the effective mass at a point along a direction,
 `1 / (|pos x dir|^2 / turnMass + 1 / mass)`. Flags that freeze motion: `bInfiniteMass`, `bDisableMoveForce`,
 `bDisableTurnForce`, `bDisableZ` (snooker balls: `ApplySpeed` clamps them to `CWorld::SnookerTableMin/Max`).
-`IsImmovable()` (`Physical.h:246`) tests the usual trio.
+`IsImmovable()` tests the usual trio.
 
 ### 5.2 Force and speed primitives
 
@@ -225,19 +225,19 @@ Mass helpers: `GetMass(pos, dir)` (`Physical.h:241`) is the effective mass at a 
 | 13 | `TestCollision` | `0x54DEC0` |
 | 22 | `ProcessEntityCollision(CEntity*, CColPoint*)` | `0x546D00` (CPhysical's own virtual; overridden by `CPed`, `CAutomobile`, `CBike`, `CMonsterTruck`, `CTrailer`) |
 
-`CEntity` also declares two virtuals used here: `SpecialEntityPreCollisionStuff` (`Entity.h:229`, decides whether a pair
+`CEntity` also declares two virtuals used here: `SpecialEntityPreCollisionStuff` (decides whether a pair
 collides, is soft, or is ignored; overridden by `CPed`, `CVehicle`, `CObject`) and `SpecialEntityCalcCollisionSteps`
-(`Entity.h:230`, number of sub-steps for fast movers).
+(number of sub-steps for fast movers).
 
-### 5.4 `ProcessControl` (`0x5485E0`, `Physical.cpp:216`)
+### 5.4 `ProcessControl` (`0x5485E0`)
 
 Clears `bSubmergedInWater` (non-peds), hit-wall/postponed/safe/contacted flags. If the status is not `STATUS_SIMPLE`:
 clears `bOnSolidSurface`, `bDoorHitEndStop`, the collided list and the damage record, calls `ApplyFriction()` (adds the
 friction speeds of last frame), then `ApplyGravity()` and `ApplyAirResistance()` unless attached (attached entities with
-`bInfiniteMass` still get them). Subclasses call it from their own `ProcessControl` (`Automobile.cpp:602`,
-`Object.cpp:253`, `Boat.cpp:557`, ...). `SkipPhysics` (`0x5433B0`) is the "do nothing this frame" variant.
+`bInfiniteMass` still get them). Subclasses call it from their own `ProcessControl` (`CAutomobile`,
+`CObject`, `CBoat`, ...). `SkipPhysics` (`0x5433B0`) is the "do nothing this frame" variant.
 
-### 5.5 `ProcessCollision` (`0x54DFB0`, `Physical.cpp:245`)
+### 5.5 `ProcessCollision` (`0x54DFB0`)
 
 1. `STATUS_SIMPLE`: only `CheckCollision_SimpleCar` (`0x54DAB0`); if it hits, switch to real physics
    (`CCarCtrl::SwitchVehicleToRealPhysics`). Then `RemoveAndAdd` and return.
@@ -251,11 +251,11 @@ friction speeds of last frame), then `ApplyGravity()` and `ApplyAirResistance()`
    restored and the entity stays **not** in a safe position, so `CWorld::Process` calls it again.
 5. No hit: `SetIsInSafePosition(true)`, `m_fMovingSpeed = distance moved`, `RemoveAndAdd()`.
 
-`CheckCollision` (`0x54D920`, `Physical.cpp:709`) advances the scan code and calls `ProcessCollisionSectorList` for every
+`CheckCollision` (`0x54D920`) advances the scan code and calls `ProcessCollisionSectorList` for every
 sector under `GetBoundRect()`. For peds it first clears `m_standingOnEntity`/`bIsStanding` (the sector pass sets them
 again) and sets `bSkipLineCol` while the player is climbing.
 
-### 5.6 `ProcessCollisionSectorList` (`0x54BA60`, `Physical.cpp:3930`)
+### 5.6 `ProcessCollisionSectorList` (`0x54BA60`)
 
 For each entity in the sector's lists (see Gotchas for the order) that uses collision, is not `this` and whose scan
 code is not current:
@@ -277,12 +277,12 @@ code is not current:
 
 `bForceHitReturnFalse` turns the whole thing into a pure test (`TestCollision` `0x54DEC0` uses it).
 `CWorld::bNoMoreCollisionTorque` stops vehicles getting extra turn impulse after the first collision pass
-(`Physical.cpp:1018, 3247, 4147`).
+(checked in `ApplyCollision`, `ApplySoftCollision` and `ProcessCollisionSectorList`).
 
-### 5.7 `ProcessShift` (`0x54DB10`, `Physical.cpp:462`)
+### 5.7 `ProcessShift` (`0x54DB10`)
 
 Run on entities still not in a safe position after the collision passes. `ApplySpeed`, then for every sector
-`ProcessShiftSectorList` (`0x546670`, `Physical.cpp:1970`): sum the normals of all colpoints with positive depth (pieces
+`ProcessShiftSectorList` (`0x546670`): sum the normals of all colpoints with positive depth (pieces
 13-16 excluded), keep the deepest depth, normalise the sum if longer than 1 and move the entity by
 `normal * depth * 1.5` (peds: `normal * clamp(1.5 * depth, 0.005, 0.3)`, downward normals: `* 0.75`). Vehicles also get
 `0.008 * step` of that normal added to their move speed. After shifting, the entity is checked again with
@@ -294,7 +294,7 @@ shift or for peds standing on a moving entity.
 - A physical is in the repeat-sector list matching its type (`Vehicles`, `Peds`, `Objects` in `CRepeatSector`,
   `RepeatSector.h`) for every sector its `GetBoundRect()` touches. `m_pCollisionList` keeps one `CEntryInfoNode` per
   membership so `Remove` can unlink them without a search.
-- `RemoveAndAdd` (`0x542560`, `Physical.cpp:601`) is called at the end of every `ProcessCollision`/`ProcessShift`: it
+- `RemoveAndAdd` (`0x542560`) is called at the end of every `ProcessCollision`/`ProcessShift`: it
   reuses existing nodes for the new sectors (unlink + relink) and deletes the leftovers. Big buildings use plain
   `CEntity::Remove/Add`.
 - `AddToMovingList` (`0x542800`) / `RemoveFromMovingList` (`0x542860`): membership in `ms_listMovingEntityPtrs`.
@@ -302,25 +302,25 @@ shift or for peds standing on a moving entity.
 
 ---
 
-## 6. Per-frame flow: `CWorld::Process` collision part (`World.cpp:2156`, `0x5684A0`)
+## 6. Per-frame flow: `CWorld::Process` collision part (`0x5684A0`)
 
-Verified against the IDB; line numbers are in `World.cpp`.
+Verified against the IDB.
 
-1. `UpdateAnim()` on every moving entity not flagged for removal (`:2201`).
+1. `UpdateAnim()` on every moving entity not flagged for removal.
 2. `ProcessControl()` on every moving entity; removed entities are deleted, static ones leave the moving list. Second
-   pass with `bForceProcessControl = true` for `GetWasPostponed()` entities (`:2230-2236`).
-3. `CObject::ProcessControlLogic` for `ms_listObjectsWithControlCode` (`:2240`).
+   pass with `bForceProcessControl = true` for `GetWasPostponed()` entities.
+3. `CObject::ProcessControlLogic` for `ms_listObjectsWithControlCode`.
 4. Replay playback: only mark everything safe and update RW matrices. Otherwise:
 5. `bNoMoreCollisionTorque = false`, one `ProcessCollision()` pass on entities not in a safe position, then
-   `bNoMoreCollisionTorque = true` and **4 more passes** (`:2269-2276`). Each call is followed by `UpdateRwMatrix` +
+   `bNoMoreCollisionTorque = true` and **4 more passes**. Each call is followed by `UpdateRwMatrix` +
    `UpdateRwFrame`.
 6. "Stuck" pass: entities still unsafe get `SetIsStuck(true)` *before* one more `ProcessCollision()`, and again if they
    are still unsafe after it.
-7. `bSecondShift = false`, `ProcessShift()` pass; `bSecondShift = true`, second `ProcessShift()` pass (`:2298-2337`).
+7. `bSecondShift = false`, `ProcessShift()` pass; `bSecondShift = true`, second `ProcessShift()` pass.
    After the second pass a player-status entity that is still stuck gets `moveSpeed *= 0.707^step` and one more
    `ApplyMoveSpeed`/`ApplyTurnSpeed`.
-8. `CVehicleRecording::SaveOrRetrieveDataForThisFrame`, `g_ikChainMan.Update`, `ProcessAttachedEntities` (`:2339`), then
-   `CPedIntelligence::ProcessAfterProcCol` and attached-ped positioning for every moving ped (`:2344`).
+8. `CVehicleRecording::SaveOrRetrieveDataForThisFrame`, `g_ikChainMan.Update`, `ProcessAttachedEntities`, then
+   `CPedIntelligence::ProcessAfterProcCol` and attached-ped positioning for every moving ped.
 
 The "safe position" flag (`m_bIsInSafePosition`, entity flag `0x20`) is what decides whether an entity takes part in a
 pass: `ProcessControl` clears it, a collision-free `ProcessCollision` or `ProcessShift` sets it.
@@ -346,11 +346,11 @@ pass: `ProcessControl` clears it, a collision-free `ProcessCollision` or `Proces
 
 ## 8. Buoyancy: `cBuoyancy`
 
-Single global `mod_Buoyancy` (`0xC1C890`). Callers: `CPed::ProcessBuoyancy` (`Ped.cpp:1699`),
-`CObject::ProcessControl` (`Object.cpp:259`), `CAutomobile::ProcessBuoyancy` (`Automobile.cpp:5142`),
-`CBike::ProcessBuoyancy` (`Bike.cpp:288`); boats use `ProcessBuoyancyBoat` (`0x6C3030`).
+Single global `mod_Buoyancy` (`0xC1C890`). Callers: `CPed::ProcessBuoyancy`, `CObject::ProcessControl`,
+`CAutomobile::ProcessBuoyancy`, `CBike::ProcessBuoyancy` and `CTrain`; boats use `ProcessBuoyancyBoat` (`0x6C3030`,
+called from `CVehicle`).
 
-`ProcessBuoyancy(entity, buoyancy, &turnPoint, &force)` (`0x6C3EF0`, `Buoyancy.cpp:24`):
+`ProcessBuoyancy(entity, buoyancy, &turnPoint, &force)` (`0x6C3EF0`):
 
 1. `CWaterLevel::GetWaterLevel` at the entity position; no water -> `false`.
 2. `PreCalcSetup` (`0x6C2B90`): copies the matrix, builds a slightly shrunk bounding box and centre offsets.
@@ -367,58 +367,58 @@ Boats weight the 3x3 sample grid with per-type tables (`afBoatVolumeDistribution
 ## 9. Gotchas
 
 - **`CCollision` hooks are installed but redirected to GTA.** `CCollision::InjectHooks` sets
-  `state = HS::RedirectToGTA` and `Locked` for all `Test*`/`Process*` functions (`Collision.cpp:3385-3386`, "bad
+  `state = HS::RedirectToGTA` and `Locked` for all `Test*`/`Process*` functions ("Hooks disabled due to bad
   performance in debug mode"). The coverage tool counts them as REVERSED, but at run time the original code runs unless
   you flip them in the debug UI. Validate changes there with a difftest, not by playing.
-- **`CPhysical::Add` and `RemoveAndAdd` run original code** (`.Reversed = false`, `Physical.cpp:23,33`). `Add`'s body is
+- **`CPhysical::Add` and `RemoveAndAdd` run original code** (`.Reversed = false` in `CPhysical::InjectHooks`). `Add`'s body is
   `#if 0`; `RemoveAndAdd` is written but not enabled. When you debug sector membership you are in GTA's code.
 - **Speeds are per time step.** `m_vecMoveSpeed` is multiplied by `CTimer::GetTimeStep()` (1.0 at 50 fps), and damping
   is `pow(k, step)`. Never convert to seconds when matching the original.
 - **`ProcessCollisionSectorList` uses a static `CColPoint[32]` at `0xB73710`.** `CPhysical::fxDirection` (`0xB73720`) is
   not a separate global: it is `colPoints[0].m_vecNormal`. `ProcessShiftSectorList` uses a local array instead.
 - **`ProcessColModels` writes one slot past the last contact** (depth sentinel). Always pass a full
-  `std::array<CColPoint, 32>`; the cast in `ProcessEntityCollision` (`Physical.cpp:588`) relies on callers doing so.
+  `std::array<CColPoint, 32>`; the cast in `CPhysical::ProcessEntityCollision` relies on callers doing so.
 - **Triangle planes can disappear.** They live in a 50-entry LRU cache; a model you processed earlier may have lost
   them. Call `CalculateTrianglePlanes` right before using `m_pTrianglePlanes`.
 - **`ePhysicalFlags` names do not match the bitfield names** for several bits (`PHYSICAL_b01` is
   `bMakeMassTwiceAsBig`, `PHYSICAL_DESTROYED` is `bRenderScorched`, `PHYSICAL_b12`/`0x800` is
   `bProcessCollisionEvenIfStationary`). Use the `physicalFlags.bXxx` names.
-- **`m_nContactSurface` is initialised to `SURFACE_DEFAULT` in our constructor (NOTSA, `Physical.cpp:128`)**; the
+- **`m_nContactSurface` is initialised to `SURFACE_DEFAULT` in our constructor (NOTSA)**; the
   original leaves it uninitialised, which can index `g_surfaceInfos` out of range.
 - **List order inside a sector matters for collision.** The original processes the sector lists in a fixed order (see
   the open bug below); the first hit returns, damage records keep the strongest hit, and impulses are applied in
   sequence.
 - **Col model coverage**: `idb_coverage.py` reports `CColModel::operator new/delete/=` (`0x40FC30`, `0x40FC40`,
-  `0x40F7C0`) as MISSING although `ColModel.cpp:17-19` hooks them; it does not match operator names. The real gaps are
+  `0x40F7C0`) as MISSING although `CColModel::InjectHooks` hooks them; it does not match operator names. The real gaps are
   the constructor/destructors and `AllocateData(int)`.
 - **`CColAccel` is dormant on PC 1.0.** The only write to `m_iCacheState` (`0xBC40A0`) in the exe is
   `COLACCEL_ENDED` in `endCache`; nothing sets `STARTED`/`LOADING`, so `CINFO.BIN` is never written or read. Do not
   spend time "fixing" its paths.
-- **`CCollision::s_DebugSettings` is NOTSA** (`Collision.h:32`). Keep the `IsEnabled(...)` early-outs and the default
+- **`CCollision::s_DebugSettings` is NOTSA** (`Collision.h`). Keep the `IsEnabled(...)` early-outs and the default
   `AllowLineOriginInsideSphere = false` (original: a line that starts and ends inside a sphere does not hit it).
 - **Doors are physicals with `bDisableMoveForce`.** `ApplySpeed` clamps their heading at `m_fDoorStartAngle +-108`
   degrees and bounces the turn speed by `-0.2`.
-- **Open bug: `ProcessShiftSectorList` ped shift is wrong** (`Physical.cpp:2111-2121`, original `0x546670`). The original
+- **Open bug: `ProcessShiftSectorList` ped shift is wrong** (original `0x546670`). The original
   moves a ped by `normal * clamp(1.5 * depth, 0.005, 0.3)` (constants `0x8CD7D4` = 1.5). Ours adds
   `normal * depth * 0.3` (or `* 0.005`) **and then** `normal * 1.5 * depth`, so peds deeper than 0.2 or shallower than
   0.0033 are pushed too far.
-- **Open bug: `ProcessShiftSectorList` keeps `bProcessEntityCollision` across entities** (`Physical.cpp:1981`). The
+- **Open bug: `ProcessShiftSectorList` keeps `bProcessEntityCollision` across entities**. The
   original resets it to `true` for every entity; ours sets it once per list, so after the first non-building entity
   every later one is skipped while `GetHasHitWall()` is set.
-- **Open bug: `ProcessShiftSectorList` building filter** (`Physical.cpp:2011`). Original:
+- **Open bug: `ProcessShiftSectorList` building filter**. Original:
   `if (attachedTo is physical && attachedTo->bDisableCollisionForce) skip; else if (ignored == entity) skip; else ...`.
   Ours enters `if (m_pAttachedTo) { ... }` and skips the ignored-entity and flyer/`bDisableZ` checks for every attached
   entity.
-- **Open bug: sector list order** (`Physical.cpp:4436-4439` and `2092-2095`). From the jump tables: the original
+- **Open bug: sector list order** (the `ProcessSectorList(...)` calls at the end of both functions). From the jump tables: the original
   `ProcessCollisionSectorList` visits Buildings, Vehicles, **Objects, Peds** (`0x54CFE0`); ours visits Buildings,
   Vehicles, Peds, Objects. The original `ProcessShiftSectorList` visits Objects, Peds, Vehicles, Buildings
   (`0x546CF0`); ours the reverse (only float summation order differs there).
-- **Open bug: `CWorld::Process` shift damping exponent** (`World.cpp:2326`). The original computes
+- **Open bug: `CWorld::Process` shift damping exponent** (`WORLD_PLAYER_SHIFT_DAMPING` in `CWorld::Process`). The original computes
   `pow(*(float*)0x8CDEEC, CTimer::ms_fTimeStep)` (asm at `0x568952`); ours uses `GetTimeStepInMS()` (20x larger) and
-  `SQRT_2 / 2` instead of the stored constant `0.707f` (`0x3F34FDF4`).
-- **Open bug: `CWorld::Process` group events** (`World.cpp:2173`). The original adds global events only to groups with
+  `SQRT_2 / 2` (0.70710677) instead of the stored constant `0.707f` (bits `0x3F34FDF4`).
+- **Open bug: `CWorld::Process` group events**. The original adds global events only to groups with
   `CPedGroups::ms_activeGroups[i]` set; ours adds them to all 8 groups. The helper
-  `CPedGroups::GetActiveGroupsWithIDs()` (`PedGroups.h:48`) already does that filtering.
+  `CPedGroups::GetActiveGroupsWithIDs()` already does that filtering.
 
 ---
 
@@ -441,27 +441,28 @@ Data from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py 
 
 Related, counted elsewhere: `CWorld` 84 functions, 64 reversed, 16 MISSING (8,812 bytes) - all the `*SectorList`
 helpers (`ProcessLineOfSightSectorList` `0x566EE0`, `TestSphereAgainstSectorList` `0x566140`,
-`TriggerExplosionSectorList` `0x567750`, ...). They are reversed as templates over the list type (`World.cpp:181`) and
+`TriggerExplosionSectorList` `0x567750`, ...). They are reversed as templates over the list type (top of `World.cpp`) and
 cannot be hooked by address, so they show as MISSING. `CCollisionEventScanner::ScanForCollisionEvents` (`0x604500`,
-3,555 bytes) is a NOHOOK `plugin::Call` stub; the `CPed/Vehicle/ObjectPotentialCollisionScanner`s (~780 bytes each)
-are untouched.
+3,555 bytes) is a NOHOOK `plugin::Call` stub, and so is
+`CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents` (`0x603720`, `Events/EventScanner.cpp`);
+the ped and object potential-collision scanners (~780 bytes each) are not in the repo.
 
 Priorities:
 
 1. **Fix the open bugs in section 9** (ped shift clamp, `bProcessEntityCollision`, attached filter, list order,
    `CWorld::Process` exponent). They are in active hooked code and change gameplay. Add a difftest for
    `ProcessShiftSectorList` with a ped overlapping a building.
-2. **`CPhysical::RemoveAndAdd`** (`0x542560`, 663 bytes) - code exists, enable it (`Physical.cpp:23`) after validating
+2. **`CPhysical::RemoveAndAdd`** (`0x542560`, 663 bytes) - code exists, enable it (`CPhysical::InjectHooks`) after validating
    with `asm_validate.py` and a difftest of sector membership. Then **`CPhysical::Add`** (`0x544A30`, 516 bytes): needs
    the same templated `CEntryInfoNode` handling as `RemoveAndAdd`.
-3. **`SurfaceInfos_c::LoadAdhesiveLimits`** (`0x55D0E0`, 317 bytes): the dead code after `return` in
-   `SurfaceInfos_c.cpp:257` never fills `m_adhesiveLimits`; rewrite it from the IDB. Then hook the already written
+3. **`SurfaceInfos_c::LoadAdhesiveLimits`** (`0x55D0E0`, 317 bytes): the dead code after the
+   `return plugin::CallMethod<0x55D0E0>` never fills `m_adhesiveLimits`; rewrite it from the IDB. Then hook the already written
    `LoadSurfaceInfos` (`0x55EB90`, 1,814 bytes) and `LoadSurfaceAudioInfos` (`0x55F2B0`, 360 bytes) - they are KNOWN only
    because `InjectHooks` lacks the `RH_ScopedInstall` lines.
 4. **`CCollisionEventScanner::ScanForCollisionEvents`** (`0x604500`, 3,555 bytes): biggest single item; register a hook
-   first (`add_missing_hooks.py`), see Events.md for the events it produces.
+   first (`add_missing_hooks.py`), see [Events.md](Events.md) for the events it produces.
 5. **`CCollision::CalculateTrianglePlanes(CColModel*)` / `RemoveTrianglePlanes(CColModel*)`** (`0x418580` / `0x4185A0`,
-   21 bytes each): trivial wrappers, still `plugin::Call` (`Collision.cpp:1881,1889`).
+   21 bytes each): trivial wrappers, still `plugin::Call` (`.Reversed = false`).
 6. **Small KNOWN/MISSING helpers**: `CColModel` ctor/dtors (`0x40FB60`, `0x40F700`, `0x4C4C00`), `AllocateData(int)`
    (`0x40F9B0`), `CCollisionData::CCollisionData` (`0x40F030`), `CColBox::Set` (`0x40EE70`), `CColDisk::Set`
    (`0x40FD50`), `CSphere::Set` (`0x40FCF0`), `CBoundingBox` (`0x40FAF0`, `0x470100`, `0x49C300`), `CColPoint::operator=`

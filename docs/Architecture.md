@@ -1,9 +1,11 @@
 # Architecture
 
-How gta-reversed is built, how it gets into the game, and where everything lives. For *how to reverse* see
-[ReversingGuide.md](ReversingGuide.md). For the layout of the original executable see [BinaryMap.md](BinaryMap.md).
+How gta-reversed is built, how it gets into the game, and where everything lives. Related pages:
+- How to reverse a function: [ReversingGuide.md](ReversingGuide.md)
+- How to register hooks: [HookRegistration.md](HookRegistration.md)
+- Layout of the original executable: [BinaryMap.md](BinaryMap.md)
+- Per-subsystem run-time details: [subsystems/README.md](subsystems/README.md)
 
-Per-subsystem run-time details are in [subsystems/README.md](subsystems/README.md).
 ---
 
 ## 1. The big picture
@@ -20,7 +22,8 @@ gta_sa.exe (1.0 US compact) ──loads──> ASI loader (vorbisFile.dll) ─�
   (`E9 rel32`) at the start of an original function, so the game runs our re-implementation instead.
 - Functions not yet reversed are still declared in C++. They forward to the original code (`plugin::Call*`) and
   their hook stays redirected to GTA.
-- Every hook can be switched at runtime from the in-game F7 menu, so you can A/B-compare ours against the original.
+- Every hook that isn't locked can be switched at runtime from the in-game F7 menu, so you can A/B-compare ours
+  against the original.
 - The long-term goal is a **standalone executable**. The `GTASA_STANDALONE` option exists, but for now it only
   builds a helper executable used by CI to list the hooks.
 
@@ -32,7 +35,7 @@ gta_sa.exe (1.0 US compact) ──loads──> ASI loader (vorbisFile.dll) ─�
 |---|---|
 | Toolchain | Visual Studio 2026 (MSVC 19.5), x86 / Win32 only, C++23, static CRT |
 | Package manager | Conan 2 (`conanfile.py`, profile `conan/profiles/windows-msvc.txt`) |
-| Configure | `python setup.py` (wraps `conan install`; `-b` also builds) |
+| Configure | `python setup.py` (runs `conan install` with that profile; extra arguments go to Conan, e.g. `-s build_type=Release` or `-o use_sdl3=False`; `-b`/`--build` also builds) |
 | Build | `cmake --build build --config Debug --target gta_reversed` |
 | Output | `bin/<Debug|Release>/gta_reversed.asi` (+ `.pdb`), or `.exe` in standalone mode |
 | Dependencies | spdlog 1.17 (std::format), nlohmann_json 3.12, Dear ImGui 1.92.9 docking, SDL3 3.4 (optional, on by default through Conan), Tracy, boost (header-only), ogg/vorbis, libjpeg-turbo, imgui-filebrowser (FetchContent) |
@@ -40,26 +43,28 @@ gta_sa.exe (1.0 US compact) ──loads──> ASI loader (vorbisFile.dll) ─�
 Notable build settings (`source/CMakeLists.txt`):
 - **Warnings are errors** (`COMPILE_WARNING_AS_ERROR ON`, `/W3`, with a few warnings disabled).
 - **No `/fp` or `/arch` flag**, so MSVC's x86 default applies (SSE2). The original game uses x87, so tiny float
-  differences are possible (see the difftest tolerance rules).
+  differences are possible (see the float tolerances in [ReversingGuide.md](ReversingGuide.md) §5).
 - Always-on defines: `FIX_BUGS`, `USE_GTASA_ALLOCATOR`, `EXTRA_DEBUG_FEATURES`, `NOTSA_WINDOWED_MODE`, `USE_D3D9`,
   `SA_SKINNED_PEDS`.
-- **Sources are globbed** (`GLOB_RECURSE`). After adding a file, re-run `cmake build` (configure) before building.
-- PCH is `StdInc.h`/`StdInc.cpp`. `notsa.natvis` adds debugger visualisers for `CPool`, the linked lists, `FixedFloat`
-  and friends, `WEnum`...
+- **Sources are globbed** (`GLOB_RECURSE`). After adding a file, re-run the configure step (`python setup.py`, or
+  `cmake build`) before building.
+- PCH is `StdInc.h`/`StdInc.cpp`. `source/notsa.natvis` adds debugger visualisers for `CPool`, the linked lists,
+  `FixedFloat` and friends, `WEnum`...
 
-CMake options:
+CMake options (set through Conan options where a Conan column is given, e.g. `python setup.py -o unity_build=True`):
 
-| Option | Default | Effect |
-|---|---|---|
-| `GTASA_UNITY_BUILD` | OFF | Unity build in batches of 16. CI builds both modes, so file-local names (`namespace {}` / `static`) must not clash between files |
-| `GTASA_WITH_OPENAL` | OFF | OpenAL audio backend instead of DirectSound |
-| `GTASA_USE_SDL3` | OFF (Conan: ON) | SDL3 window/input instead of Win32 |
-| `GTASA_STANDALONE` | OFF | Build an `.exe` instead of the `.asi` (`NOTSA_STANDALONE`) |
-| `GTASA_STANDALONE_DUMP_HOOKS_ONLY` | OFF | Standalone build that only registers hooks (as `NullHook`s) and dumps them. Used by CI to generate `docs/hooks.json` |
-| `GTASA_WITH_SCRIPT_COMMAND_HOOKS` | OFF | Register script command handlers as toggleable hooks |
-| `GTASA_WITH_LTO` | OFF | Link-time optimisation |
-| `GTASA_NO_EDIT_AND_CONTINUE` | OFF | `/Z7` instead of `/ZI` (and `/MAP`), used by the Wine build |
-| `GTASA_WITH_CLEO_COMMANDS` | OFF | **Has no effect today.** Nothing maps it to the `NOTSA_WITH_CLEO_SCRIPT_COMMANDS` define, and the CLEO headers that define would include don't exist |
+| Option | Conan option | Default | Effect |
+|---|---|---|---|
+| `GTASA_UNITY_BUILD` | `unity_build` | OFF | Unity build in batches of 16. CI builds both modes, so file-local names (`namespace {}` / `static`) must not clash between files |
+| `GTASA_USE_SDL3` | `use_sdl3` | OFF (Conan: ON) | SDL3 window/input instead of Win32 |
+| `GTASA_STANDALONE` | `standalone` | OFF | Build an `.exe` instead of the `.asi` (`NOTSA_STANDALONE`) |
+| `GTASA_STANDALONE_DUMP_HOOKS_ONLY` | `standalone=dump_hooks_only` | OFF | Standalone build that only registers hooks (as `NullHook`s) and dumps them. Requires `GTASA_STANDALONE`. Used by CI to generate `docs/hooks.json` |
+| `GTASA_WITH_SCRIPT_COMMAND_HOOKS` | `with_script_command_hooks` | OFF | Show script command handlers as toggleable hooks in the UI |
+| `GTASA_WITH_OPENAL` | – | OFF (forced ON off Windows) | OpenAL audio backend instead of DirectSound |
+| `GTASA_WITH_LTO` | – | OFF | Link-time optimisation |
+| `GTASA_NO_EDIT_AND_CONTINUE` | – | OFF | `/Z7` instead of `/ZI` (and `/MAP`), used by the Wine build |
+| `GTASA_WITH_SANITIZERS` | – | OFF | Not implemented: turning it on stops the configure step with an error |
+| `GTASA_WITH_CLEO_COMMANDS` | – | OFF | **Has no effect today.** Nothing maps it to the `NOTSA_WITH_CLEO_SCRIPT_COMMANDS` define, and the CLEO headers that define would include (`Commands/CLEO/Commands.hpp`, `Commands/CLEO/Extensions/`) don't exist |
 
 The Linux cross-build through msvc-wine lives in `contrib/msvc-wine/`.
 
@@ -73,20 +78,24 @@ The Linux cross-build through msvc-wine lives in `contrib/msvc-wine/`.
 2. Open a console, load debug symbols (dbghelp), start logging (`logs/log.log` plus console). Logging also installs
    an unhandled-exception filter that logs a stack walk.
 3. `CommandLine::Load`. Wait for a debugger if `--debug` was passed.
-4. Read `gta-reversed.ini` from the working directory (`[FastLoader]`, `[Misc]`).
+4. Read `gta-reversed.ini` from the working directory (`[FastLoader]`, `[Misc]`). See §11 for where that is.
 5. `RHManager::CreateInstance()`, then **`InjectHooksMain()`**:
    - windowed-mode hooks
    - then every class's `InjectHooks()` (`source/InjectHooksMain.cpp`, grouped by subsystem)
    - then `CommandLine::PostHooksInjected()`, which applies `--use-gta-for` and friends, `--dump-hooks-to` and
      `--run-difftests`
 
+   An exception escaping `InjectHooksMain()` is caught in `DllMain`: it is logged, shown in a message box, and the
+   process is terminated (letting it escape would deadlock under the loader lock).
+
 The game then reaches its `WinMain` (`0x748710`). That function is itself hooked, to `NOTSA_WinMain`
 (`source/app/platform/win/WinMain.cpp`), which runs: RenderWare/skeleton initialisation, SDL or Win32 window,
 input, `gta_sa.set`, `UIRenderer` (ImGui), and finally the main loop.
 
-In standalone mode the order differs (command line before console). No ini is loaded, and hooks become `NullHook`s
-that only record addresses. `StaticRef` also returns a dummy buffer per type, so standalone builds can't run game
-code yet.
+In standalone mode `WinMain` (`source/app/platform/win/WinMain.cpp`) is our own entry point. It reads the command
+line before opening the console, loads no ini, and hooks become `NullHook`s that only record addresses. Only the
+dump-hooks-only build does something useful (it runs `InjectHooksMain()` and exits); a plain standalone build logs an
+error and exits. In dump-hooks-only builds `StaticRef` returns one dummy buffer per type.
 
 ---
 
@@ -94,7 +103,7 @@ code yet.
 
 | Piece | Role |
 |---|---|
-| `StaticOneWayHook` | Patches `from` with `E9 rel32` → `to` (5 bytes, saved for restoring). It follows one `EB`/`E9` thunk at the target (incremental linking or Edit & Continue). With `StackArgumentsToPreserve`/`PreserveRegisters` it jumps to a generated `pushad`… `call`… `popad; ret n` thunk instead (for register-passed arguments) |
+| `StaticOneWayHook` | Patches `from` with `E9 rel32` → `to` (5 bytes, saved for restoring). It follows one `EB`/`E9` thunk at the target (incremental linking or Edit & Continue). With `StackArgumentsToPreserve`/`PreserveRegisters` it uses a generated `pushad` … `call` … `popad` stub instead (written in place if it fits, otherwise in allocated memory), for callers that expect registers to survive the call |
 | `StaticTwoWayHook` | Two one-way hooks: `_FromGTA` (GTA→ours) and `_ToGTA` (ours→GTA). States: `RedirectToOurs`, `RedirectToGTA`, `Unhooked` |
 | `VirtualHook` | `StaticTwoWayHook` for direct calls plus a `VMTRedirectHook` that swaps the vtable entry for virtual dispatch. Our vtable is found through the exported `??_7Class@@6B@` symbol, which is why polymorphic classes need `NOTSA_EXPORT_VTABLE` |
 | `VMTRedirectHook` | Vtable swap only. Used with `{ .Overrides = false }` |
@@ -103,22 +112,12 @@ code yet.
 | `NullHook` | Standalone/dump mode. Never touches memory |
 | `RHManager` | Singleton. Tree of categories (`Global/CGeneral`, `Entity/Ped/CPed`, …) built by the `RH_Scoped*` macros. `CheckAll()` re-applies patches that something else overwrote, at most every 500 ms (called from the UI's pre-render update). `WriteHooksToFile` dumps **JSON**, not the CSV its comment claims |
 
-`HookInstallOptions`:
-- `Reversed` (true)
-- `Unhooked` (false)
-- `State`
-- `Locked` (defaults to `!Reversed`)
-- `Overrides` (true)
-- `StackArgumentsToPreserve`
-- `PreserveRegisters`
-- `InstallSrcLoc`
+The macros, the `HookInstallOptions` fields and the `.Reversed = false` rule are documented in
+[HookRegistration.md](HookRegistration.md). Besides the user-facing options, `HookInstallOptions::InstallSrcLoc`
+records where each hook was installed from (shown in the JSON dump).
 
-**Hook states are not persisted.** Each run starts from the install options, adjusted by
-`--all-use-gta-hooks`, `--all-use-gta-hooks-except=a,b` and `--use-gta-for=a,b`. Entries are `Cat/Sub` or
-`Cat/Sub::Item`.
-
-Rules for using the macros: [HookRegistration.md](HookRegistration.md). The most important one: a function still
-calling `plugin::Call*` on its own address must be `.Reversed = false`, otherwise it recurses forever.
+**Hook states are not persisted.** Each run starts from the install options, adjusted by the command-line
+arguments in §8.
 
 ---
 
@@ -178,7 +177,8 @@ calling `plugin::Call*` on its own address must be `.Reversed = false`, otherwis
 
 - **Hooks** window: category tree with tri-state checkboxes, drag-to-set, a context menu (Ours / GTA / Unhooked,
   copy addresses), a fuzzy filter, and JSON export (Ctrl+S).
-- Module state (open windows, filters) is saved every 5 s to `DebugModules.json` in the game folder. Hook states
+- Module state (open windows, filters) is saved every 5 s to `DebugModules.json`, relative to the working directory (`<game>/scripts/` under the ASI loader,
+  see §11). Hook states
   are not saved.
 - Adding a module: see `source/toolsmenu/DebugModules/!README.md`.
 
@@ -223,10 +223,12 @@ Command-line arguments:
 |---|---|
 | `--debug` | Wait for a debugger before loading |
 | `--all-use-gta-hooks` | Redirect every hook to GTA |
-| `--all-use-gta-hooks-except=` | Same, except for the listed categories/items |
-| `--use-gta-for=` | Redirect only the listed categories/items to GTA |
+| `--all-use-gta-hooks-except=a,b` | Meant as "same, except for the listed categories/items". As written (`CommandLine::ApplyHookSettings`), the listed entries are also set to GTA, so it currently behaves like `--all-use-gta-hooks` |
+| `--use-gta-for=a,b` | Redirect only the listed categories/items to GTA. Entries are `Cat/Sub` (every item of that category, not its sub-categories) or `Cat/Sub::Item`, e.g. `Global/CGeneral::LimitAngle` |
 | `--dump-hooks-to=path` | Write all hooks to a JSON file |
-| `--run-difftests[=filter]`, `--difftests-out=`, `--difftests-exit` | Run the differential tests at startup (see ReversingGuide §5) |
+| `--run-difftests[=filter]`, `--difftests-out=path`, `--difftests-exit` | Run the differential tests right after the hooks are installed (still inside `DllMain`; `NOTSA_DIFFTEST_INGAME` tests are skipped). See [ReversingGuide.md](ReversingGuide.md) §5 |
+
+The hook arguments only exist in ASI builds. Locked hooks can't be switched by `--use-gta-for`.
 
 ---
 
@@ -237,13 +239,13 @@ Command-line arguments:
   through `s_OriginalCommandHandlerTable` (`0x8A6168`, 27 entries).
   - So the original dispatchers stay in use for every command we haven't implemented.
   - They're reversed command by command, never as whole functions.
-- Each `Commands/<Group>Commands.cpp` file has a `RegisterHandlers()` that calls:
-  - `REGISTER_COMMAND_HANDLER(COMMAND_X, Fn)` for implemented commands
-  - `REGISTER_COMMAND_NOP` for commands that do nothing
-  - `REGISTER_COMMAND_UNIMPLEMENTED` (logs and breaks; it is **not** a fallback to GTA's code)
+- Each `Commands/<Group>Commands.cpp` file has a `RegisterHandlers()` that registers its handlers
+  (`REGISTER_COMMAND_HANDLER`, `REGISTER_COMMAND_NOP`, `REGISTER_COMMAND_UNIMPLEMENTED`, in
+  `Scripts/CommandParser/Parser.hpp`). `CRunningScript::InjectCustomCommandHooks()` (called from
+  `CRunningScript::InjectHooks`) calls them. `draw::` and `path::` `RegisterHandlers()` exist but are not called.
 - Handlers are plain C++ functions. `CommandParser<Cmd, Fn>` reads each parameter with `notsa::script::Read<T>`
-  (`ReadArg.hpp`) and stores the return value with `StoreArg.hpp`. See
-  [ScriptCommandReversing.md](ScriptCommandReversing.md).
+  (`ReadArg.hpp`) and stores the return value with `StoreArg.hpp`. Conventions and the argument types:
+  [ScriptCommandReversing.md](ScriptCommandReversing.md). Run-time behaviour: [subsystems/Scripts.md](subsystems/Scripts.md).
 - `contrib/scripts-hooks-gen.py` generates handler stubs.
 
 ---
@@ -253,9 +255,10 @@ Command-line arguments:
 | Workflow | What it does |
 |---|---|
 | `build.yml` | Every push and PR: builds x86 {Debug, Release} × {Unity, NoUnity} through Conan, and uploads `bin/` |
-| `static-analysis.yml` | MSVC Code Analysis, with results sent to code scanning |
+| `hook-registration.yml` | Pull requests touching `source/`: runs `check_hooks.py --base origin/<base>` (Python only, no build) |
+| `static-analysis.yml` | Every push and PR: MSVC Code Analysis, with results sent to code scanning |
 | `codeql.yml` | CodeQL (C++, Actions, Python) on push and PR to master, and weekly |
-| `docs.yml` | Doxygen to GitHub Pages |
+| `docs.yml` | On master: Doxygen to GitHub Pages |
 | `update-re-progress.yml` | On master: builds `standalone=dump_hooks_only`, runs `gta_reversed.exe --dump-hooks-to=docs/hooks.json`, regenerates `docs/ReversedClasses.md` (`contrib/hooks2md.py`) and commits it |
 
 `contrib/` contents:
@@ -268,15 +271,19 @@ Command-line arguments:
 
 ---
 
-## 11. Runtime files (in the game folder / working directory)
+## 11. Runtime files
+
+`contrib/install.py` unzips `contrib/plugins.zip` into the game folder and symlinks the chosen build's `.asi`/`.pdb`
+into `scripts/`. The DLL opens its own files by **relative path**, and the ASI loader sets the working directory to
+`scripts/`, so the log, the ini, the difftest report and the debug UI state all live in `<game>/scripts/`.
 
 | File | Purpose |
 |---|---|
 | `scripts/gta_reversed.asi` (+ `.pdb`) | The DLL |
-| `vorbisFile.dll` | ASI loader. The original file is kept as `vorbisHooked.dll` |
+| `vorbisFile.dll` | ASI loader. The original file is kept as `vorbisHooked.dll`; `scripts/global.ini` is the loader's config |
 | `dinput8.dll` | Mouse fix |
-| `gta-reversed.ini` | `[FastLoader]` (skip intros, auto-load a save), `[Misc]` (save directory, load mismatched saves). **Gotcha:** the DLL opens it relative to the *working directory* (normally the game folder), while `contrib/plugins.zip` installs it into `scripts/`. As installed it isn't read; copy it to the game folder |
-| `logs/log.log` | Log file |
-| `DebugModules.json`, `imgui.ini` | Debug UI state |
-| `difftests.log` | Report written by `--run-difftests` |
-| `hooks.json` | Written by `--dump-hooks-to` (or Ctrl+S in the Hooks window) |
+| `scripts/gta-reversed.ini` | `[FastLoader]` (skip intros, auto-load a save), `[Misc]` (save directory, load mismatched saves) |
+| `scripts/logs/log.log` | Log file |
+| `scripts/difftests.log` | Report written by `--run-difftests` (path changeable with `--difftests-out=`) |
+| `scripts/DebugModules.json`, `scripts/imgui.ini` | Debug UI state |
+| `hooks.json` | Written by `--dump-hooks-to=path` (relative paths resolve against `scripts/`), or Ctrl+S in the Hooks window |

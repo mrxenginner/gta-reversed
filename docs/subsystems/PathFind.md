@@ -4,7 +4,7 @@ How the game stores its road and footpath network, streams it in per map area, a
 and peds make ("closest node", "next node when wandering", "route from A to B"). It also covers the consumers:
 `CCarCtrl`/`CAutoPilot` for traffic and mission cars, and `CTaskComplexFollowNodeRoute`/`CTaskComplexWander` for peds.
 For the general workflow see [../ReversingGuide.md](../ReversingGuide.md). Driving AI is described in more depth in
-[Vehicles.md](Vehicles.md) §6, the task tree in [Tasks.md](Tasks.md), and DAT streaming in
+[Vehicles.md](Vehicles.md) ("AI driving"), the task tree in [Tasks.md](Tasks.md), and DAT streaming in
 [WorldStreamingPools.md](WorldStreamingPools.md).
 
 All paths are relative to the repo root. Addresses are the ones written in the repo (`RH_*Install` or `// 0xADDR`)
@@ -15,7 +15,7 @@ and were checked against the IDB. Where the IDB disagrees with the repo, this pa
 ## 1. Overview
 
 ```
-ThePaths (CPathFind, 0x96F050, size 0x3C80)          source/game_sa/PathFind.h:618
+ThePaths (CPathFind, 0x96F050, size 0x3C80)          source/game_sa/PathFind.h
  ├─ 64 map areas  (8 x 8 grid of 750 x 750 units, world -3000..+3000)   area = y * 8 + x
  │   └─ one streamed file per area: nodes<N>.dat = streaming model RESOURCE_ID_DAT + N (25511 + N)
  ├─ 8 interior areas (ids 64..71), built at run time by InteriorGroup_c::SetupPaths
@@ -30,11 +30,11 @@ ThePaths (CPathFind, 0x96F050, size 0x3C80)          source/game_sa/PathFind.h:6
 ```
 
 There is one node graph for both kinds of traffic. A node is a car node or a ped node depending on its index inside
-its area (`GetPathNodesInArea`, `PathFind.cpp:1236`). Searches take an `ePathType` (`PATH_TYPE_VEH = 0`,
-`PATH_TYPE_PED = 1`, `PathFind.h:22`) and only look at the matching half of each area. Boats use the car nodes
+its area (`GetPathNodesInArea`). Searches take an `ePathType` (`PATH_TYPE_VEH = 0`,
+`PATH_TYPE_PED = 1`) and only look at the matching half of each area. Boats use the car nodes
 with `m_bWaterNode` set.
 
-A node is addressed by `CNodeAddress { uint16 area; uint16 node; }` (`source/game_sa/NodeAddress.h:9`). An
+A node is addressed by `CNodeAddress { uint16 area; uint16 node; }` (`source/game_sa/NodeAddress.h`). An
 address with area `0xFFFF` is invalid (`IsValid`, `operator bool`). Before you dereference an address, check that its
 area is loaded (`IsAreaNodesAvailable`, `0x420AA0`), because only the areas near the player (plus a few requested
 ones) are in memory at any time (§3.1).
@@ -45,16 +45,16 @@ ones) are in memory at any time (§3.1).
 
 ### 2.1 Structures (`source/game_sa/PathFind.h`)
 
-| Struct | Size | Lines | Notes |
-|---|---|---|---|
-| `CNodeAddress` | `0x4` | `NodeAddress.h:9-28` | area id + node id, `-1/-1` = invalid |
-| `CCarPathLinkAddress` | `0x2` | `PathFind.h:49-72` | 10-bit navi node id + 6-bit area id. Only map areas (0..63) fit in 6 bits |
-| `CPathIntersectionInfo` | `0x1` | `74-83` | `m_bRoadCross`, `m_bPedTrafficLight`. Read by `TestCrossesRoad` (`0x44D790`) and `TestForPedTrafficLight` (`0x44D480`) |
-| `CCarPathLink` ("navi node") | `0xE` | `85-118` | `+0x0` position as `int16 * 8`, `+0x4` `m_attachedTo` (the node this segment points at), `+0x8` direction as `int8 / 100`, `+0xA` width `/16`, `+0xB` lanes: bits 0-2 `m_numOppositeDirLanes`, bits 3-5 `m_numSameDirLanes`, bit 6 traffic light direction, `+0xC` traffic light state (2 bits) and `m_bridgeLights` |
-| `CPathNode` | `0x1C` | `120-180` | see below |
-| `CNodesSwitchedOnOrOff` | `0x1C` | `36-47` | a box plus `isOff`/`isCars`; 64 of them are kept in `m_aNodeSwitches` |
-| `CPathFind` | `0x3C80` | `182-616` | the whole network plus the search hash table |
-| `CNodeRoute` | `0x24` | `source/game_sa/NodeRoute.h` | `notsa::Route<CNodeAddress, 8>` (`source/game_sa/Route.hpp:9`), pooled (`ms_pNodeRoutePool`, `0xB744B8`). `new`/`delete` are `0x41B860`/`0x41B870` |
+| Struct | Size | Notes |
+|---|---|---|
+| `CNodeAddress` | `0x4` | `NodeAddress.h`. Area id + node id, `-1/-1` = invalid |
+| `CCarPathLinkAddress` | `0x2` | 10-bit navi node id + 6-bit area id. Only map areas (0..63) fit in 6 bits |
+| `CPathIntersectionInfo` | `0x1` | `m_bRoadCross`, `m_bPedTrafficLight`. Read by `TestCrossesRoad` (`0x44D790`) and `TestForPedTrafficLight` (`0x44D480`) |
+| `CCarPathLink` ("navi node") | `0xE` | `+0x0` position as `int16 * 8`, `+0x4` `m_attachedTo` (the node this segment points at), `+0x8` direction as `int8 / 100`, `+0xA` width `/16`, `+0xB` lanes: bits 0-2 `m_numOppositeDirLanes`, bits 3-5 `m_numSameDirLanes`, bit 6 traffic light direction, `+0xC` traffic light state (2 bits) and `m_bridgeLights` |
+| `CPathNode` | `0x1C` | see below |
+| `CNodesSwitchedOnOrOff` | `0x1C` | a box plus `isOff`/`isCars`; 64 of them are kept in `m_aNodeSwitches` |
+| `CPathFind` | `0x3C80` | the whole network plus the search hash table |
+| `CNodeRoute` | `0x24` | `source/game_sa/NodeRoute.h`: `notsa::Route<CNodeAddress, 8>` (`source/game_sa/Route.hpp`), pooled (`ms_pNodeRoutePool`, `0xB744B8`). `new`/`delete` are `0x41B860`/`0x41B870` |
 
 `CPathNode` layout (offsets computed from the header, matches `VALIDATE_SIZE`):
 
@@ -90,8 +90,8 @@ ones) are in memory at any time (§3.1).
 
 Region helpers (all reversed): `FindXRegionForCoors` `0x44D890`, `FindYRegionForCoors` `0x44D8C0`,
 `FindRegionForCoors` `0x44D830`, `FindXCoorsForRegion` `0x44D8F0`, `FindYCoorsForRegion` `0x44D910`,
-`FindStartPointOfRegion` `0x44D930`. The NOTSA helpers `GetPathNodesInArea`, `GetNodeLinkedNodes`
-(`PathFind.h:609`), `IterAreasTouchingRect` (`PathFind.h:588`) and `FindIntersection` (`PathFind.cpp:233`) replace
+`FindStartPointOfRegion` `0x44D930`. The NOTSA helpers `GetPathNodesInArea`, `GetNodeLinkedNodes`,
+`IterAreasTouchingRect` and `FindIntersection` replace
 loops that the compiler inlined everywhere.
 
 ---
@@ -101,8 +101,8 @@ loops that the compiler inlined everywhere.
 ### 3.1 Streaming the areas
 
 ```
-CGame::Process                                   source/game_sa/Game.cpp:748
- └─ ThePaths.UpdateStreaming(false)              0x450A60, PathFind.cpp:775 (reversed)
+CGame::Process
+ └─ ThePaths.UpdateStreaming(false)              0x450A60 (reversed)
      ├─ runs when a 512 ms boundary is crossed, when s_bLoadPathsNeeded is set, or when forced
      ├─ MarkRegionsForCoors(player, 350)          0x44DB60
      ├─ MarkRegionsForCoors(SetPathsNeededAtPosition pos, 300)   0x44DCD0 (CEntryExit::TransitionFinished)
@@ -110,10 +110,10 @@ CGame::Process                                   source/game_sa/Game.cpp:748
      ├─ script rect from MakeRequestForNodesToBeLoaded -> STREAMING_MISSION_REQUIRED
      └─ for each of the 64 areas: RequestModel(DAT, KEEP_IN_MEMORY or MISSION_REQUIRED) / RemoveModel(DAT)
 
-CStreaming::ConvertBufferToObject (DAT case)     Streaming.cpp:581-585
- └─ ThePaths.LoadPathFindData(stream, area)      0x4529F0, PathFind.cpp:657
-CStreaming::RemoveModel (DAT case)               Streaming.cpp:2419-2421
- └─ ThePaths.UnLoadPathFindData(area)            0x44D0F0, PathFind.cpp:716
+CStreaming::ConvertBufferToObject (DAT case)
+ └─ ThePaths.LoadPathFindData(stream, area)      0x4529F0
+CStreaming::RemoveModel (DAT case)
+ └─ ThePaths.UnLoadPathFindData(area)            0x44D0F0
 ```
 
 `LoadPathFindData(stream, area)` reads the five counts, then the nodes, navi nodes, links (`numAddresses + 192`
@@ -131,33 +131,33 @@ area (`SwitchRoadsOffInAreaForOneRegion`), and resets that area's dynamic-link t
 
 | Caller | Path function | Status of the callee |
 |---|---|---|
-| `CTaskComplexWander::UpdatePathNodes` (`TaskComplexWander.cpp:223`, `0x669ED0`) | `FindNextNodeWandering` `0x451B70` | STUB |
+| `CTaskComplexWander::UpdatePathNodes` (`0x669ED0`) | `FindNextNodeWandering` `0x451B70` | STUB |
 | `CTaskComplexWander::ComputeTargetPos` (`0x669F60`) | `TakeWidthIntoAccountForWandering` `0x4509A0` | REVERSED |
-| `CTaskComplexFollowNodeRoute::ComputePathNodes` (`TaskComplexFollowNodeRoute.cpp:236`, `0x66EFA0`) | `ComputeRoute` `0x452760` -> `DoPathSearch` `0x4515D0` | both STUB |
+| `CTaskComplexFollowNodeRoute::ComputePathNodes` (`0x66EFA0`) | `ComputeRoute` `0x452760` -> `DoPathSearch` `0x4515D0` | both STUB |
 | `CCarCtrl::JoinCarWithRoadSystemGotoCoors` (`0x42F870`) | `DoPathSearch`, then `RemoveBadStartNode` | STUB caller |
 | `CCarCtrl::PickNextNodeToFollowPath` / `ToChaseCar` / `ReconsiderRoute` / `SteerAICarWithPhysicsFollowPath_Racing` | `DoPathSearch` | STUB callers |
 | `CCarCtrl::PickNextNodeRandomly` (`0x42DE80`) | node links, navi links, `ThisNodeWillLeadIntoADeadEnd` | STUB caller |
 | `CCarCtrl::GenerateCarCreationCoors2`, `CCarGenerator`, `CGangWars`, `CWorld::RemoveFallen*`, `CPed::PositionPedOutOfCollision`, script commands | `FindNodeClosestToCoors` `0x44F460` | STUB |
-| `CPopulation` (`Population.cpp:1131`), `CStuckCarCheck`, `CGangWars` | `FindNthNodeClosestToCoors` `0x44F8C0` | STUB |
-| `CPopulation` (`Population.cpp:1839`) | `GeneratePedCreationCoors_Interior` `0x44ECA0` | STUB |
+| `CPopulation`, `CStuckCarCheck`, `CGangWars` | `FindNthNodeClosestToCoors` `0x44F8C0` | STUB |
+| `CPopulation` | `GeneratePedCreationCoors_Interior` `0x44ECA0` | STUB |
 
 ### 3.3 Closest-node queries
 
-- `FindNodeClosestToCoors` (`0x44F460`, STUB, `PathFind.cpp:758`): searches the region of `pos` with
+- `FindNodeClosestToCoors` (`0x44F460`, STUB): searches the region of `pos` with
   `FindNodeClosestInRegion` (`0x44F2C0`, MISSING), then rings of neighbouring regions (750 units further each time,
   at most 4 extra rings) while the best distance is larger than the distance to the region edge, and finally the 8
   interior areas unless the last argument is set. The repo's parameter names (`unk2`, `unk3`, `unk4`, `bBoatsOnly`,
   `unk6`) are still guesses: `unk2` and `unk4` are passed through to `FindNodeClosestInRegion`, `unk3` is not used,
   `unk4 = 1` skips nodes that carry the temporary "recorded" mark (byte 1, bit 1), and `unk6` skips the interior
   areas.
-- `RecordNodesClosestToCoors` (declared at `PathFind.h:306`, no address in the repo) is `0x44FA30`. It clears the
+- `RecordNodesClosestToCoors` (declared in `PathFind.h`, no address in the repo) is `0x44FA30`. It clears the
   mark on every node of the requested type, then calls `FindNodeClosestToCoors(..., unk4 = 1, ...)` `count` times,
   marking each node it finds. **The IDB names `0x44FA30` `CPathFind::FindNodeClosestToCoors`.** That name is wrong.
 - `FindNthNodeClosestToCoors` (`0x44F8C0`, STUB) and `FindNodeClosestToCoorsFavourDirection` (`0x44FCE0`,
-  reversed, `PathFind.cpp:982`) are variants. `FindNodePairClosestToCoors` (`0x44FEE0`, MISSING) is used by car
+  reversed) are variants. `FindNodePairClosestToCoors` (`0x44FEE0`, MISSING) is used by car
   creation.
 
-### 3.4 `DoPathSearch` (`0x4515D0`, `PathFind.cpp:298`, STUB)
+### 3.4 `DoPathSearch` (`0x4515D0`, STUB)
 
 The route search. It is a Dijkstra search **backwards from the target**, using integer link lengths and the
 512-bucket hash table as a cheap priority queue:
@@ -183,12 +183,13 @@ nullptr, 999999.88, nullptr, 999999.88, false, EmptyNodeAddress, false, false)` 
 (Vortex hovercraft), and `forBoats = IsSubBoat()`.
 
 The hook is `.Reversed = false` with the comment *"Sometimes breaks `CTaskComplexFollowNodeRoute::ComputePathNodes`
-- To repro just walk around in groove st."* (`PathFind.cpp:77`). The reason is now known; see Gotchas, three bugs
+- To repro just walk around in groove st."* (`CPathFind::InjectHooks`). The reason is now known; see Gotchas, three bugs
 in the backtracking loop and one in the lane test.
 
 ### 3.5 Switching roads on and off
 
-Script commands (`source/game_sa/Scripts/Commands/PathCommands.cpp:22-77`) call
+Script commands (`SWITCH_ROADS_*` / `SWITCH_PED_ROADS_*` in `source/game_sa/Scripts/Commands/PathCommands.cpp`; these
+handlers are not registered yet, see [Scripts.md](Scripts.md) Gotchas, so the original handlers run) call
 `SwitchRoadsOffInArea` (`0x452C80`) / `SwitchPedRoadsOffInArea` (`0x452F00`). These:
 
 1. call `SwitchRoadsOffInAreaForOneRegion` (`0x452820`) for each of the 64 areas. For every car or ped node inside
@@ -201,8 +202,7 @@ Script commands (`source/game_sa/Scripts/Commands/PathCommands.cpp:22-77`) call
 
 `TidyUpNodeSwitchesAfterMission` (`0x44D3B0`) trims the list back to 54 entries. `Save` (`0x5D34C0`) and
 `Load` (`0x5D3500`) write the count followed by the boxes; they are called for `eBlocks::PATHS`
-(`GenericGameStorage.cpp:311-313`, `459-463`). The NOTSA bug fix `CPathFind_SwitchRoadsOffInArea_StrayAreas`
-(`PathFind.cpp:1298`) fixes the original's wrong index when compacting the list.
+in `CGenericGameStorage`. The NOTSA bug fix `notsa::bugfixes::CPathFind_SwitchRoadsOffInArea_StrayAreas` fixes the original's wrong index when compacting the list.
 
 `SetLinksBridgeLights` (`0x44D960`) and `MarkRoadNodeAsDontWander` (`0x450560`) are the other run-time edits.
 
@@ -233,10 +233,10 @@ one allocates area `64 + slot`, links it to the outside world with `AddDynamicLi
 - `m_aPathFindNodesInfo[8]` + `m_nPathFindNodesCount`: the planned route for "go to" missions.
   `RemoveOnePathNode` (`0x41B950`, NOHOOK) shifts it by one.
 
-Call chain (see [Vehicles.md](Vehicles.md) §6.3 for the steering side):
+Call chain (see "AI driving" in [Vehicles.md](Vehicles.md) for the steering side):
 
 ```
-mission set / car created / script        CCarCtrl::JoinCarWithRoadAccordingToMission  0x432CB0 (reversed, CarCtrl.cpp:572)
+mission set / car created / script        CCarCtrl::JoinCarWithRoadAccordingToMission  0x432CB0 (reversed)
  ├─ cruising, parking, ...                 JoinCarWithRoadSystem          0x42F5A0 STUB: nearest node pair, pick direction
  └─ chase / go to coordinates              JoinCarWithRoadSystemGotoCoors 0x42F870 STUB:
                                              DoPathSearch(car pos -> target) into m_aPathFindNodesInfo
@@ -253,7 +253,7 @@ each time the car reaches its target node  PickNextNodeAccordingStrategy  0x432B
 ```
 
 `sub_44E4F0` is called only from `JoinCarWithRoadSystemGotoCoors` with `(car pos, route, &count)`. That matches the
-declaration `RemoveBadStartNode(CVector, CNodeAddress*, int16*)` at `PathFind.h:235`, which has no address in the
+declaration `RemoveBadStartNode(CVector, CNodeAddress*, int16*)` in `PathFind.h`, which has no address in the
 repo yet.
 
 Traffic creation uses `CCarCtrl::GenerateCarCreationCoors2` (`0x424210`) -> `FindNodeClosestToCoors` and the
@@ -268,7 +268,7 @@ node's `m_nSpawnProbability`; `CPathFind::CalcRoadDensity` (`0x44EFC0`, MISSING)
 
 The task keeps `m_LastNode`, `m_NextNode` and a direction `m_nDir` (0-7, eight compass sectors).
 `UpdatePathNodes` moves `m_NextNode` into `m_LastNode` and asks `FindNextNodeWandering(PATH_TYPE_PED, pos, &last,
-&next, dir, &outDir)` (STUB) for the neighbour that best matches the direction. `UpdateDir` (`:178`, `0x669DA0`)
+&next, dir, &outDir)` (STUB) for the neighbour that best matches the direction. `UpdateDir` (`0x669DA0`)
 sometimes turns at nodes with 3 or more links. The walk target is the node position offset sideways inside the path
 width by `TakeWidthIntoAccountForWandering(node, ped->m_nRandomSeed)`, plus 1 m in Z. `ScanForBlockedNodes`
 (`0x674560`) re-picks when the next node is blocked. `CreateNextSubTask` (`0x674140`) is still a STUB, and the
@@ -278,7 +278,7 @@ standard civilian subclass `CTaskComplexWanderStandard` has no reversed function
 
 ```
 SetTarget / CreateFirstSubTask
- └─ ComputePathNodes(ped)                 0x66EFA0, TaskComplexFollowNodeRoute.cpp:236
+ └─ ComputePathNodes(ped)                 0x66EFA0
      ├─ snap m_TargetPt to the ground
      ├─ if !CanGoStraightThere: ThePaths.ComputeRoute(PATH_TYPE_PED, pos, target, m_StartNode, m_NodeRoute)
      ├─ drop the route if its first node is much further away than the target (3 m, or 50 m in some cases)
@@ -286,11 +286,11 @@ SetTarget / CreateFirstSubTask
      │  (These2NodesAreAdjacent, ComputeRoute, CNodeRoute::Reverse 0x667900)
      ├─ otherwise: cut the route at the first node from which the target is directly reachable
      └─ m_CurrPtIdx / m_CurrNode
- └─ ComputeRoute()                        0x6699E0, :344   CNodeRoute -> CPointRoute (node positions + target)
+ └─ ComputeRoute()                        0x6699E0   CNodeRoute -> CPointRoute (node positions + target)
 ControlSubTask / CreateNextSubTask walk the CPointRoute with CTaskSimpleGoToPoint(Fine) / GoToPointAndStandStill
 ```
 
-`CPointRoute` is `notsa::Route<CVector>` (`source/game_sa/PedGeometryAnalyser.h:17`, size `0x64`). It is also
+`CPointRoute` is `notsa::Route<CVector>` (`source/game_sa/PedGeometryAnalyser.h`, size `0x64`). It is also
 filled by `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox` (`0x5F3DD0`) for walking round cars and
 objects. There is **no `CPedPath` class in San Andreas** (it existed in Vice City); the IDB has no function with that
 name. Short-range ped avoidance is done with `CPointRoute` and `CPedGeometryAnalyser` instead.
@@ -298,7 +298,7 @@ name. Short-range ped avoidance is done with `CPointRoute` and `CPedGeometryAnal
 ### 5.3 Spawning
 
 `CPopulation` asks for ped nodes near the camera with `FindNthNodeClosestToCoors` and, for interiors,
-`GeneratePedCreationCoors_Interior` (STUB). `GeneratePedCreationCoors` is declared at `PathFind.h:301` but has no
+`GeneratePedCreationCoors_Interior` (STUB). `GeneratePedCreationCoors` is declared in `PathFind.h` but has no
 address or body in the repo.
 
 ---
@@ -310,7 +310,7 @@ address or body in the repo.
 - **Always check the area.** `GetPathNode` (`0x420AC0`) only asserts. Linked nodes can be in another area that is not
   loaded; `GetNodeLinkedNodes(node)` filters them out, `GetNodeLinkedNodes(node, false)` does not.
 - **`CCarPathLinkAddress` has 6 bits of area,** so navi nodes only exist for the 64 map areas, and `m_pNaviLinks`
-  has 64 slots, not 72. `CPathFind::Init` (`0x44D080`, `PathFind.cpp:118`) clears 72 entries of it and of
+  has 64 slots, not 72. `CPathFind::Init` (`0x44D080`) clears 72 entries of it and of
   `m_aTempNodes`; the overflow lands in the next arrays. This is copied from the original on purpose (commented).
 - **Link arrays have 192 spare entries** (16 blocks of 12) for dynamic links. `AddDynamicLinkBetween2Nodes_For1Node`
   moves a node's links into a free block and records it in `m_aDynamicLinks*`. Search for `MAGIC_NUM_12`.
@@ -323,36 +323,36 @@ address or body in the repo.
 - **IDB naming traps.** `0x44F460` (the real `FindNodeClosestToCoors`) is named as a free function
   `FindNodeClosestToCoors::...` in the IDB, so `idb_coverage.py --class CPathFind` does not list it. `0x44FA30` is
   `RecordNodesClosestToCoors` but is named `CPathFind::FindNodeClosestToCoors`. `sub_44E4F0` is `RemoveBadStartNode`.
-  `CNodeRoute::operator new` (`0x41B860`) shows as MISSING although `NodeRoute.cpp:7` hooks it (the script does not
+  `CNodeRoute::operator new` (`0x41B860`) shows as MISSING although `CNodeRoute::InjectHooks` hooks it (the script does not
   match `operator` names).
-- **`CountNeighboursToBeSwitchedOff` (`0x4504F0`) has an inline `__asm mov eax, this`** (`PathFind.cpp:1072-1076`).
+- **`CountNeighboursToBeSwitchedOff` (`0x4504F0`) has an inline `__asm mov eax, this`**.
   The comment says the original `SwitchOffNodeAndNeighbours` crashed when this function was unhooked, because it
   expects `eax` to be left unchanged. The `return` that follows overwrites `eax` anyway, so the workaround probably
   does nothing. Check `SwitchOffNodeAndNeighbours` (`0x452160`) in IDA before you change either function.
 - **`TakeWidthIntoAccountForWandering` uses `% 16` and `/ 16`** on an `int16` seed where the original uses `& 0xF`
-  and `>> 4` (`PathFind.cpp:277`, `0x4509A0`). The results differ only for negative seeds. Ped seeds come from
+  and `>> 4` (`0x4509A0`). The results differ only for negative seeds. Ped seeds come from
   `rand()` (0..0x7FFF), so this is latent.
-- **(Bug, not fixed) `DoPathSearch` backtracking** (`PathFind.cpp:471-485`): the original loop is
+- **(Bug, not fixed) `DoPathSearch` backtracking** (the final `for` loop): the original loop is
   `while (count < maxNodesToFind && node != target)`. The repo has `node == target || count < maxNodesToFind`, so it
   never stops at the target. It increments `outNodesCount` both in the body and in the `for` increment. It also reads
-  `m_pNodeLinks[area][linkNum]` without adding `m_wBaseLinkId` (`:473`), so it follows the wrong links. These three
+  `m_pNodeLinks[area][linkNum]` without adding `m_wBaseLinkId`, so it follows the wrong links. These three
   explain the `ComputePathNodes` breakage noted in the hook comment.
-- **(Bug, not fixed) `DoPathSearch` lane test** (`PathFind.cpp:409-416`): when the navi node is attached to the linked
+- **(Bug, not fixed) `DoPathSearch` lane test** (the `oneSideOnly` branch): when the navi node is attached to the linked
   node, the original requires `m_numSameDirLanes != 0` (byte `+0xB >> 3`), otherwise `m_numOppositeDirLanes`. The
   repo tests the two fields the other way round. It only matters for `oneSideOnly` (car) searches.
-- **(Bug, live) `FindNodeCoorsForScript(addr, bool*)`** (`0x4505E0`, `PathFind.cpp:540`) reads
+- **(Bug, live) `FindNodeCoorsForScript(addr, bool*)`** (`0x4505E0`) reads
   `m_pNodeLinks[node->m_wBaseLinkId]` (an area pointer chosen by link id) instead of
   `m_pNodeLinks[node->m_wAreaId][node->m_wBaseLinkId]`. It also calls `GetPathNode` on the linked node without the
   original's "area loaded" check (the original then returns the node's own position). The function is hooked and
   reversed. It is used by script commands and `CTaskSimpleCreateCarAndGetIn`.
-- **(Bug, live) `LoadPathFindData(stream, area)`** (`PathFind.cpp:709-712`) resets the dynamic link tables of areas
+- **(Bug, live) `LoadPathFindData(stream, area)`** (last loop) resets the dynamic link tables of areas
   0..15 every time any area loads. The original (`0x4529F0`) resets only the 16 entries of the loaded area.
-- **(Bug, live) `RemoveInterior`** (`0x44E1A0`, `PathFind.cpp:1128`), reached from `InteriorGroup_c::Exit`:
+- **(Bug, live) `RemoveInterior`** (`0x44E1A0`), reached from `InteriorGroup_c::Exit`:
   - it never sets `m_interiorIDs[slot] = -1`, so interior slots are never freed (`StartNewInterior` then runs past 8);
-  - it frees `m_pLinkLengths` twice and never frees `m_pNodeLinks` (`:1184`, `:1186`), which leaks;
-  - it looks up the dynamic link in `m_aDynamicLinksIds[intSlot]` (`:1167`) where the original uses the table of the
+  - it frees `m_pLinkLengths` twice and never frees `m_pNodeLinks` (the `FreeAndNull` calls at the end), which leaks;
+  - it looks up the dynamic link in `m_aDynamicLinksIds[intSlot]` where the original uses the table of the
     area being scanned;
-  - `rng::remove_if` over `GetNodeLinkedNodes(node, false)` (`:1145`) moves whole `CPathNode` objects. The original
+  - `rng::remove_if` over `GetNodeLinkedNodes(node, false)` moves whole `CPathNode` objects. The original
     shifts the `CNodeAddress` links;
   - it scans all 72 areas; the original scans only the 64 map areas.
 
@@ -360,8 +360,8 @@ address or body in the repo.
 
 ## 7. What is left
 
-Numbers from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (cache of
-2026-10-12). Bytes are the sizes of functions not yet REVERSED.
+Numbers from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (checked
+2026-10-14). Bytes are the sizes of functions not yet REVERSED.
 
 | Class | Functions | Reversed | Stub | No-hook | Known | Missing | Bytes left |
 |---|---|---|---|---|---|---|---|
@@ -374,6 +374,7 @@ Numbers from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.
 | `CTaskComplexFollowNodeRoute` | 20 | 19 | 0 | 0 | 0 | 1 | 30 |
 | `CTaskComplexWander` | 20 | 13 | 1 | 0 | 1 | 5 | 1,406 |
 | `CTaskComplexWanderStandard` | 10 | 0 | 0 | 5 | 2 | 3 | 2,252 |
+| `InteriorGroup_c` | 25 | 2 | 22 | 0 | 0 | 1 | 7,902 |
 
 Not counted above because the IDB does not attribute them to `CPathFind`: `FindNodeClosestToCoors` (`0x44F460`,
 STUB, 1,118 B) and `RemoveBadStartNode` (`sub_44E4F0`, 285 B, not in the repo).
@@ -403,7 +404,7 @@ Biggest `CPathFind` functions left: `DoPathSearch` 1,427 B (STUB), `CompleteNewI
 6. **Car side:** `CAutoPilot::RemoveOnePathNode`/`ModifySpeed` (add the missing hooks), `RemoveBadStartNode`,
    `FindNodeOrientationForCarPlacement`, `CCarCtrl::FindLinksToGoWithTheseNodes`, `JoinCarWithRoadSystem(GotoCoors)`,
    `FindNodesThisCarIsNearestTo`, `IsThisAnAppropriateNode`, `FindPathDirection`, then the `PickNextNode*`
-   functions. The steering functions are covered in [Vehicles.md](Vehicles.md) §10.
+   functions. The steering functions are covered in the status section of [Vehicles.md](Vehicles.md).
 
 For every function follow [../ReversingGuide.md](../ReversingGuide.md): read it in IDA, write it, register it,
 then run `asm_validate.py` and a difftest or an in-game A/B with the hook toggled in the F7 menu.

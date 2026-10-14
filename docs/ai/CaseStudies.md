@@ -4,16 +4,16 @@ These are real mistakes found in reversed code, with the original behaviour, the
 review and looked right in the pseudocode. Read them before reversing something similar. The rule numbers (R*n*)
 refer to [../ReversingRules.md](../ReversingRules.md).
 
-Cases 1-7 are still **open** in the repository: their fixes change game code and go in separate pull requests (see
-[../BinaryMap.md](../BinaryMap.md) §4.2). The code shown as "Fix" is the change that makes them match the original.
-Cases 8-10 (hook registration) are fixed.
+Cases 1-3 and 5-7 are still **open** in the repository: their fixes change game code and go in separate pull
+requests (see [../BinaryMap.md](../BinaryMap.md) §4.2). The code shown as "Fix" is the change that makes them match
+the original. Case 4 and cases 8-10 are fixed.
 
 | # | Function | Kind of mistake | Found by | Status |
 |---|---|---|---|---|
 | 1 | `CCam::ClipBeta` | wrong branch structure | disassembly | open |
 | 2 | `CGeneral::SolveQuadratic` | operation order changes rounding | difftest | open |
 | 3 | `CGeneral::LimitRadianAngle` | x87 extended precision | difftest | open |
-| 4 | `PI`/`TWO_PI` in `common.h` | rounded constants | static check (`asm_validate.py`) | open |
+| 4 | `PI`/`TWO_PI` in `common.h` | rounded constants | static check (`asm_validate.py`) | fixed (`std::numbers`) |
 | 5 | `CTaskSimpleCarJumpOut::ProcessPed` | vehicle type vs sub-type | disassembly | open |
 | 6 | `CPedIntelligence::GetActivePrimaryTask` | loop variable not used | disassembly | open |
 | 7 | `CMatrix::ConvertToEulerAngles` | wrong array index | difftest | open |
@@ -39,7 +39,8 @@ if (m_fHorizontalAngle > PI) {
     m_fHorizontalAngle += TWO_PI;
 }
 ```
-The static check was clean, because the constants and calls were all right. The mistake was in the branch layout:
+The original loads `3.1415927f` and `6.2831855f`, which are exactly `PI` and `TWO_PI`. The static check was clean,
+because the constants and calls were all right. The mistake was in the branch layout:
 an `else` where the original has `else if`.
 **Lesson:** read the conditional jumps in `asm_validate.py --dump` and check that every path exists in our code
 (R4). A wrap-around helper that changes a value already in range is always suspect.
@@ -78,13 +79,15 @@ return (float)result;
 accumulate in `double` (R4). Compare float results in difftests with ULP tolerance (`CompareFloats`), not
 byte-for-byte.
 
-## 4. `PI` / `TWO_PI` in `common.h`: rounded constants
+## 4. `PI` / `TWO_PI` in `common.h`: rounded constants (fixed)
 
-`PI` is `3.14159f`, which is 11 ULP away from the `3.1415927f` the game loads. Every function written with `PI`
-therefore computes slightly different results than the original. `asm_validate.py` reported this as
-`PRECISION MISMATCH` in many functions. The fix makes the constants exact. `FxEmitter_c::CreateParticle` is the one
-place found so far where the original really uses `6.28318f`; with exact constants it has to keep that literal, with
-a `// NOTE:` comment.
+`PI` was `3.14159f`, which is 11 ULP away from the `3.1415927f` the game loads, and the other constants
+(`TWO_PI`, `HALF_PI`, `FRAC_*`, ...) were rounded the same way. Every function written with them computed slightly
+different results than the original: `asm_validate.py` reported `PRECISION MISMATCH` in many functions, and the
+difftests of `CGeneral::GetATanOfXY`, `GetRadianAngleBetweenPoints` and `GetAngleBetweenPoints` failed.
+The constants are now the exact `std::numbers` values. The few functions whose original really loads a rounded value
+keep it as a literal with a `// NOTE:` comment: `FxEmitter_c::CreateParticle` (`6.28318f`) and
+`CWaterLevel::CalculateWavesOnlyForCoordinate` (`0.577f`).
 **Lesson:** use the value the binary loads (R3). A shared constant can't be "close enough".
 
 ## 5. `CTaskSimpleCarJumpOut::ProcessPed` (`0x64DD60`): type vs sub-type

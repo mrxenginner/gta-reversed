@@ -23,10 +23,10 @@ an extra or missing random call shifts every later random value.
 *Check:* the `[MISSING]` / `[CHECK]` lines of `asm_validate.py`; confirm each one against `--dump`, since the
 original may have inlined the callee (see [ai/InlineCatalogue.md](ai/InlineCatalogue.md)).
 
-**R3. Same constants, bit for bit.** Use the value the binary loads. `PI` and `TWO_PI` in `common.h` are currently rounded
-(`3.14159f`, `6.28318f`) and are **not** the game's values (`3.1415927f`, `6.2831855f`): where the original loads the
-exact value, write the exact literal. A few places really use a rounded value (`FxEmitter_c::CreateParticle` loads
-`6.28318f`); write that literal with a `// NOTE:` comment.
+**R3. Same constants, bit for bit.** Use the value the binary loads. The named constants in `common.h` (`PI`,
+`TWO_PI`, `FRAC_*`, `DEG_TO_RAD`, ...) are the exact `std::numbers` floats (`PI` = `3.1415927f`). Where the original
+loads a rounded value instead, write that literal with a `// NOTE:` comment (examples in
+[ai/TipsAndTricks.md](ai/TipsAndTricks.md) §2).
 *Check:* `PRECISION MISMATCH` in `asm_validate.py` is a real behaviour difference unless it is 1-2 ULP.
 
 **R4. Same comparisons, integer widths and float precision.**
@@ -34,8 +34,9 @@ exact value, write the exact literal. A few places really use a rounded value (`
   unsigned, and x87 `fcomp`/`fnstsw` flag tests are easy to get wrong.
 - Keep the truncation of `int8`/`uint16` members and the `_ftol` (truncate toward zero) conversions.
 - The original keeps intermediate float results in x87 registers (80-bit). When a value is accumulated across a loop
-  without being stored, compute it in `double` (`CGeneral::LimitRadianAngle` needs this, see [ai/CaseStudies.md](ai/CaseStudies.md)).
-- Keep the operation order. `(1 / a) * 0.5` and `1 / (2a)` round differently (`CGeneral::SolveQuadratic`).
+  without being stored, compute it in `double` (`CGeneral::LimitRadianAngle`, [ai/CaseStudies.md](ai/CaseStudies.md) §3).
+- Keep the operation order. `(1 / a) * 0.5` and `1 / (2a)` round differently (`CGeneral::SolveQuadratic`,
+  [ai/CaseStudies.md](ai/CaseStudies.md) §2).
 
 **R5. Use the vehicle sub-type when the original reads it.** `m_nVehicleType` only says AUTOMOBILE, BIKE, BOAT or
 TRAIN. `IsPlane()` / `IsHeli()` / `IsTrailer()` / `IsBMX()` are never true on a live vehicle. Check which offset the
@@ -46,7 +47,7 @@ original reads and use `IsSub*()` when it reads `m_nVehicleSubType`.
   `// NOTE:` comment when the fix is not obvious.
 - If the *original game* has a bug, keep the original behaviour by default. Gate a fix behind a `notsa::bugfixes`
   entry (`source/reversiblebugfixes/Bugs.hpp`, named `Class_Function_BugName`), or `notsa::IsFixBugs()` for trivial
-  cases. If you don't fix it, at least leave a `// BUG:` comment.
+  cases (CodingGuidelines: *Fixing bugs*). If you don't fix it, at least leave a `// BUG:` comment.
 *Why:* bug fixes have to stay switchable, so original behaviour can always be reproduced and compared.
 
 **R7. Don't silently drop the original's error handling.** Where the original quietly bails out on an "impossible"
@@ -65,6 +66,7 @@ return and log if useful.
 `plugin::Call*<its own address>`. Installed as reversed, the hook redirects GTA to our function, which calls GTA,
 which redirects to ours, forever. Hooks that are already
 `{ .State = HS::RedirectToGTA, .Locked = true }` are fine; don't unlock them.
+*Check:* `check_hooks.py` reports a self-call without `.Reversed = false` as an error.
 
 **R10. `RH_ScopedVMTInstall` only for functions that are in that class's vtable.** `VMTInfo` throws when the address
 isn't in the vtable named by `RH_ScopedVirtualClass(cls, vtable, slots)`. Static callbacks, non-virtual helpers and
@@ -87,7 +89,7 @@ stays commented out until such a wrapper exists.
 definition.
 
 **R14. Globals are references into the game's memory.** Declare them as
-`static inline auto& ms_X = StaticRef<T>(0xADDR);` (or `StaticRef<T, 0xADDR>()`). Never use a copy, because both
+`static inline auto& ms_X = StaticRef<T>(0xADDR);`. Never use a copy, because both
 the game and our code must see the same variable.
 
 **R15. Keep layouts exact.** Every reversed struct or class has `VALIDATE_SIZE`, and `VALIDATE_OFFSET` for fields

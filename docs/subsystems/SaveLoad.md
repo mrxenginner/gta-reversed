@@ -3,7 +3,7 @@
 How a PC save file is written and read: `CGenericGameStorage` (the block stream, the work buffer, the checksum),
 `C_PcSave` (slots and file names), `CSimpleVariablesSaveStructure` (the first block), and the `Load`/`Save` pair each
 subsystem contributes. Also covers how to check a reversed `Load`/`Save` against the original. The menu pages that
-trigger saving and loading are described in [HudFrontend.md](HudFrontend.md) section 5.
+trigger saving and loading are described in [HudFrontend.md](HudFrontend.md) ("Front-end menu").
 
 All paths are relative to the repo root. Addresses are the ones written in the repo (`RH_*Install` or `// 0xADDR`) and
 were checked against the IDB (`GenericSave` `0x5D13E0` and `GenericLoad` `0x5D17B0` decompiled side by side with
@@ -20,7 +20,7 @@ Menu "Save" (SCREEN_SAVE_DONE_1)                         Menu "Load" (SCREEN_LOA
     MakeValidSaveName -> ms_SaveFileName                      GenerateGameFilename, CheckDataNotCorrupt (checksum)
     DoGameSpecificStuffBeforeSave   0x618F50                  m_bLoadingData = true
     GenericSave                     0x5D13E0               ...main loop restarts the game...
-      OpenFileForWriting                                   CGame::InitialiseWhenRestarting (Game.cpp:658)
+      OpenFileForWriting                                   CGame::InitialiseWhenRestarting
       28 x { "BLOCK" + <subsystem>::Save() }                 GenericLoad 0x5D17B0
       pad to 202,748 bytes, append uint32 checksum             OpenFileForReading(ms_LoadFileName)
       CloseFile                                                 28 x { check "BLOCK" + <subsystem>::Load() }
@@ -29,7 +29,7 @@ Menu "Save" (SCREEN_SAVE_DONE_1)                         Menu "Load" (SCREEN_LOA
 
 The file is one stream: for each of the 28 blocks, the 5 bytes `BLOCK` (no terminator) followed by whatever that
 subsystem's `Save` wrote. There are no per-block lengths. Block boundaries are found only by reading every block in
-order. After the last block the stream is padded to `SIZE_OF_ONE_GAME_IN_BYTES = 202748` (`GenericGameStorage.cpp:54`),
+order. After the last block the stream is padded to `SIZE_OF_ONE_GAME_IN_BYTES = 202748` (`GenericGameStorage.cpp`),
 and the 32-bit checksum is appended. **Every PC save is exactly 202,752 bytes.**
 
 ---
@@ -38,11 +38,11 @@ and the 32-bit checksum is appended. **Every PC save is exactly 202,752 bytes.**
 
 | Class / file | Role |
 |---|---|
-| `CGenericGameStorage` (`source/game_sa/GenericGameStorage.h/.cpp`) | Static. Block order (`eBlocks`, `.h:18-48`), work buffer, checksum, file open/close, slot state arrays |
+| `CGenericGameStorage` (`source/game_sa/GenericGameStorage.h/.cpp`) | Static. Block order (`eBlocks`), work buffer, checksum, file open/close, slot state arrays |
 | `C_PcSave` (`C_PcSave.h/.cpp`) | Slot helper, global `s_PcSaveHelper` (`0xC17034`, a single `eErrorCode`). Save directory, file names, slot list for the menu, save/delete one slot |
 | `CSimpleVariablesSaveStructure` (`SimpleVariablesSaveStructure.h/.cpp`) | The first block (`0x138` = 312 bytes): save name, version id, clock, weather, camera zoom, area, riots, system time... `Construct` `0x5D1B80` fills it from the game, `Extract` `0x5D1EA0` applies it back |
 | `CVehicleSaveStructure`, `CObjectSaveStructure`, `CGangWarsSaveStructure` (`*SaveStructure.h/.cpp`) | Per-entity / per-subsystem POD layouts used inside some blocks |
-| `CFileMgr` (`FileMgr.h/.cpp`) | `OpenFile`/`Read`/`Write`/`CloseFile`, `InitUserDirectories` (`FileMgr.cpp:38`, `0x744FB0`), `SetDirMyDocuments` |
+| `CFileMgr` (`FileMgr.h/.cpp`) | `OpenFile`/`Read`/`Write`/`CloseFile`, `InitUserDirectories` (`0x744FB0`), `SetDirMyDocuments` |
 | `FastLoaderConfig` (`source/extensions/Configs/FastLoader.hpp`) | NOTSA. `[FastLoader] SaveGameToLoad` auto-loads a slot at start-up through `CMenuManager::SimulateGameLoad` |
 | `MiscConfig` (`source/extensions/Configs/Miscellaneous.hpp`) | NOTSA. `[Misc] SaveDirectoryPath` (custom user folder) and `LoadSavesWithMismatchingVersion` |
 
@@ -65,9 +65,9 @@ Globals (`GenericGameStorage.h`, all `StaticRef`):
 
 ## 3. Files and directory
 
-- The user directory comes from `InitUserDirectories` (`FileMgr.cpp:38`): `<Documents>\GTA San Andreas User Files`
+- The user directory comes from `InitUserDirectories` (`FileMgr.cpp`): `<Documents>\GTA San Andreas User Files`
   (or `[Misc] SaveDirectoryPath` from `gta-reversed.ini`, NOTSA; falls back to `data` if the shell folder can't be
-  found). `WinPs.cpp:123-124` passes it to `C_PcSave::SetSaveDirectory` (`0x619040`), which stores
+  found). At start-up `WinPs.cpp` passes it to `C_PcSave::SetSaveDirectory` (`0x619040`), which stores
   `<dir>\GTASAsf` in `DefaultPCSaveFileName`.
 - Slot `i` (0-7) is `<dir>\GTASAsf<i+1>.b` (`GenerateGameFilename` `0x6190A0`: `"%s%i%s"`, `slot + 1`, `".b"`).
   `MakeValidSaveName` (`0x5D0E90`) builds the same name with `"%s%i"` + `".b"` into `ms_SaveFileName` and replaces `?`
@@ -80,16 +80,16 @@ Globals (`GenericGameStorage.h`, all `StaticRef`):
 
 ## 4. Saving
 
-`C_PcSave::SaveSlot` (`C_PcSave.cpp:91`, `0x619060`): `MakeValidSaveName(slot)`, clear the error,
+`C_PcSave::SaveSlot` (`0x619060`): `MakeValidSaveName(slot)`, clear the error,
 `CFileMgr::SetDirMyDocuments()` (the original only calls `InitUserDirectories`), `DoGameSpecificStuffBeforeSave`, then
 `GenericSave`. It returns `0` for success and `2` for failure, and `ProcessFileActions` treats any non-zero value as
 "save failed" (`FES_CMP`).
 
-`DoGameSpecificStuffBeforeSave` (`GenericGameStorage.cpp:172`, `0x618F50`) **changes the game state before writing**:
+`DoGameSpecificStuffBeforeSave` (`0x618F50`) **changes the game state before writing**:
 shuts down ropes, removes pickup objects, caps the player's health, ends a gang war, increments
 `STAT_SAFEHOUSE_VISITS`, passes 6 game hours, resets hunger, sprint energy and wanted level, and tidies memory.
 
-`GenericSave` (`GenericGameStorage.cpp:422`, `0x5D13E0`):
+`GenericSave` (`0x5D13E0`):
 
 1. `OpenFileForWriting` (`0x5D0DD0`): `fopen(ms_SaveFileName, "wb")`, reset positions, allocate the buffer.
 2. `ms_CheckSum = 0`, then for each block in `eBlocks` order: write `"BLOCK"` with `SaveDataToWorkBuffer`, call the
@@ -102,7 +102,7 @@ shuts down ropes, removes pickup objects, caps the player's health, ends a gang 
 
 `SaveDataToWorkBuffer(data, size)` (`0x5D1270`) copies into the buffer and flushes it with `SaveWorkBuffer(false)`
 whenever it fills up, so a single call can span buffers. Subsystems call it once per field or array. The repo adds
-templates `SaveDataToWorkBuffer(const T&)` and `LoadDataFromWorkBuffer<T>()` (`GenericGameStorage.h:98-106`).
+templates `SaveDataToWorkBuffer(const T&)` and `LoadDataFromWorkBuffer<T>()` (`GenericGameStorage.h`).
 
 ---
 
@@ -111,11 +111,11 @@ templates `SaveDataToWorkBuffer(const T&)` and `LoadDataFromWorkBuffer<T>()` (`G
 `CGenericGameStorage::CheckSlotDataValid(slot)` (`0x5D1380`) runs from the menu: `GenerateGameFilename`, then
 `CheckDataNotCorrupt` (`0x5D1170`), which opens the file, sums every byte except the last 4 and compares the sum with
 the last 4 bytes. On success it calls `CStreaming::DeleteAllRwObjects` and the menu sets `m_bLoadingData`. The game
-then restarts (`WinMain.cpp:367`, `CGame::ShutDownForRestart` + `InitialiseWhenRestarting`), and
-`CGame::InitialiseWhenRestarting` (`Game.cpp:658`) calls `GenericLoad`. The file name is the `ms_LoadFileName` that
+then restarts (main loop in `WinMain.cpp`: `CGame::ShutDownForRestart` + `InitialiseWhenRestarting`), and
+`CGame::InitialiseWhenRestarting` calls `GenericLoad`. The file name is the `ms_LoadFileName` that
 the checksum pass left behind.
 
-`GenericLoad` (`GenericGameStorage.cpp:230`, `0x5D17B0`):
+`GenericLoad` (`0x5D17B0`):
 
 1. `CCheat::ResetCheats`, `OpenFileForReading(nullptr, 0)` (`0x5D0D20`). The buffer starts "empty" (`pos == size ==
    51200`), so the first read triggers `LoadWorkBuffer`.
@@ -135,56 +135,56 @@ that reads a different number of bytes than its `Save` wrote shifts the stream, 
 ### Version check
 
 `GetCurrentVersionNumber` (`0x5D0F50`) is `CKeyGen::GetKey("Apr 28 200510:28:55")`, the build date of v1.0 US. The
-value is stored in `m_nVersionId`. **The original computes it on load and ignores it.** The repo adds a NOTSA check
-(`GenericGameStorage.cpp:277-292`): a mismatching save is refused (and a new game starts) unless
-`[Misc] LoadSavesWithMismatchingVersion = true`. `SaveVersionName` (line 215) maps known ids to names (PS2, v1, v1.1,
+value is stored in `m_nVersionId`. **The original computes it on load and ignores it.** The repo adds a NOTSA check in
+`GenericLoad`: a mismatching save is refused (and a new game starts) unless
+`[Misc] LoadSavesWithMismatchingVersion = true`. The NOTSA helper `SaveVersionName` maps known ids to names (PS2, v1, v1.1,
 v2, Austrian, German).
 
 ### Slot list
 
-`C_PcSave::PopulateSlotInfo` (`C_PcSave.cpp:38`, `0x619140`), called after saving/deleting and when the menu opens:
+`C_PcSave::PopulateSlotInfo` (`0x619140`), called after saving/deleting and when the menu opens:
 for each slot, read `CSimpleVariablesSaveStructure` at offset 5 (after the first `BLOCK`). If the save name isn't
 `"THIS FILE IS NOT VALID YET"`, mark the slot `SLOT_FILLED` and copy the name (cut at 24 characters). Then
 `CheckDataNotCorrupt`: if it passes, format the date from `m_systemTime` with the `MONTH<n>` GXT keys. If it fails, put
-`FEC_SLC` with the slot number into the name. The repo also sets `SLOT_CORRUPTED` (NOTSA, `C_PcSave.cpp:85`).
+`FEC_SLC` with the slot number into the name. The repo also sets `SLOT_CORRUPTED` (NOTSA).
 
 ---
 
 ## 6. Block order and the subsystem `Load`/`Save` pairs
 
-`eBlocks` (`GenericGameStorage.h:18`). All pairs below are hooked and reversed unless noted; addresses are from the
+`eBlocks` (`GenericGameStorage.h`). All pairs below are hooked and reversed unless noted; addresses are from the
 `GenericSave`/`GenericLoad` calls in the IDB.
 
-| # | Block | Load | Save | Repo (Load / Save definition) |
+| # | Block | Load | Save | Repo file |
 |---|---|---|---|---|
-| 0 | `SIMPLE_VARIABLES` | `CSimpleVariablesSaveStructure` 312 bytes, `Extract` `0x5D1EA0` | `Construct` `0x5D1B80` | `SimpleVariablesSaveStructure.cpp:102 / 17` |
-| 1 | `SCRIPTS` | `CTheScripts::Load` `0x5D4FD0` | `CTheScripts::Save` `0x5D4C40` | `Scripts/TheScripts.cpp:1110 / 1257` |
-| 2 | `POOLS` | `CPools::Load` `0x5D0890` | `CPools::Save` `0x5D0880` | `Pools.cpp:162 / 298` |
-| 3 | `GARAGES` | `CGarages::Load` `0x5D3270` | `CGarages::Save` `0x5D3160` | `Garages.cpp:441 / 482` |
-| 4 | `GAMELOGIC` | `CGameLogic::Load` `0x5D3440` | `CGameLogic::Save` `0x5D33C0` | `GameLogic.cpp:262 / 248` |
-| 5 | `PATHS` | `CPathFind::Load` `0x5D3500` | `CPathFind::Save` `0x5D34C0` | `PathFind.cpp:1018 / 1009` |
-| 6 | `PICKUPS` | `CPickups::Load` `0x5D35A0` | `CPickups::Save` `0x5D3540` | `Pickups.cpp:726 / 743` |
+| 0 | `SIMPLE_VARIABLES` | `CSimpleVariablesSaveStructure` 312 bytes, `Extract` `0x5D1EA0` | `Construct` `0x5D1B80` | `SimpleVariablesSaveStructure.cpp` |
+| 1 | `SCRIPTS` | `CTheScripts::Load` `0x5D4FD0` | `CTheScripts::Save` `0x5D4C40` | `Scripts/TheScripts.cpp` |
+| 2 | `POOLS` | `CPools::Load` `0x5D0890` | `CPools::Save` `0x5D0880` | `Pools.cpp` |
+| 3 | `GARAGES` | `CGarages::Load` `0x5D3270` | `CGarages::Save` `0x5D3160` | `Garages.cpp` |
+| 4 | `GAMELOGIC` | `CGameLogic::Load` `0x5D3440` | `CGameLogic::Save` `0x5D33C0` | `GameLogic.cpp` |
+| 5 | `PATHS` | `CPathFind::Load` `0x5D3500` | `CPathFind::Save` `0x5D34C0` | `PathFind.cpp` |
+| 6 | `PICKUPS` | `CPickups::Load` `0x5D35A0` | `CPickups::Save` `0x5D3540` | `Pickups.cpp` |
 | 7 | `PHONEINFO` | (empty block: tag only) | | |
-| 8 | `RESTART` | `CRestart::Load` `0x5D3770` | `CRestart::Save` `0x5D3620` | `Restart.cpp:182 / 216` |
-| 9 | `RADAR` | `CRadar::Load` `0x5D53C0` | `CRadar::Save` `0x5D5860` | `Radar.cpp:2002 / 2019` |
-| 10 | `ZONES` | `CTheZones::Load` `0x5D2F40` | `CTheZones::Save` `0x5D2E60` | `TheZones.cpp:392 / 368` |
-| 11 | `GANGS` | `CGangs::Load` `0x5D3A90` | `CGangs::Save` `0x5D3A60` | `Gangs.cpp:30 / 38` |
-| 12 | `CAR_GENERATORS` | `CTheCarGenerators::Load` `0x5D39B0` | `CTheCarGenerators::Save` `0x5D38C0` | `TheCarGenerators.cpp:58 / 112` |
+| 8 | `RESTART` | `CRestart::Load` `0x5D3770` | `CRestart::Save` `0x5D3620` | `Restart.cpp` |
+| 9 | `RADAR` | `CRadar::Load` `0x5D53C0` | `CRadar::Save` `0x5D5860` | `Radar.cpp` |
+| 10 | `ZONES` | `CTheZones::Load` `0x5D2F40` | `CTheZones::Save` `0x5D2E60` | `TheZones.cpp` |
+| 11 | `GANGS` | `CGangs::Load` `0x5D3A90` | `CGangs::Save` `0x5D3A60` | `Gangs.cpp` |
+| 12 | `CAR_GENERATORS` | `CTheCarGenerators::Load` `0x5D39B0` | `CTheCarGenerators::Save` `0x5D38C0` | `TheCarGenerators.cpp` |
 | 13 | `PED_GENERATORS` | (empty) | | |
 | 14 | `AUDIO_SCRIPT_OBJECT` | (empty) | | |
-| 15 | `PLAYERINFO` | `CPlayerInfo::Load` `0x5D3B00` | `CPlayerInfo::Save` `0x5D3AC0` | `PlayerInfo.cpp:456 / 464` |
-| 16 | `STATS` | `CStats::Load` `0x5D3BF0` | `CStats::Save` `0x5D3B40` | `Stats.cpp:676 / 658` |
-| 17 | `SET_PIECES` | `CSetPieces::Load` `0x5D3CA0` | `CSetPieces::Save` `0x5D3C70` | `SetPieces.cpp:41 / 48` |
-| 18 | `STREAMING` | `CStreaming::Load` `0x5D29E0` | `CStreaming::Save` `0x5D29A0` | `Streaming.cpp:1008 / 1019` |
-| 19 | `PED_TYPES` | `CPedType::Load` `0x5D3D10` | `CPedType::Save` `0x5D3CD0` | `PedType.cpp:85 / 95` |
-| 20 | `TAGS` | `CTagManager::Load` `0x5D3DA0` | `CTagManager::Save` `0x5D3D60` | `TagManager.cpp:240 / 231` |
-| 21 | `IPLS` | `CIplStore::Load` `0x5D54A0` | `CIplStore::Save` `0x5D5420` | `IplStore.cpp:811 / 798` |
-| 22 | `SHOPPING` | `CShopping::Load` `0x5D3E40` | `CShopping::Save` `0x5D3DE0` | `Shopping.cpp:797 / 808` |
-| 23 | `GANGWARS` | `CGangWars::Load` `0x5D3EB0` | `CGangWars::Save` `0x5D5530` | `GangWars.cpp:62 / 70` |
-| 24 | `STUNTJUMPS` | `CStuntJumpManager::Load` `0x5D5920` | `CStuntJumpManager::Save` `0x5D5570` | `StuntJumpManager.cpp:62 / 50` |
-| 25 | `ENTRY_EXITS` | `CEntryExitManager::Load` `0x5D55C0` | `CEntryExitManager::Save` `0x5D5970` | `EntryExitManager.cpp:409 / 445` |
-| 26 | `RADIOTRACKS` | `CAERadioTrackManager::Load` `0x5D40E0` | `CAERadioTrackManager::Save` `0x5D3EE0` | `Audio/Managers/AERadioTrackManager.cpp:798 / 848` |
-| 27 | `USER3DMARKERS` | `C3dMarkers::LoadUser3dMarkers` `0x5D42E0` | `C3dMarkers::SaveUser3dMarkers` `0x5D4300` | `3dMarkers.cpp:631 / 639` |
+| 15 | `PLAYERINFO` | `CPlayerInfo::Load` `0x5D3B00` | `CPlayerInfo::Save` `0x5D3AC0` | `PlayerInfo.cpp` |
+| 16 | `STATS` | `CStats::Load` `0x5D3BF0` | `CStats::Save` `0x5D3B40` | `Stats.cpp` |
+| 17 | `SET_PIECES` | `CSetPieces::Load` `0x5D3CA0` | `CSetPieces::Save` `0x5D3C70` | `SetPieces.cpp` |
+| 18 | `STREAMING` | `CStreaming::Load` `0x5D29E0` | `CStreaming::Save` `0x5D29A0` | `Streaming.cpp` |
+| 19 | `PED_TYPES` | `CPedType::Load` `0x5D3D10` | `CPedType::Save` `0x5D3CD0` | `PedType.cpp` |
+| 20 | `TAGS` | `CTagManager::Load` `0x5D3DA0` | `CTagManager::Save` `0x5D3D60` | `TagManager.cpp` |
+| 21 | `IPLS` | `CIplStore::Load` `0x5D54A0` | `CIplStore::Save` `0x5D5420` | `IplStore.cpp` |
+| 22 | `SHOPPING` | `CShopping::Load` `0x5D3E40` | `CShopping::Save` `0x5D3DE0` | `Shopping.cpp` |
+| 23 | `GANGWARS` | `CGangWars::Load` `0x5D3EB0` | `CGangWars::Save` `0x5D5530` | `GangWars.cpp` |
+| 24 | `STUNTJUMPS` | `CStuntJumpManager::Load` `0x5D5920` | `CStuntJumpManager::Save` `0x5D5570` | `StuntJumpManager.cpp` |
+| 25 | `ENTRY_EXITS` | `CEntryExitManager::Load` `0x5D55C0` | `CEntryExitManager::Save` `0x5D5970` | `EntryExitManager.cpp` |
+| 26 | `RADIOTRACKS` | `CAERadioTrackManager::Load` `0x5D40E0` | `CAERadioTrackManager::Save` `0x5D3EE0` | `Audio/Managers/AERadioTrackManager.cpp` |
+| 27 | `USER3DMARKERS` | `C3dMarkers::LoadUser3dMarkers` `0x5D42E0` | `C3dMarkers::SaveUser3dMarkers` `0x5D4300` | `3dMarkers.cpp` |
 
 Notes on some blocks:
 
@@ -197,24 +197,24 @@ Notes on some blocks:
   `SaveObjectPool`). `SavePedPool` (`0x5D4B40`, stub) writes `ref, model, pedType` and the ped's own `Save` for peds
   with `m_nPedType == PED_TYPE_PLAYER1` and `bInVehicle` clear (bit 8 of `m_nPedFlags`, `+0x46C`). `LoadPedPool` creates a
   `CPlayerPed` at that pool ref. `LoadVehiclePool`/`SaveVehiclePool` exist (Android) but aren't called on PC. The
-  three `Save*Pool` are still `.Reversed = false` stubs (`Pools.cpp:63-65`).
+  three `Save*Pool` are still `.Reversed = false` stubs (`CPools::InjectHooks`).
 - **PATHS**: `m_nNumNodeSwitches` and that many 28-byte node-switch areas (the IDB calls them forbidden areas).
 - **STATS**: does a side effect before writing: adds `STAT_KILLS_SINCE_LAST_CHECKPOINT` to
-  `STAT_TOTAL_LEGITIMATE_KILLS` and zeroes it (`Stats.cpp:659-660`).
+  `STAT_TOTAL_LEGITIMATE_KILLS` and zeroes it.
 - **RADAR**: the whole `ms_RadarTrace` array. Entry/exit pointers are written as pool index + 1, and tracking flags are
-  cleared just for the write and restored afterwards (`Radar.cpp:2019-2040`). `Load` starts with `Initialise()`.
+  cleared just for the write and restored afterwards (`CRadar::Save`). `Load` starts with `Initialise()`.
 - **PED_TYPES**: `PED_TYPE_COUNT x ACQUAINTANCE_NUM` `uint32` acquaintance masks.
 
 ---
 
 ## 7. Hook status of the storage core
 
-`CGenericGameStorage::InjectHooks` (`GenericGameStorage.cpp:56-84`) registers 16 functions. Only `ReportError`,
-`GenericLoad`, `GenericSave`, `LoadDataFromWorkBuffer` and `SaveDataToWorkBuffer` are live. The other 12 are
-`.Reversed = false` even though most have a complete C++ body: `OpenFileForReading/Writing`, `CloseFile`,
-`LoadWorkBuffer`, `SaveWorkBuffer`, `CheckDataNotCorrupt`, `CheckSlotDataValid`, `MakeValidSaveName`,
-`GetCurrentVersionNumber`, `DoGameSpecificStuffBeforeSave/AfterSucessLoad`, `InitRadioStationPositionList`,
-`RestoreForStartLoad`. The comment there says they couldn't be tested because common mods interfere, and that the
+`CGenericGameStorage::InjectHooks` registers 19 hooks. Only `ReportError`, `GenericLoad`, `GenericSave`,
+`LoadDataFromWorkBuffer` and `SaveDataToWorkBuffer` are live. The other 14 are `.Reversed = false` even though most
+have a complete C++ body: `OpenFileForReading/Writing`, `CloseFile`, `LoadWorkBuffer`, `SaveWorkBuffer`,
+`CheckDataNotCorrupt`, `CheckSlotDataValid`, `MakeValidSaveName`, `GetCurrentVersionNumber`,
+`DoGameSpecificStuffBeforeSave/AfterSucessLoad`, `InitRadioStationPositionList`, `RestoreForStartLoad` and the free
+function `GetSavedGameDateAndTime`. The comment there says they couldn't be tested because common mods interfere, and that the
 originals passed the file pointer in `ebp`. In `RedirectToGTA` state our body is patched to jump to the original, so
 our direct calls from `GenericSave`/`GenericLoad` also run the original code. `C_PcSave::GenerateGameFilename` is
 also off (`// bad`). `idb_coverage.py` reports all of these as STUB.
@@ -279,10 +279,10 @@ and a hex dump of every buffer read/write (`LOG_SAVE`, `LOG_HEX_SPAN`).
 - **The checksum covers the padding.** The padding bytes are whatever was left in `ms_WorkBuffer`, so two saves of the
   same state differ there and in the checksum. Never compare whole files.
 - **`ms_WorkBufferSize` vs `0xC800`.** The original `SaveDataToWorkBuffer` (`0x5D1270`) flushes at a hard-coded 51,200
-  bytes. The repo (`GenericGameStorage.cpp:647`) uses `ms_WorkBufferSize`, which the last read leaves at the size of
+  bytes. The repo uses `ms_WorkBufferSize`, which the last read leaves at the size of
   the final chunk (49,152 after a checksum pass over a full save, e.g. from `PopulateSlotInfo`). The byte stream is
   the same, only the flush points move. Keep that in mind when you compare `ms_FilePos` values between versions.
-- **`ReportError` on a tag mismatch** says `LOADING` in the repo (`GenericGameStorage.cpp:253`); the original passes
+- **`ReportError` on a tag mismatch** says `LOADING` in the repo (`GenericLoad`); the original passes
   `SAVING` there (`0x5D17B0`). The message is only logged, but asm_validate will flag it.
 - **The original ignores the version id.** The refusal to load mismatching saves is NOTSA (section 5). It is on by
   default and turns old saves into "new game".
@@ -291,28 +291,28 @@ and a hex dump of every buffer read/write (`LOG_SAVE`, `LOG_HEX_SPAN`).
 - **Two different "slot" numberings.** Menu entries and `ms_Slots` are 0-7, file names use 1-8, `FastLoader`'s
   `SaveGameToLoad` uses 1-8 (`-1` = first existing, `-2` = off).
 - **`GenerateGameFilename` is `__stdcall` in the IDB** (no `this`), while the repo declares it as a member. It works
-  because the body doesn't use `this`. The hook is off anyway (`C_PcSave.cpp:19`, `// bad`).
-- **`s_PcSaveHelper` is a single error code** (`C_PcSave::eErrorCode`, `C_PcSave.h:10`: 4 open, 5 read, 6 close, 7 slot
+  because the body doesn't use `this`. The hook is off anyway (`// bad`).
+- **`s_PcSaveHelper` is a single error code** (`C_PcSave::eErrorCode`: 4 open, 5 read, 6 close, 7 slot
   invalid, 11 write). The header itself has a TODO saying it may be a bit field.
 
 ### Bugs found while writing this page (not fixed)
 
 | Where | Original | Problem |
 |---|---|---|
-| `GenericGameStorage.cpp:755-770` (`MakeValidSaveName`) | `0x5D0E90` | Builds the path with `GenerateGameFilename` (which already ends in `.b`), then appends `.b` again, giving `GTASAsf1.b.b`. The original uses `sprintf("%s%i")`. **Latent**: the hook is `.Reversed = false`, so `C_PcSave::SaveSlot`'s direct call runs the original today. It becomes live the moment the hook is enabled |
-| `C_PcSave.cpp:84` (`PopulateSlotInfo`, live) | `0x619140` | Inserts the 0-based `i` into `FEC_SLC`; the original passes the slot number `i + 1`. A corrupted slot 1 is shown as slot 0 |
-| `C_PcSave.cpp:94` (`SaveSlot`, live) | `0x619060` | Calls `CFileMgr::SetDirMyDocuments()`, which also changes the current directory. The original only calls `InitUserDirectories()`. Harmless for the save itself (absolute path), but later relative `CFileMgr::OpenFile` calls start from the user folder until something calls `SetDir("")` |
-| `GenericGameStorage.cpp:253` (`GenericLoad`, live) | `0x5D17B0` | `ReportError(..., LOADING)` where the original uses `SAVING` (log text only) |
+| `CGenericGameStorage::MakeValidSaveName` | `0x5D0E90` | Builds the path with `GenerateGameFilename` (which already ends in `.b`), then appends `.b` again, giving `GTASAsf1.b.b`. The original uses `sprintf("%s%i")`. **Latent**: the hook is `.Reversed = false`, so `C_PcSave::SaveSlot`'s direct call runs the original today. It becomes live the moment the hook is enabled |
+| `C_PcSave::PopulateSlotInfo` (live) | `0x619140` | Inserts the 0-based `i` into `FEC_SLC`; the original passes the slot number `i + 1`. A corrupted slot 1 is shown as slot 0 |
+| `C_PcSave::SaveSlot` (live) | `0x619060` | Calls `CFileMgr::SetDirMyDocuments()`, which also changes the current directory. The original only calls `InitUserDirectories()`. Harmless for the save itself (absolute path), but later relative `CFileMgr::OpenFile` calls start from the user folder until something calls `SetDir("")` |
+| `CGenericGameStorage::GenericLoad` (live) | `0x5D17B0` | `ReportError(..., LOADING)` where the original uses `SAVING` (log text only) |
 
 ---
 
 ## 10. Reversing status and what is left
 
-From `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (2026-10-12):
+From `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (checked 2026-10-14):
 
 | Class | Funcs | Reversed | Stub | Notes |
 |---|---|---|---|---|
-| `CGenericGameStorage` | 16 | 4 | 12 | All 12 "stubs" except `InitRadioStationPositionList` (empty) and `RestoreForStartLoad` (returns false) have a full C++ body behind `.Reversed = false` |
+| `CGenericGameStorage` | 16 | 4 | 12 | The IDB class count; see section 7 for the 19 registered hooks. All "stubs" except `InitRadioStationPositionList` (empty) and `RestoreForStartLoad` (returns false) have a full C++ body behind `.Reversed = false` |
 | `C_PcSave` | 5 | 4 | 1 | `GenerateGameFilename` off |
 | `CSimpleVariablesSaveStructure` | 2 | 2 | 0 | |
 | `CPools` | 19 | 16 | 3 | `SavePedPool` `0x5D4B40` (248 B), `SaveObjectPool` `0x5D4940` (245 B), `SaveVehiclePool` `0x5D4800` (319 B, unused on PC) |
@@ -321,7 +321,7 @@ All 27 subsystem `Load`/`Save` pairs in section 6 are registered and reversed.
 
 Prioritised work:
 
-1. **Turn on the storage core one function at a time** (12 functions, about 1.4 KB, already written). Validate each
+1. **Turn on the storage core one function at a time** (13 methods, about 1.4 KB, already written). Validate each
    with `asm_validate.py`, enable it, and do a file round trip (section 8). Fix `MakeValidSaveName` first. Good order:
    `GetCurrentVersionNumber`, `CloseFile`, `OpenFileForWriting`/`Reading`, `SaveWorkBuffer`/`LoadWorkBuffer`,
    `CheckDataNotCorrupt`, `CheckSlotDataValid`, `MakeValidSaveName`, then the two `DoGameSpecificStuff*`.

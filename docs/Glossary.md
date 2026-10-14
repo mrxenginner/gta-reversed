@@ -6,14 +6,15 @@ Terms used in the code, in the docs and in reviews. Each entry links to the page
 
 | Term | Meaning |
 |---|---|
-| **ASI / ASI loader** | An `.asi` file is a DLL that an ASI loader (a proxy `vorbisFile.dll` from `contrib/plugins.zip`) loads into `gta_sa.exe`. `gta_reversed.asi` is our build output. The loader sets the working directory to `scripts/`, so logs, `gta-reversed.ini` and `difftests.log` end up there ([Architecture.md](Architecture.md)) |
+| **ASI / ASI loader** | An `.asi` file is a DLL that an ASI loader (a proxy `vorbisFile.dll` from `contrib/plugins.zip`) loads into `gta_sa.exe`. `gta_reversed.asi` is our build output. The loader sets the working directory to `scripts/` while loading it, so logs, `gta-reversed.ini` and `difftests.log` live there ([Architecture.md](Architecture.md) §11) |
 | **Compact exe** | The `gta_sa.exe` 1.0 US variant (5,189,632 bytes) that every address in the repo refers to |
 | **Hook** | A patch at a GTA function address. Depending on its state it jumps to our C++ or keeps running the original. Registered with `RH_Scoped*Install` in `InjectHooks()` ([HookRegistration.md](HookRegistration.md)) |
-| **Hook state** | `RedirectToOurs` (our code runs), `RedirectToGTA` (the original runs), `Unhooked`. `.Reversed = false` starts the hook as `RedirectToGTA`, and `.Locked = true` stops users from toggling it in the F7 menu |
+| **Hook path** | `<Category>/<Scope>/<Fn>`, e.g. `Global/CGeneral/LimitAngle`: where a hook appears in F7 → Settings → Hooks. Set by `RH_ScopedCategory` and `RH_ScopedClass`/`RH_ScopedNamespace` |
+| **Hook state** | `RedirectToOurs` (our code runs), `RedirectToGTA` (the original runs), `Unhooked` (nothing patched). `.Reversed = false` starts the hook as `RedirectToGTA` and locks it; `.Locked = true` stops it from being toggled in the F7 menu |
 | **`InjectHooks` / `InjectHooksMain`** | Each class's hook registration function, and the function in `source/InjectHooksMain.cpp` that calls all of them from `DllMain` |
 | **VMT install** | `RH_ScopedVMTInstall`: hooks a virtual function through its vtable slot. Needs `RH_ScopedVirtualClass(cls, vtable, slots)` and an address that is in that vtable ([ai/Vtables.md](ai/Vtables.md)) |
 | **Stub** | A function whose body still calls the original (`plugin::Call*<0xADDR>`); its hook must be `{ .Reversed = false }` |
-| **`StaticRef`** | `StaticRef<T>(0xADDR)` returns a reference to a global variable in the game's memory |
+| **`StaticRef`** | `StaticRef<T>(0xADDR)` returns a reference to a global variable in the game's memory (`source/Base.h`) |
 | **`VALIDATE_SIZE` / `VALIDATE_OFFSET`** | Compile-time checks that a struct's size or field offset matches the original layout |
 | **`notsa::bugfixes`** | Switchable fixes for bugs of the original game (`source/reversiblebugfixes/Bugs.hpp`) |
 | **NOTSA** | "Not SA": code or behaviour that doesn't exist in the original game (debug tools, fixes, helpers) |
@@ -31,7 +32,7 @@ Terms used in the code, in the docs and in reviews. Each entry links to the page
 | **`__thiscall` / `__cdecl` / `__stdcall` / `__fastcall`** | Calling conventions: member functions (`this` in ECX), free functions (caller cleans the stack), callbacks and Win32 API (callee cleans), register arguments |
 | **`__usercall`** | IDA's name for a non-standard calling convention, with arguments in arbitrary registers. They can't be hooked directly; the repo leaves their install commented out with a note (eg. `CPlantMgr::LoadModels`) |
 | **Inlined function** | A function MSVC copied into its callers instead of calling it. Its body shows up in the pseudocode; our code calls the function instead ([ai/InlineCatalogue.md](ai/InlineCatalogue.md)) |
-| **Scalar deleting destructor** | The vtable's slot 0: destroys the object and optionally frees it. The repo hooks the plain destructor instead |
+| **Scalar deleting destructor** | The vtable's slot 0: destroys the object and optionally frees it. The repo hooks the plain destructor instead, through a `Destructor()` wrapper ([HookRegistration.md](HookRegistration.md) §3) |
 | **Vtable** | The table of virtual function pointers at the start of every polymorphic object |
 
 ## Game engine
@@ -44,7 +45,7 @@ Terms used in the code, in the docs and in reviews. Each entry links to the page
 | **IDE / IPL** | Text or binary data files: IDE defines model types, IPL places instances in the world |
 | **IMG / streaming** | `CStreaming` loads models, textures, collisions, animations and scripts on demand from the IMG archives |
 | **LOD** | Level of detail: low-poly models drawn far away instead of the full model |
-| **Pool** | A fixed-size allocator for one kind of object (`CPools::ms_pPedPool`, ...). Script handles encode the pool index |
+| **Pool** | A fixed-size allocator for one kind of object (`GetPedPool()`, `GetVehiclePool()`, ...). Script handles encode the pool index |
 | **Sector / repeat sector** | The world grid `CWorld` uses to find entities near a position |
 | **Entity / Physical / Ped / Vehicle / Object** | The class tree: `CEntity` → `CPhysical` → `CPed`, `CVehicle`, `CObject` |
 | **Vehicle type vs sub-type** | `m_nVehicleType` (AUTOMOBILE, BIKE, BOAT, TRAIN) vs `m_nVehicleSubType` (also HELI, PLANE, QUAD, TRAILER, BMX, ...). Use `IsSub*()` for the concrete class ([subsystems/Vehicles.md](subsystems/Vehicles.md)) |
@@ -62,7 +63,7 @@ Terms used in the code, in the docs and in reviews. Each entry links to the page
 | Term | Meaning |
 |---|---|
 | **SCM** | The compiled mission script `main.scm` and the virtual machine that runs it ([subsystems/Scripts.md](subsystems/Scripts.md)) |
-| **Opcode / command** | One SCM instruction (eg. `0x0001 WAIT`). The repo registers handlers per command; unregistered ones run the original `ProcessCommandsXToY` switch |
+| **Opcode / command** | One SCM instruction (eg. `0x0001 WAIT`). The repo registers handlers per command; unregistered ones run the original `ProcessCommandsXToY` switch ([ScriptCommandReversing.md](ScriptCommandReversing.md)) |
 | **Running script** | `CRunningScript`: one script thread with its own instruction pointer, locals and timers |
 | **Script brain** | A streamed script attached to a ped or object model (`CScriptsForBrains`) |
 | **CLEO** | A third-party script extension library; some of its opcodes are implemented in `Scripts/Commands/CLEO/` |

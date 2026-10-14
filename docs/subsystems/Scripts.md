@@ -58,7 +58,7 @@ flowchart LR
 | `source/game_sa/Scripts/CommandParser/` | `Parser.hpp` (dispatch template + `REGISTER_COMMAND_*` macros), `ReadArg.hpp` (`notsa::script::Read<T>`), `StoreArg.hpp` (`StoreArg`), `Utility.hpp` (`MultiRet`, `return_multiple`, `CompareFlagUpdate`, `CommandHandlerFunction`). `LUTGenerator.hpp` is dead code (`#if 0`) |
 | `source/game_sa/Scripts/Commands/*.cpp` | Our handlers, one file per category (`CharacterCommands.cpp` is the biggest: 4,482 lines, 272 handlers). Each file ends with `notsa::script::commands::<ns>::RegisterHandlers()` |
 | `source/game_sa/Scripts/Commands/CLEO/` | CLEO opcodes (only compiled in with `NOTSA_WITH_CLEO_SCRIPT_COMMANDS`, see Gotchas) |
-| `source/game_sa/Enums/eScriptCommands.h` | `eScriptCommands` (`COMMAND_X = 0xNNNN`). PC vanilla ends at `COMMAND_DO_DEBUG_STUFF = 0x0A4E` (line 2679) |
+| `source/game_sa/Enums/eScriptCommands.h` | `eScriptCommands` (`COMMAND_X = 0xNNNN`). PC vanilla ends at `COMMAND_DO_DEBUG_STUFF = 0x0A4E` (`COMMAND_HIGHEST_VANILLA_ID`) |
 | `source/game_sa/ScriptsForBrains.h/.cpp` | `CScriptsForBrains`: 70 `tScriptForBrains` entries that tie streamed scripts to ped models / objects / attractors |
 | `source/game_sa/StreamedScripts.*`, `MissionCleanup.*`, `UpsideDownCarCheck.*`, `StuckCarCheck.*`, `ScriptResourceManager.*` | Helpers owned by `CTheScripts` (`StreamedScripts` 0xA47B60, `MissionCleanUp` 0xA90850, `UpsideDownCars` 0xA4892C, `StuckCars` 0xA90AB0, `ScriptResourceManager` 0xA485A8) |
 | `source/reversiblehooks/ReversibleHook/ScriptCommandHook.h` | Per-command hook object for the hooks UI (only with `NOTSA_WITH_SCRIPT_COMMAND_HOOKS`) |
@@ -68,10 +68,9 @@ flowchart LR
 
 ## 3. Run-time lifecycle
 
-### 3.1 Loading `main.scm` (`CTheScripts::Init`, `0x468D50`, `TheScripts.cpp:108`)
+### 3.1 Loading `main.scm` (`CTheScripts::Init`, `0x468D50`)
 
-Called from `CGame::Init2` (`Game.cpp:495`) and `CGame::ReInitGameObjectVariables` (`Game.cpp:882`), and at the top
-of `CTheScripts::Load`.
+Called from `CGame::Init2`, `CGame::ReInitGameObjectVariables` and at the top of `CTheScripts::Load`.
 
 1. Zero `ScriptSpace` and `LocalVariablesForCurrentMission`; `Init()` all 96 scripts and chain them into
    `pIdleScripts` (`pActiveScripts = nullptr`).
@@ -87,8 +86,8 @@ of `CTheScripts::Load`.
    inform-event queues and `CDecisionMakerTypes::GetInstance`.
 
 The main script is **not** started by `Init`. `CTheScripts::StartTestScript` (`0x464D40`) does
-`StartNewScript(MainSCMBlock.data())`; it is called by `CGame::Initialise` (`Game.cpp:558`) and by
-`ReInitGameObjectVariables` when not loading a save (`Game.cpp:909`), each time followed by one `CTheScripts::Process`.
+`StartNewScript(MainSCMBlock.data())`; it is called by `CGame::Initialise` and by
+`ReInitGameObjectVariables` when not loading a save, each time followed by one `CTheScripts::Process`.
 
 ### 3.2 `main.scm` header chunks (`SCMChunks.hpp`)
 
@@ -104,24 +103,24 @@ offset of the next chunk, then a 1-byte chunk index. The VM simply jumps over th
 | `3` | `tSCMUnknownChunk3` | one `uint32`, unknown |
 | `4` | `tSCMExtraInfoChunk` | global var space size, build number(?) |
 
-`CTheScripts::GetSCMChunk<T>()` (NOTSA, `TheScripts.h:572`) walks at most 6 chunks to find one.
+`CTheScripts::GetSCMChunk<T>()` (NOTSA) walks at most 6 chunks to find one.
 
 ### 3.3 Variables and the script layout
 
 - **Globals** live inside `ScriptSpace` itself. A global variable operand is a **byte offset** into `ScriptSpace`
   (`GetGlobal<T>(loc)` = `ScriptSpace[loc]`). The `OnAMissionFlag` global (`0xA476AC`) stores the *offset* of the
   `$ONMISSION` variable, read as `ScriptSpace[OnAMissionFlag]`.
-- **Locals** are `tScriptParam` slots (`MAX_LOCAL_VARS = 32` plus `MAX_NUM_TIMERS = 2`, `RunningScript.h:83-87`). A
-  local operand is a **slot index**. `GetLocal<T>` (`RunningScript.h:358`) reads
+- **Locals** are `tScriptParam` slots (`MAX_LOCAL_VARS = 32` plus `MAX_NUM_TIMERS = 2`). A local operand is a
+  **slot index**. `GetLocal<T>` reads
   `CTheScripts::LocalVariablesForCurrentMission[loc]` (1,024 slots at `0xA48960`) when
   `m_ThisMustBeTheOnlyMissionRunning` is set, otherwise `m_LocalVars[loc]`.
-- **Timers** are local slots 32 and 33 (`SCRIPT_VAR_TIMERA`/`TIMERB`, `TheScripts.h:344`): `TIMERA`/`TIMERB` in
+- **Timers** are local slots 32 and 33 (`SCRIPT_VAR_TIMERA`/`TIMERB`): `TIMERA`/`TIMERB` in
   Sanny Builder (`32@`, `33@`). `CTheScripts::Process` adds the frame time to both, in every script and in the mission
-  local block (`TheScripts.cpp:1429-1439`).
-- **Arrays** use a 6-byte `scm::ArrayAccess` operand (`RunningScript.h:142`): base, index variable (global or local),
+  local block.
+- **Arrays** use a 6-byte `scm::ArrayAccess` operand: base, index variable (global or local),
   size, element type. Global array elements are `base + idx * elemBytes`; local ones are `base + idx * elemSlots`.
 
-`CRunningScript` fields (`RunningScript.h:232-251`, `VALIDATE_SIZE 0xE0`):
+`CRunningScript` fields (`VALIDATE_SIZE 0xE0`):
 
 | Off | Field | Notes |
 |---|---|---|
@@ -137,7 +136,7 @@ offset of the next chunk, then a 1-byte chunk index. The VM simply jumps over th
 | 0xD8 | `m_SceneSkipIP` | cutscene skip target |
 | 0xDC | `m_ThisMustBeTheOnlyMissionRunning` | "is the mission script": locals come from the mission block |
 
-Jump targets: `UpdatePC(int32)` (`0x464DA0`, `RunningScript.cpp:875`): `>= 0` is an absolute offset into
+Jump targets: `UpdatePC(int32)` (`0x464DA0`): `>= 0` is an absolute offset into
 `ScriptSpace` (main script), `< 0` is `m_BaseIP + |target|` (missions and streamed scripts are position independent).
 
 ### 3.4 Starting and stopping scripts
@@ -145,20 +144,20 @@ Jump targets: `UpdatePC(int32)` (`0x464DA0`, `RunningScript.cpp:875`): `>= 0` is
 - `CTheScripts::StartNewScript(ip)` (`0x464C20`) takes the head of `pIdleScripts`, `Init()`s it, sets the IP and moves
   it to `pActiveScripts`. No null check (same as the original). The `(ip, index)` overload (`0x464C90`) picks a
   specific slot; `Load` uses it.
-- `START_NEW_SCRIPT` (`BasicCommands.cpp:174`) then copies the trailing arguments into the new script's locals with
+- `START_NEW_SCRIPT` (`BasicCommands.cpp`) then copies the trailing arguments into the new script's locals with
   `ReadParametersForNewlyStartedScript` (`0x464500`, reads until `SCRIPT_PARAM_END_OF_ARGUMENTS`).
-- Missions: `LOAD_AND_LAUNCH_MISSION_INTERNAL` (`MissionCommands.cpp:12`) reads `MISSION_SCRIPT_SIZE` (69,000) bytes
+- Missions: `LOAD_AND_LAUNCH_MISSION_INTERNAL` (`MissionCommands.cpp`) reads `MISSION_SCRIPT_SIZE` (69,000) bytes
   from `main.scm` at `MultiScriptArray[id]` into `MissionBlock`, wipes the mission locals, starts a script there with
   `m_UsesMissionCleanup = m_ThisMustBeTheOnlyMissionRunning = true`, `m_BaseIP = MissionBlock`, and sets
   `bAlreadyRunningAMissionScript`.
-- `TERMINATE_THIS_SCRIPT` (`BasicCommands.cpp:164`) moves the script back to the idle list, calls
+- `TERMINATE_THIS_SCRIPT` moves the script back to the idle list, calls
   `ShutdownThisScript` (`0x465AA0`, still a stub: releases a streamed script and clears the ped's script brain) and
   returns `OR_WAIT`.
 
-### 3.5 Per frame: `CTheScripts::Process` (`0x46A000`, `TheScripts.cpp:1393`)
+### 3.5 Per frame: `CTheScripts::Process` (`0x46A000`)
 
-Called from `CGame::Process` (`Game.cpp:746`), after loading a save (`GenericGameStorage.cpp:199`) and on entry/exit
-teleports (`EntryExit.cpp:498`). Skipped during replay playback.
+Called from `CGame::Process`, after loading a save (`CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad`) and on entry/exit teleports
+(`CEntryExit`). Skipped during replay playback.
 
 1. `CommandsExecuted = 0`; `UpsideDownCars.UpdateTimers()`, `StuckCars.Process()`,
    `MissionCleanUp.CheckIfCollisionHasLoadedForMissionObjects()`, `DrawScriptSpheres()`, `ProcessAllSearchLights()`,
@@ -168,7 +167,7 @@ teleports (`EntryExit.cpp:498`). Skipped during replay playback.
    a script may terminate itself).
 4. `RecordEventForScript(0, 0)` on every mission-created ped.
 
-### 3.6 `CRunningScript::Process` (`0x469F00`, `RunningScript.cpp:911`)
+### 3.6 `CRunningScript::Process` (`0x469F00`)
 
 1. Cutscene skip: if `m_SceneSkipIP` and the skip button is pressed, jump there and clear `m_WakeTime`.
 2. `m_UsesMissionCleanup` → `DoDeathArrestCheck` (`0x485A50`): on a mission, if the player is restarting after death
@@ -178,7 +177,7 @@ teleports (`EntryExit.cpp:498`). Skipped during replay playback.
 4. `CTheScripts::ReinitialiseSwitchStatementData()`.
 5. If `now >= m_WakeTime`: `while (ProcessOneCommand() == OR_CONTINUE) {}`.
 
-`ProcessOneCommand` (`0x469EB0`, `RunningScript.cpp:882`, inlined in the original `Process`) increments
+`ProcessOneCommand` (`0x469EB0`, inlined in the original `Process`) increments
 `CommandsExecuted`, reads the 2-byte `scm::Instruction` (15-bit command + not-flag bit 15, i.e. `0x8000`), stores the
 not-flag in `m_NotFlag` and dispatches (section 4). Return values: `OR_CONTINUE` = run the next command now,
 `OR_WAIT` = yield until next frame (or `m_WakeTime`), `OR_INTERRUPT` = also stops this script for the frame (the
@@ -189,12 +188,12 @@ original's "unknown command" path).
 `CMissionCleanup` (`MissionCleanup.h`, 75 `tMissionCleanupEntity {type, handle}` slots) records everything a mission
 creates: peds, vehicles, objects, particles, groups, sequences, decision makers, search lights, checkpoints, TXDs. A
 command that creates an entity calls `MissionCleanUp.AddEntityToList(...)` when `m_UsesMissionCleanup` is set; in
-`CharacterCommands.cpp` use the helper `HandleEntityMissionCleanup(S, entity)` (line 40). `MARK_*_AS_NO_LONGER_NEEDED`
+`CharacterCommands.cpp` use the helper `HandleEntityMissionCleanup(S, entity)`. `MARK_*_AS_NO_LONGER_NEEDED`
 removes it again. `CMissionCleanup::Process` (`0x468560`, called on mission end) is still a call into GTA.
 
 ### 3.8 Save and load (`CTheScripts::Save` `0x5D4C40`, `Load` `0x5D4FD0`)
 
-Order in the save block (`TheScripts.cpp:1110-1370`): size + global variable space (in 51,200-byte parts), the 70
+Order in the save block: size + global variable space (in 51,200-byte parts), the 70
 `tScriptForBrains`, `OnAMissionFlag`, `LastMissionPassedTime`, building swaps and invisibility settings (as pool index
 + 1, typed by `ScriptSavedObjectType`), blocked vehicle models, connected LODs, attached anim groups, a few flags and
 sizes, then every **non-external** active script (`!m_IsExternal && m_ExternalType == -1`): slot index, the raw
@@ -209,13 +208,13 @@ active list so that `Load` recreates the same order. Streamed scripts and brains
 - `CScriptsForBrains` (`ScriptsForBrains.h`) maps a brain (`m_StreamedScriptIndex`, `m_TypeOfBrain`, activation
   radius, model / generator id or attractor name) to a streamed script. Types used in code: 0 and 3 = ped brains, 1
   and 4 = object brains, 5 = attractor brains (`GetIndexOfScriptBrainWithThisName(name, 5)`).
-- Entities that need a brain call `CheckIfNewEntityNeedsScript` (`CarGenerator.cpp:314`, `DummyObject.cpp:38`) and
-  wait in `EntitiesWaitingForScriptBrain` (150 entries). `CTheScripts::ProcessWaitingForScriptBrainArray` (`0x46CF00`,
-  `TheScripts.cpp:1520`) starts the script once its streamed file is loaded (`StartNewStreamedScriptBrain`) or
+- Entities that need a brain call `CheckIfNewEntityNeedsScript` (from `CCarGenerator` and `CDummyObject`) and
+  wait in `EntitiesWaitingForScriptBrain` (150 entries). `CTheScripts::ProcessWaitingForScriptBrainArray` (`0x46CF00`)
+  starts the script once its streamed file is loaded (`StartNewStreamedScriptBrain`) or
   requests it.
 - Brain scripts run as normal scripts with `m_ExternalType` = brain type; local 0 holds the entity handle. That is why
-  `GivePedScriptedTask` (`RunningScript.cpp:236`) checks `m_ExternalType` 0/2/3/5 and routes type 5 tasks into
-  `CScriptedBrainTaskStore` (see [Tasks.md](Tasks.md) §4).
+  `CRunningScript::GivePedScriptedTask` checks `m_ExternalType` 0/2/3/5 and routes type 5 tasks into
+  `CScriptedBrainTaskStore` (see [Tasks.md](Tasks.md)).
 
 ---
 
@@ -224,9 +223,9 @@ active list so that `Load` recreates the same order. Streamed scripts and brains
 ### 4.1 Two tables
 
 ```cpp
-// RunningScript.cpp:34
+// RunningScript.cpp
 static inline std::array<notsa::script::CommandHandlerFunction, COMMAND_HIGHEST_ID_TO_HOOK + 1> s_CustomCommandHandlerTable{};
-// RunningScript.h:257
+// RunningScript.h
 static inline auto& s_OriginalCommandHandlerTable = StaticRef<std::array<CommandHandlerFn_t, 27>>(0x8A6168);
 ```
 
@@ -236,10 +235,9 @@ member functions `CRunningScript::ProcessCommands0To99` (`0x465E60`) ... `Proces
 each is one giant `switch` over 100 opcodes (**decimal** blocks: opcode `0x02AB` = 683 → `600To699`). Unknown cases
 return `OR_INTERRUPT`.
 
-The custom table is filled at start-up by `CRunningScript::InjectCustomCommandHooks()` (`RunningScript.cpp:90`), which
-calls each `notsa::script::commands::<ns>::RegisterHandlers()`.
+The custom table is filled at start-up by `CRunningScript::InjectCustomCommandHooks()`, which calls each `notsa::script::commands::<ns>::RegisterHandlers()`.
 
-### 4.2 Registration macros (`CommandParser/Parser.hpp:115-143`)
+### 4.2 Registration macros (`CommandParser/Parser.hpp`)
 
 | Macro | Effect |
 |---|---|
@@ -249,9 +247,9 @@ calls each `notsa::script::commands::<ns>::RegisterHandlers()`.
 | `REGISTER_COMMAND_UNIMPLEMENTED(COMMAND_X)` | `NotImplemented`: logs, `NOTSA_DEBUGBREAK()`, returns `OR_INTERRUPT` (the vanilla default path). For opcodes the original never implemented |
 | `REGISTER_UNSUPPORTED_COMMAND_HANDLER(COMMAND_X, Fn)` | `Fn` only with `IMPLEMENT_UNSUPPORTED_OPCODES`, otherwise `NotImplemented` |
 
-With the CMake option `..._WITH_SCRIPT_COMMAND_HOOKS` (defines `NOTSA_WITH_SCRIPT_COMMAND_HOOKS`) every registered
+With the CMake option `GTASA_WITH_SCRIPT_COMMAND_HOOKS` (defines `NOTSA_WITH_SCRIPT_COMMAND_HOOKS`) every registered
 command shows up in the hooks UI; turning one off nulls its table slot so the original switch runs it
-(`ScriptCommandHook.h:40-47`). Handlers are installed either way.
+(`ScriptCommandHook.h`). Handlers are installed either way.
 
 ### 4.3 Command statuses
 
@@ -278,10 +276,10 @@ opcodes `<= 0x0A4E`):
 `no-op` = returns `OR_CONTINUE` without reading anything; `not-impl` = returns `OR_INTERRUPT`. The 655 HANDLER rows
 include the 14 handlers of `DrawCommands.cpp` and `PathCommands.cpp` that are never registered at run time (Gotchas).
 
-### 4.4 How our handler gets its arguments (`Parser.hpp:17-78`)
+### 4.4 How our handler gets its arguments (`Parser.hpp`)
 
 `CommandParser<Cmd, Fn>` resets `ScriptArgCharNextFreeBuffer`, then `CollectArgsAndCall` reads one argument per
-parameter of `Fn`, **in declaration order**, with `notsa::script::Read<T>(S)` (`ReadArg.hpp:110`). A parameter of
+parameter of `Fn`, **in declaration order**, with `notsa::script::Read<T>(S)` (`ReadArg.hpp`). A parameter of
 type `eScriptCommands` receives the current opcode without reading anything; `CRunningScript&`/`*` receives the
 script. The return value is then written back with `StoreArg`:
 
@@ -315,15 +313,15 @@ checkpoints, search lights, sequences, 2D effects) are validated by the packed i
 | `UpdateCompareFlag(x)` (`0x4859D0`) | Condition result | return `bool` |
 | `CTheScripts::UsedObjectArray[-x]` | Negative model id = used object | `script::Model` |
 
-Operand encoding (`eScriptParameterType`, `RunningScript.h:19`): 1 = int32, 2/3 = global/local int var, 4/5 = int8 /
+Operand encoding (`eScriptParameterType` in `RunningScript.h`): 1 = int32, 2/3 = global/local int var, 4/5 = int8 /
 int16, 6 = float, 7/8 = global/local int array, 9 = 8-byte string, 10-13 = short string var/array, 14 = pascal string,
 15 = 16-byte string, 16-19 = long string var/array, 0 = end of varargs.
 
 ### 4.6 The condition flag
 
-An `if` compiles to `ANDOR n` (`0x00D6`, `BasicCommands.cpp:142`) followed by n conditions and `GOTO_IF_FALSE`.
+An `if` compiles to `ANDOR n` (`0x00D6`) followed by n conditions and `GOTO_IF_FALSE`.
 `ANDOR` sets `m_AndOrState` (0 = single condition, 1-8 = ANDs, 21-28 = ORs) and seeds `m_CondResult`. Each condition
-calls `UpdateCompareFlag(state)` (`RunningScript.cpp:843`), which first applies `m_NotFlag` (bit `0x8000` of the
+calls `CRunningScript::UpdateCompareFlag(state)`, which first applies `m_NotFlag` (bit `0x8000` of the
 opcode word, set by `ProcessOneCommand`), then ANDs/ORs into `m_CondResult` and counts `m_AndOrState` down. Never
 negate the result yourself: return the plain condition and let the not-flag do it.
 
@@ -359,11 +357,11 @@ python $S locate 0x02AB --dump           # annotated disassembly from the exe (n
    `InjectCustomCommandHooks`.
 5. **Verify**: build, compare with the case (`--dump`), and run a mission or a CLEO script that uses the command. Shared
    cases (`real/shared`) are usually one templated handler registered for each opcode (see the `IsGreaterEqual<int32>`
-   block at the top of `basic::RegisterHandlers`, `BasicCommands.cpp:230`).
+   block at the top of `basic::RegisterHandlers` in `BasicCommands.cpp`).
 
 `CRunningScript` / `CTheScripts` methods are reversed like any other function
 ([../ReversingGuide.md](../ReversingGuide.md)). Most `CRunningScript` helpers use
-`{ .StackArgumentsToPreserve = N, .PreserveRegisters = true }` (`RunningScript.cpp:61-83`) because the original
+`{ .StackArgumentsToPreserve = N, .PreserveRegisters = true }` (`CRunningScript::InjectHooks`) because the original
 switch functions call them with live registers; keep those options when you touch them.
 
 ---
@@ -372,36 +370,36 @@ switch functions call them with live registers; keep those options when you touc
 
 - **`draw::` and `path::` handlers are never registered.** `Commands.hpp` declares
   `path::RegisterHandlers()` and `draw::RegisterHandlers()` and both files register handlers
-  (`PathCommands.cpp:82`, 6 commands: `SWITCH_ROADS_ON/OFF/BACK_TO_ORIGINAL`, `SWITCH_PED_ROADS_*`;
-  `DrawCommands.cpp:114`, 8 commands: `DRAW_SPRITE`, `DRAW_RECT`, `LOAD_SPRITE`, `LOAD_TEXTURE_DICTIONARY`, ...), but
-  `InjectCustomCommandHooks` (`RunningScript.cpp:90-117`) calls neither. At run time those commands still go to the
+  (`PathCommands.cpp`, 6 commands: `SWITCH_ROADS_ON/OFF/BACK_TO_ORIGINAL`, `SWITCH_PED_ROADS_*`;
+  `DrawCommands.cpp`, 8 commands: `DRAW_SPRITE`, `DRAW_RECT`, `LOAD_SPRITE`, `LOAD_TEXTURE_DICTIONARY`, ...), but
+  `CRunningScript::InjectCustomCommandHooks` calls neither. At run time those commands still go to the
   original switch, while `script_cmd.py` reports them as HANDLER.
-- **`ResetIP` is off by one** (`RunningScript.cpp:958`): `m_IP = m_IPStack[m_StackDepth--]` (post-decrement) ends on
+- **`ResetIP` is off by one** (`CRunningScript::ResetIP`): `m_IP = m_IPStack[m_StackDepth--]` (post-decrement) ends on
   `m_IPStack[1]`. The original (`0x485A50` and the inlined copy in `0x469F00`) unwinds to depth 1 and takes
-  `m_IPStack[--depth]`, which is `m_IPStack[0]`. `GOSUB` pushes with `m_IPStack[m_StackDepth++]`
-  (`BasicCommands.cpp:114`), so after a death/arrest or `FailCurrentMission` with one `GOSUB` level, our IP is a stale
+  `m_IPStack[--depth]`, which is `m_IPStack[0]`. `GOSUB` pushes with `m_IPStack[m_StackDepth++]`,
+  so after a death/arrest or `FailCurrentMission` with one `GOSUB` level, our IP is a stale
   or null slot instead of the return address. It also reads `m_IPStack[8]` when the depth is 8.
 - **Local string arrays are indexed with the wrong stride by the parser.** `GetArrayLocal` defaults to
-  `std::min<size_t>(1, sizeof(T) / 4)` (`RunningScript.h:364`), which is 1 for 8- and 16-byte strings; it should be
-  2/4 like `GetArrayGlobal`'s `std::max` (line 376). Affects `Read<std::string_view / scm::StringRef / const char*>`
+  `std::min<size_t>(1, sizeof(T) / 4)`, which is 1 for 8- and 16-byte strings; it should be
+  2/4 like `GetArrayGlobal`'s `std::max`. Affects `Read<std::string_view / scm::StringRef / const char*>`
   of `SCRIPT_PARAM_LOCAL_SHORT/LONG_STRING_ARRAY`. The legacy path (`GetPointerToLocalArrayElement` with an explicit
   size) is fine.
-- **`ReadTextLabelFromScript`, global long-string array** (`RunningScript.cpp:790`): `strncpy_s(buffer,
+- **`ReadTextLabelFromScript`, global long-string array case**: `strncpy_s(buffer,
   SHORT_STRING_SIZE, src, min(len, 16))` declares an 8-byte destination for up to 16 characters; a long label trips the
   CRT invalid-parameter handler.
-- **`SCRIPT_NAME` does not lower-case** (`MissionCommands.cpp:63`): it builds `lowered` and then stores the original
+- **`SCRIPT_NAME` does not lower-case** (`MissionCommands.cpp`): it builds `lowered` and then stores the original
   `name`. The original (case at `0x4846A1`) lower-cases A-Z before `strncpy(m_szName, .., 8)`.
 - **NOP is not "free".** `REGISTER_COMMAND_NOP(cmd, T...)` must read exactly what the original reads, with matching
   operand kinds:
-  - `SAVE_TEXT_LABEL_TO_DEBUG_FILE` (`TextCommands.cpp:366`) reads nothing; the original reads a text label → IP
-    desync. `WRITE_DEBUG` (`UnusedCommands.cpp:265`) and `SAVE_STRING_TO_DEBUG_FILE` (line 180) read a `uint32` where
+  - `SAVE_TEXT_LABEL_TO_DEBUG_FILE` (`TextCommands.cpp`) reads nothing; the original reads a text label → IP
+    desync. `WRITE_DEBUG` and `SAVE_STRING_TO_DEBUG_FILE` (`UnusedCommands.cpp`) read a `uint32` where
     the original reads a text label / 128 raw bytes.
   - Float operands declared as `uint32` (`SET_CHAR_FIRE_DAMAGE_MULTIPLIER`, `WRITE_DEBUG_WITH_FLOAT`, ...) hit the
-    `DebugBreak()` in `ReadArg.hpp:205` if a float literal is passed.
+    `DebugBreak()` in `Read<T>` (`ReadArg.hpp`) if a float literal is passed.
   - Conditions registered as NOP leave `m_CondResult` stale; the original calls `UpdateCompareFlag(false)`
     (`IS_AUDIO_BUILD`, `IS_RECORDING_GOING_ON_FOR_CAR`, `IS_PLAYER_IN_SHORTCUT_TAXI`) or even does real work
     (`IS_PS2_KEYBOARD_KEY_PRESSED`/`_JUST_PRESSED` call `CPCKeyboard::GetKeyDown`).
-  - `SWITCH_RUBBISH` (`UnusedCommands.cpp:234`) calls `CRubbish::SetVisibility` in the original.
+  - `SWITCH_RUBBISH` (NOP in `UnusedCommands.cpp`) calls `CRubbish::SetVisibility` in the original.
   Most of these are debug commands that the shipped `main.scm` never runs, but CLEO scripts can. List them with
   `script_cmd.py list --status nop --original real` (37 rows).
 - **UNIMPLEMENTED with real code** (5): `LINE` (consumes 6 params), `PRINT_STRING_IN_STRING_NOW`,
@@ -410,18 +408,18 @@ switch functions call them with live registers; keep those options when you touc
   `IS_FIRST/SECOND_CAR_COLOUR`) implement opcodes whose PC case is the `OR_INTERRUPT` default: harmless extensions,
   but not vanilla.
 - **Integer literal → `float` parameter is converted, not reinterpreted.** `Read<float>` of
-  `SCRIPT_PARAM_STATIC_INT_*` does a value cast (`ReadArg.hpp:195-200`); the original reads the raw bits of
+  `SCRIPT_PARAM_STATIC_INT_*` does a value cast; the original reads the raw bits of
   `ScriptParams[i]`. Reading a **variable** reinterprets bits in both. The reverse (float literal → integer parameter)
   calls `DebugBreak()`, which also fires in release builds. Declare the parameter type the original uses.
-- **Pascal strings**: the original reads the length byte signed (max 127, comment at `RunningScript.cpp:806`);
-  `Read<scm::StringRef>` reads it unsigned (`ReadArg.hpp:158`). Pascal strings are not null-terminated: use
+- **Pascal strings**: the original reads the length byte signed (max 127, comment in
+  `CRunningScript::ReadTextLabelFromScript`); `Read<scm::StringRef>` reads it unsigned. Pascal strings are not null-terminated: use
   `const char*` if you need a terminator.
 - **`bool` return = compare flag.** A command that stores a 0/1 into a variable must return `int32`, not `bool`.
 - **`const char*` arguments share 16 buffers of 64 bytes**, reset per command. More than 16 string parameters, or a
-  string of 63+ characters, asserts (`ReadArg.hpp:170`).
+  string of 63+ characters, asserts (`ReadArg.hpp`).
 - **`.Reversed = false` stubs are redirected to GTA.** `CScriptsForBrains::StartOrRequestNewStreamedScriptBrain` and
-  `IsObjectWithinBrainActivationRange` have `NOTSA_UNREACHABLE()` bodies (`ScriptsForBrains.cpp:51,62`) and are called
-  from reversed code (`TheScripts.cpp:1556-1561`). This works only because the `_ToGTA` hook sends those calls to the
+  `IsObjectWithinBrainActivationRange` have `NOTSA_UNREACHABLE()` bodies and are called
+  from reversed code (`CTheScripts::ProcessWaitingForScriptBrainArray`). This works only because the `_ToGTA` hook sends those calls to the
   original; implement them before flipping `.Reversed`.
 - **`CTheScripts::Init` does not start the main script**; `StartTestScript` does. Do not "fix" it.
 - **Mission locals vs script locals**: `m_LocalVars` of a mission script are unused (except its timers, which are
@@ -429,11 +427,11 @@ switch functions call them with live registers; keep those options when you touc
   `GetPointerToLocalVariable`, never `m_LocalVars[...]` directly.
 - **Negative jump targets are relative to `m_BaseIP`.** `LoadAndLaunchMissionInternal` and streamed scripts set it; a
   script started with `StartNewScript` alone keeps `m_BaseIP = nullptr`.
-- **CLEO opcodes are not built.** The CMake option `..._WITH_CLEO_COMMANDS` exists (`source/CMakeLists.txt:32`) but
-  nothing defines `NOTSA_WITH_CLEO_SCRIPT_COMMANDS` (TODO at `RunningScript.cpp:26`).
-- `tSCMGlobalVarChunk::ReadVariable` (`SCMChunks.hpp:31`) dereferences the byte value as a pointer (missing `&`).
+- **CLEO opcodes are not built.** The CMake option `GTASA_WITH_CLEO_COMMANDS` exists (`source/CMakeLists.txt`) but
+  nothing defines `NOTSA_WITH_CLEO_SCRIPT_COMMANDS` (TODO next to the `#ifdef` at the top of `RunningScript.cpp`).
+- `tSCMGlobalVarChunk::ReadVariable` (`SCMChunks.hpp`) dereferences the byte value as a pointer (missing `&`).
   Unused today.
-- `CScriptsForBrains::InjectHooks` uses category `"Tasks/TaskTypes"` (`ScriptsForBrains.cpp:7`); look for it there in
+- `CScriptsForBrains::InjectHooks` uses category `"Tasks/TaskTypes"`; look for it there in
   the hooks UI.
 
 ---
@@ -496,8 +494,8 @@ From `idb_coverage.py --class <C>`:
 
 `CRunningScript` stubs, by priority:
 
-1. `ShutdownThisScript` (`0x465AA0`, 347 B): called by every `TERMINATE_THIS_SCRIPT`; a commented draft is already in
-   `RunningScript.cpp:207`.
+1. `ShutdownThisScript` (`0x465AA0`, 347 B): called by every `TERMINATE_THIS_SCRIPT`; a commented draft is already in its
+   body in `RunningScript.cpp`.
 2. The area/locate helpers shared by many opcodes: `LocateCharCommand` (`0x486D80`), `LocateCharCharCommand`
    (`0x4870F0`), `LocateCharCarCommand` (`0x487420`), `LocateCharObjectCommand` (`0x487720`), `LocateCarCommand`
    (`0x487A20`), `LocateObjectCommand` (`0x487D10`), `CharInAreaCheckCommand` (`0x488B50`), `CarInAreaCheckCommand`

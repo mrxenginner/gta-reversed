@@ -10,9 +10,9 @@ switchable bug fix (`notsa::bugfixes`) says otherwise.
 - `docs/ReversingGuide.md` — end-to-end workflow: read the original, write C++, register, **validate against the binary**
 - `docs/BinaryMap.md` — gta_sa.exe layout (game code vs RenderWare/D3DX/CRT), key globals, real coverage of game methods
 - `docs/CodingGuidelines.md` — style and C++ rules (mandatory)
-- `docs/HookRegistration.md` — InjectHooks / InjectHooksMain / `.Reversed = false` rules
+- `docs/HookRegistration.md` — InjectHooks / InjectHooksMain, every `RH_Scoped*` macro, install options (`.Reversed`, `.Locked`, `.Overrides`...), review checklist
 - `docs/ai/TipsAndTricks.md` — engine quirks, IDA idioms, known wrong addresses, recovered enums
-- `docs/ScriptCommandReversing.md` — script command argument conventions
+- `docs/ScriptCommandReversing.md` — script command handlers: registration, argument/return types
 - `docs/subsystems/README.md` — per-subsystem guides (world/streaming/pools, peds, tasks, events, vehicles, camera, rendering, audio, scripts, collision/physics, animation, pathfinding, weapons, HUD/frontend, save/load); most `source/game_sa/` subfolders also have a short `CLAUDE.md` that loads automatically
 - `docs/ai/CaseStudies.md` — 10 real reversal mistakes (branching, operation order, x87, type vs sub-type, VMT, recursion...) and their lessons
 - `docs/Glossary.md` — project, compiler, engine and script terms
@@ -40,12 +40,12 @@ switchable bug fix (`notsa::bugfixes`) says otherwise.
 ## Scripts (run with `python <path>`; all under `.claude/skills/*/scripts/`)
 | Script | What it gives you |
 |---|---|
-| `find-reversing-targets/idb_coverage.py [--classes \| --class C \| --missing \| --untouched]` | real coverage of game methods by status (REVERSED/DORMANT/STUB/NOHOOK/KNOWN/MISSING) |
+| `find-reversing-targets/idb_coverage.py [--classes N \| --class C \| --missing N \| --untouched N]` | real coverage of game methods by status (REVERSED/DORMANT/STUB/NOHOOK/KNOWN/MISSING) |
 | `find-reversing-targets/class_dossier.py <Class> [--ida]` | everything about one class: methods + status + size, vtable, fields, callers, files |
 | `find-reversing-targets/struct_check.py [--type T] [--export]` | repo `VALIDATE_SIZE/OFFSET` vs IDB structs |
 | `find-reversing-targets/repo_to_idb.py [--apply]` | push repo names/addresses into the IDB (dry run by default; never save the IDB without asking) |
 | `reverse-script-command/script_cmd.py list\|locate\|stats` | script-command status vs original handler, pseudocode of a case |
-| `review-reversal/check_hooks.py [files \| --base origin/master]` | hook registration errors (also runs automatically after every Edit/Write via the PostToolUse hook) |
+| `review-reversal/check_hooks.py [files \| --base origin/master \| --all]` | hook registration errors (also runs automatically after every Edit/Write via the PostToolUse hook) |
 | `review-reversal/add_missing_hooks.py [--apply]` | registers `plugin::Call` stubs that have no hook as `.Reversed = false` |
 | `validate-against-binary/asm_validate.py <Cls::Fn\|0xADDR> [--dump]` | static compare of our C++ against the original asm |
 | `find-reversing-targets/catalogues.py [--only ...]` | regenerates `docs/ai/{Vtables,Globals,Enums,FrameCallGraph}.md` (needs `ida_rpc.py export` + `export-xrefs`) |
@@ -61,18 +61,22 @@ runs one `gta-reverser` per function in its own worktree/branch, then `gta-rever
   be `.Reversed = false`, otherwise it recurses forever.
 - Globals: `static inline auto& ms_X = StaticRef<T>(0xADDR);` — never guess addresses.
 - Layout: keep `VALIDATE_SIZE` / `VALIDATE_OFFSET` valid.
-- Build: `cmake --build build --config Debug --target gta_reversed` (configure with `python setup.py`).
+- Build: `cmake --build build --config Debug --target gta_reversed` (configure with `python setup.py`; re-run it after
+  adding files, sources are globbed).
 - Validation against the original code: `asm_validate.py` (exe path in `.claude/gtasa_exe_path.txt`; `--dump` gives
   annotated disassembly without IDA) and differential tests in `source/difftests/` (F7 → Tools → Diff tests, or
-  `--run-difftests[=filter] --difftests-exit`; the report goes to `<game>/scripts/difftests.log` because the ASI loader
-  sets the working dir to `scripts/`). `PI`/`TWO_PI` in `common.h` are rounded (`3.14159f`/`6.28318f`) and are NOT the game's
-  constants (`3.1415927f`/`6.2831855f`, 11 ULP apart): where the original loads the exact value, write it as a literal. The original keeps x87 extended precision: accumulate loops in `double`, compare float
-  results with ULP tolerance (`CompareFloats`).
+  `--run-difftests[=filter] --difftests-exit`). The ASI loader sets the working dir to `scripts/`, so the report
+  (`difftests.log`), `logs/log.log` and `gta-reversed.ini` live in `<game>/scripts/`.
+- Floats: `PI`/`TWO_PI`/`FRAC_*` in `common.h` are the exact `std::numbers` floats (`3.1415927f`/`6.2831855f`). Where
+  the original loads a rounded value (e.g. `6.28318f` in `FxEmitter_c::CreateParticle`), write that literal with a
+  `// NOTE:`. The original keeps x87 extended precision: accumulate loops in `double`, compare float results with ULP
+  tolerance (`CompareFloats`).
 - IDA Pro is reachable through the `ida-pro-mcp` plugin (`mcp__plugin_ida-pro-mcp_idalib__*`); open the user's
   IDB (`gta_sa.i64` of the 1.0 US compact exe) with `idb_open` if `idb_list` is empty. For bulk
   queries use `.claude/skills/find-reversing-targets/scripts/ida_rpc.py` (`export` -> `.claude/cache/idb_export.json`).
 - Only the game's own code is reversed function-by-function (region `0x401000-0x748000`); RenderWare, D3DX, libpng
   and the CRT are called, not reversed.
-- `InjectHooksMain` runs under the loader lock: an exception there used to hang the game at the console (now caught in
-  `dllmain.cpp`). `RH_ScopedVMTInstall` throws if the address is not in the class vtable; `check_hooks.py` checks that.
+- `InjectHooksMain` runs under the loader lock: nothing on that path may throw or wait (an escaping exception is caught
+  in `dllmain.cpp`, reported and the game terminates). `RH_ScopedVMTInstall` throws if the address is not in the class
+  vtable; `check_hooks.py` checks that.
 - Don't change unrelated code; one subject per PR.

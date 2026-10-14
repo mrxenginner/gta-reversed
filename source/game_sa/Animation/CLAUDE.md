@@ -1,34 +1,35 @@
 # Animation/ — anim blend system (CAnimManager and friends)
 
-Full guide: [../../../docs/subsystems/Animation.md](../../../docs/subsystems/Animation.md). `README.md` in this folder explains the object model, and
-[../../../docs/subsystems/Peds.md](../../../docs/subsystems/Peds.md) §6 "Animation hookup" shows how peds use it.
-The clump-level API is the RpAnimBlend plugin in `../Plugins/RpAnimBlendPlugin/RpAnimBlend.h`
-(`RpAnimBlendClumpGetAssociation`, `RpAnimBlendClumpGetData`, ...).
+Guide: [../../../docs/subsystems/Animation.md](../../../docs/subsystems/Animation.md). Object model in short:
+`README.md` here. How peds use it: [Peds.md](../../../docs/subsystems/Peds.md) §4 "Animation hookup".
 
-## Object model (sizes from `VALIDATE_SIZE`)
-- `CAnimBlendHierarchy` (0x18) — one animation, owns `CAnimBlendSequence`s (0xC, one per bone, key frames from
-  `AnimSequenceFrames.h`, compressed or not). Stored in `CAnimManager::ms_aAnimations` (2500), freed only when the IFP
-  block is streamed out.
-- `CAnimBlock` (0x20) — one IFP block (`ms_aAnimBlocks`), ref-counted (`AddAnimBlockRef` / `RemoveAnimBlockRef`).
-- `CAnimBlendAssocGroup` (0x14) — maps `AnimationId` / names to `CAnimBlendStaticAssociation`s (0x14, vtable `0x85C6CC`).
-- `CAnimBlendAssociation` (0x3C, has a virtual destructor) — a running anim on a clump, with one `CAnimBlendNode`
-  (0x18) per bone. `CAnimBlendClumpData` (0x14) is the per-clump list; `AnimBlendFrameData` (0x18) per frame.
-- Enums: `AnimationId`, `AssocGroupId` in `../Enums/AnimationEnums.h`; group definitions in `AnimAssocDefinitions.cpp`
-  (`ms_aAnimAssocDefinitions`, `0x8AA5A8`).
+## Layout (sizes from `VALIDATE_SIZE`)
+- `AnimManager.*` — `CAnimManager` (static): `ms_aAnimations` (2500 `CAnimBlendHierarchy`, `0xB4EA40`),
+  `ms_aAnimBlocks` (`0xB5D4A0`), `ms_aAnimAssocDefinitions` (`0x8AA5A8`).
+- `CAnimBlendHierarchy` (0x18) — one animation; owns one `CAnimBlendSequence` (0xC) per bone, key frames in
+  `AnimSequenceFrames.h` (compressed or not).
+- `CAnimBlock` (0x20) — one IFP block, ref-counted (`AddAnimBlockRef` / `RemoveAnimBlockRef`).
+- `CAnimBlendAssocGroup` (0x14) — maps `AnimationId`s / names to `CAnimBlendStaticAssociation`s (0x14, vtable `0x85C6CC`).
+- `CAnimBlendAssociation` (0x3C, virtual destructor) — a running anim on a clump, one `CAnimBlendNode` (0x18) per bone.
+  `CAnimBlendClumpData` (0x14) is the per-clump list; `AnimBlendFrameData` (0x18) per frame.
+- Clump-level API: `../Plugins/RpAnimBlendPlugin/RpAnimBlend.h` (`RpAnimBlendClumpGetAssociation`, `RpAnimBlendClumpGetData`).
+- Enums: `AnimationId`, `AssocGroupId` in `../Enums/AnimationEnums.h`; `eAnimationFlags` in `AnimBlendAssociation.h`.
 
 ## Conventions
-- Hooks: `RH_ScopedClass` + category `"Animation"`; overloaded constructors/`Init` use
-  `RH_ScopedOverloadedInstall(Constructor0/1/2/3 | Init, "suffix", addr, signature)` (see `AnimBlendAssociation.cpp`).
-- Start anims via `CAnimManager::AddAnimation`, `BlendAnimation`, `AddAnimationAndSync`; look them up with
+- Hooks: `RH_ScopedClass` (or `RH_ScopedVirtualClass` for the static association) + category `"Animation"`.
+  Overloaded constructors / `Init` use `RH_ScopedOverloadedInstall` (see `AnimBlendAssociation.cpp`).
+- Start anims with `CAnimManager::AddAnimation`, `BlendAnimation`, `AddAnimationAndSync`; find them with
   `RpAnimBlendClumpGetAssociation(clump, animId)`.
-- Use the flag helpers (`IsPlaying()`, `IsLooped()`, `IsPartial()`, ...) and `eAnimationFlags` names instead of raw
-  masks. Several flag names are known-uncertain (comments in `AnimBlendAssociation.h`); don't rename in a reversal PR.
+- Use the flag helpers (`IsPlaying()`, `IsLooped()`, `IsPartial()`, ...) and `eAnimationFlags` names, not raw masks.
+  Some flag names are known to be doubtful (comments in the enum); don't rename them in a reversal PR.
 
 ## Pitfalls
-- Callbacks: `SetFinishCallback` / `SetDeleteCallback(fn, data)` store a raw `void*` (usually a task). Whoever sets one
-  must reset it to `CDefaultAnimCallback::DefaultAnimCB` (`SetDefaultFinishCallback()`) before the owner dies.
-- `ANIMATION_IS_BLEND_AUTO_REMOVE` deletes the association once faded out: don't keep pointers to it across frames
+- `AnimAssocDefinitions.cpp` defines `ms_aAnimAssocDefinitionsX`, a NOTSA copy of the table that nothing uses;
+  game code reads the `StaticRef` `ms_aAnimAssocDefinitions`.
+- `SetFinishCallback` / `SetDeleteCallback(fn, data)` store a raw `void*` (usually a task). The owner must reset it
+  (`SetDefaultFinishCallback()`, i.e. `CDefaultAnimCallback::DefaultAnimCB`) before it dies.
+- `ANIMATION_IS_BLEND_AUTO_REMOVE` deletes the association once faded out: don't keep a pointer to it across frames
   without a delete callback.
-- `ANIMATION_FACIAL` associations are never destroyed.
-- Anims in a block are only valid while the block is loaded; streaming code checks `GetNumRefsToAnimBlock`.
-- Bone indices: use `eBoneTag` / `ePedNode`, not `AnimationId` (some older ped code mixes them).
+- `ANIMATION_FACIAL` associations are never destroyed (treated as indestructible by `BlendAnimation`).
+- Hierarchies are valid only while their block is loaded; streaming code checks `GetNumRefsToAnimBlock`.
+- Bones: use `eBoneTag` / `ePedNode`, not `AnimationId` (some older ped code mixes them).

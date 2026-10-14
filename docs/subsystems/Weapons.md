@@ -4,7 +4,7 @@ How a shot happens: weapon state and ammo (`CWeapon`), weapon data (`CWeaponInfo
 (slots, skills, aiming tasks), the four ways a weapon fires (instant hit, projectile, area effect, sniper bullet),
 the effects that follow (bullet traces, explosions, fires, crosshairs), and how damage reaches a ped through
 `CEventDamage` and `CPedDamageResponseCalculator`. Ped basics are in [Peds.md](Peds.md), the event queue in
-[Events.md](Events.md), the task tree in [Tasks.md](Tasks.md), and vehicle damage in [Vehicles.md](Vehicles.md) §5.
+[Events.md](Events.md), the task tree in [Tasks.md](Tasks.md), and vehicle damage in [Vehicles.md](Vehicles.md) ("Damage").
 
 All paths are relative to the repo root. Addresses are the ones written in the repo (`RH_*Install` or `// 0xADDR`)
 and were checked against the IDB.
@@ -14,8 +14,8 @@ and were checked against the IDB.
 ## 1. Overview
 
 ```
-CPed::m_aWeapons[13]  (CWeapon, 0x1C each)       source/game_sa/Entity/Ped/Ped.h:312
-  index = eWeaponSlot = CWeaponInfo::m_nSlot      source/game_sa/Weapon.h:27
+CPed::m_aWeapons[13]  (CWeapon, 0x1C each)       source/game_sa/Entity/Ped/Ped.h
+  index = eWeaponSlot = CWeaponInfo::m_nSlot      source/game_sa/Weapon.h
   m_nActiveWeaponSlot -> GetActiveWeapon()
         │
         │  task asks to fire: CTaskSimpleUseGun::FireGun, CTaskSimpleGangDriveBy::FireGun,
@@ -46,14 +46,14 @@ Melee does **not** go through `CWeapon::Fire`. Fists and melee weapons are handl
 
 | Class / file | Size | Role |
 |---|---|---|
-| `CWeapon` (`source/game_sa/Weapon.h/.cpp`) | `0x1C` | One weapon in a ped slot: `m_Type`, `m_State` (`eWeaponState`: READY, FIRING, RELOADING, OUT_OF_AMMO, MELEE_MADECONTACT), `m_AmmoInClip`, `m_TotalAmmo`, `m_TimeForNextShotMs`, `m_IsFirstPersonWeaponModeSelected`, `m_DontPlaceInHand` (goggles), `m_FxSystem` (flame/spray/extinguisher particles). `Weapon.h:153-163` |
-| `CWeaponInfo` (`WeaponInfo.h/.cpp`) | `0x70` | Static data per weapon and skill level. `aWeaponInfo[80]` at `0xC8AAB8` (`WeaponInfo.h:33`). Aim offsets `ms_WeaponAimOffsets` at `0xC8A8A8` |
+| `CWeapon` (`source/game_sa/Weapon.h/.cpp`) | `0x1C` | One weapon in a ped slot: `m_Type`, `m_State` (`eWeaponState`: READY, FIRING, RELOADING, OUT_OF_AMMO, MELEE_MADECONTACT), `m_AmmoInClip`, `m_TotalAmmo`, `m_TimeForNextShotMs`, `m_IsFirstPersonWeaponModeSelected`, `m_DontPlaceInHand` (goggles), `m_FxSystem` (flame/spray/extinguisher particles) |
+| `CWeaponInfo` (`WeaponInfo.h/.cpp`) | `0x70` | Static data per weapon and skill level. `aWeaponInfo[80]` at `0xC8AAB8`. Aim offsets `ms_WeaponAimOffsets` at `0xC8A8A8` |
 | `CWeaponModelInfo` (`Models/WeaponModelInfo.h`) | | Model info of a weapon model; `SetWeaponInfo(type)` is called while `weapon.dat` loads |
 | `CProjectileInfo` (`ProjectileInfo.h/.cpp`) | `0x24` | 32 live projectiles: `gaProjectileInfo` `0xC891A8` (info) + `ms_apProjectile` `0xC89110` (the `CProjectile` objects). Almost all stubs |
-| `CProjectile` (`Entity/Object/Projectile.h`) | `0x17C` | `CObject` subclass used for the projectile entity. Only its constructor `0x5A4030` exists |
+| `CProjectile` (`Entity/Object/Projectile.h`) | `0x17C` | `CObject` subclass used for the projectile entity. Only the constructor has a C++ body, and it is not hooked (IDB `0x5A4030`) |
 | `CBulletInfo` (`BulletInfo.h/.cpp`) | `0x2C` | 8 moving bullets (`aBulletInfos`, `0xC88740`). Only `FireSniper` creates them |
 | `CBulletTraces` / `CBulletTrace` (`BulletTraces.h`, `BulletTrace.h`) | `0x2C` per trace | 16 tracer lines (`aTraces`, `0xC7C748`), updated and drawn by `CSpecialFX` |
-| `CShotInfo` (`ShotInfo.h/.cpp`) | `0x2C` | 100 slow "shots" for area-effect weapons (`aShotInfos`, `0xC89690`, `ShotInfo.cpp:6`) |
+| `CShotInfo` (`ShotInfo.h/.cpp`) | `0x2C` | 100 slow "shots" for area-effect weapons (`aShotInfos`, `0xC89690`) |
 | `CExplosion` (`Explosion.h/.cpp`) | `0x7C` | 16 explosions (`aExplosions`, `0xC88950`), `eExplosionType` 0..12 |
 | `CFire` / `CFireManager` (`Fire.h`, `FireManager.h`) | `0x28` / `0x964` | 60 fires in `gFireManager` (`0xB71F80`) |
 | `CCreepingFire` (`CreepingFire.h`) | | 32 x 32 grid of fire state (`m_aFireStatus`, `0xB71B68`) for spreading ground fire |
@@ -63,25 +63,26 @@ Melee does **not** go through `CWeapon::Fire`. Fists and melee weapons are handl
 
 Enums: `eWeaponType` (`source/game_sa/Enums/eWeaponType.h`: real weapons 0..46, `WEAPON_LAST_WEAPON = 47`, then
 damage-only types `WEAPON_ARMOUR` 48 .. `WEAPON_FLARE` 58), `eWeaponFire` (MELEE, INSTANT_HIT, PROJECTILE,
-AREA_EFFECT, CAMERA, USE), `eWeaponSkill` (POOR, STD, PRO, COP), `eWeaponSlot` (`Weapon.h:27`, 13 slots). The
-weapon flag bits are listed in `docs/ai/TipsAndTricks.md` ("Weapons & Melee Combat").
+AREA_EFFECT, CAMERA, USE), `eWeaponSkill` (POOR, STD, PRO, COP), `eWeaponSlot` (`Weapon.h`, 13 slots). The
+weapon flag bits (`CWeaponInfo::m_nFlags`) are in `source/game_sa/Enums/eWeaponFlags.h`; bits `0x40` and `0x80` are
+unknown.
 
 ---
 
 ## 3. Weapon data (`CWeaponInfo`, `weapon.dat`)
 
 `CWeaponInfo::Initialise` (`0x5BF750`) clears all 80 entries and the aim offsets, then `LoadWeaponData`
-(`0x5BE670`, `WeaponInfo.cpp:159`) parses `DATA\WEAPON.DAT` until `ENDWEAPONDATA`. The first character of a line
+(`0x5BE670`) parses `DATA\WEAPON.DAT` until `ENDWEAPONDATA`. The first character of a line
 selects the record:
 
 | Prefix | Record | Fields |
 |---|---|---|
 | `$` | gun | name, fire type, target range, weapon range, model 1/2, slot, anim group, clip size, damage, fire offset, **skill level**, required stat, accuracy, move speed, two anim loops (start/end/fire, in frames of 1/30 s), breakout time, flags (hex), and optional speed, radius, lifespan, spread |
 | `%` | aim offsets | anim group, aim X/Z, duck X/Z, reload sound times A/B and crouched A/B |
-| `£` (byte 163) | melee | `WeaponInfo.cpp:294` |
+| `£` (byte 163) | melee | see the `£` branch of `LoadWeaponData` |
 
 Skill levels: the 11 weapons `WEAPON_PISTOL` .. `WEAPON_TEC9` (`TypeHasSkillStats`) have POOR, STD, PRO and COP
-entries; every other weapon only has STD. `GetWeaponInfoIndex` (`WeaponInfo.cpp:111`) gives the layout:
+entries; every other weapon only has STD. `GetWeaponInfoIndex` gives the layout:
 
 ```
 index  0..46   STD entry of every weapon (index = weapon type)
@@ -107,25 +108,25 @@ Other helpers: `GetWeaponReloadTime` (`0x743D70`: 1000 ms, or 2000 for twin pist
 ### 4.1 Global update
 
 ```
-CGame::Process                                   source/game_sa/Game.cpp
- ├─ CCreepingFire::Update()          :755       0x539CE0
- ├─ gFireManager.Update()            :757       0x53AF00   CFire::ProcessFire for each active fire
- ├─ CWeapon::UpdateWeapons()         :766       0x73A360   Weapon.cpp:1117
+CGame::Process
+ ├─ CCreepingFire::Update()                     0x539CE0
+ ├─ gFireManager.Update()                       0x53AF00   CFire::ProcessFire for each active fire
+ ├─ CWeapon::UpdateWeapons()                    0x73A360
  │   ├─ CShotInfo::Update            0x739E60   move area-effect shots, set peds/cars on fire, spray paint, extinguish
  │   ├─ CExplosion::Update           0x737620   damage, fuel jets, fire spread, sounds
  │   ├─ CProjectileInfo::Update      0x738B20   STUB: move projectiles, fuses, heat seeking, remove/explode
  │   └─ CBulletInfo::Update          0x7360D0   move sniper bullets, line-of-sight hit test
- └─ CWorld::Process                  :781       peds and vehicles (see 4.2)
+ └─ CWorld::Process                             peds and vehicles (see 4.2)
        ...
-CSpecialFX::Update -> CBulletTraces::Update      SpecialFX.cpp:66
-RenderEffects -> CWeaponEffects::Render (0x742CF0, STUB, source/app/app_game.cpp:113)
-CSpecialFX::Render -> CBulletTraces::Render      SpecialFX.cpp:119
+CSpecialFX::Update -> CBulletTraces::Update
+RenderEffects -> CWeaponEffects::Render          0x742CF0, STUB (source/app/app_game.cpp)
+CSpecialFX::Render -> CBulletTraces::Render
 ```
 
 ### 4.2 Per ped
 
-- `CWeapon::Update(owner)` (`0x73DB40`, `Weapon.cpp:1024`) runs once per frame for the active weapon, from
-  `CPlayerPed::ProcessControl` (`PlayerPed.cpp:1143`), `CCivilianPed`, `CCopPed` and `CEmergencyPed`
+- `CWeapon::Update(owner)` (`0x73DB40`) runs once per frame for the active weapon, from
+  `CPlayerPed::ProcessControl`, `CCivilianPed`, `CCopPed` and `CEmergencyPed`
   `ProcessControl`, and also from `CTaskSimpleGangDriveBy::ProcessPed`, `CVehicle::DoDriveByShootings` and the
   two-player camera. It is the state machine:
   - FIRING: play shotgun pump sounds; when `m_TimeForNextShotMs` passes go to READY (or OUT_OF_AMMO when the
@@ -139,16 +140,16 @@ CSpecialFX::Render -> CBulletTraces::Render      SpecialFX.cpp:119
 
 | Caller | Address | Status |
 |---|---|---|
-| `CTaskSimpleUseGun::FireGun` (`Tasks/TaskTypes/TaskSimpleUseGun.cpp:82`) | `0x61EB10` | reversed. Passes `m_TargetEntity` and `m_TargetPos` (null if X or Y is 0) |
+| `CTaskSimpleUseGun::FireGun` | `0x61EB10` | reversed. Passes `m_TargetEntity` and `m_TargetPos` (null if X or Y is 0) |
 | `CTaskSimpleUseGun::ProcessPed` | `0x62A380` | STUB (3 KB): aiming, burst, reload commands |
 | `CTaskSimpleGangDriveBy::FireGun` | `0x627CC0` | not reversed |
-| `CTaskSimpleThrowProjectile::ProcessPed` (`TaskSimpleThrowProjectile.cpp:161`) | `0x62AF50` | reversed |
-| `CTaskSimplePlayerOnFoot::ProcessPlayerWeapon` (`TaskSimplePlayerOnFoot.cpp:331`, `:427`) | `0x6859A0` | detonator and camera fire directly |
+| `CTaskSimpleThrowProjectile::ProcessPed` | `0x62AF50` | reversed |
+| `CTaskSimplePlayerOnFoot::ProcessPlayerWeapon` | `0x6859A0` | detonator and camera fire directly |
 
 Aiming for the player: `CPlayerPed::FindWeaponLockOnTarget` (`0x60DC50`), `FindNextWeaponLockOnTarget`
 (`0x60E530`) and `Compute3rdPersonMouseTarget` (`0x60B650`) are STUBs. The lock-on target is
 `CPed::m_pTargetedObject`, and the marker is drawn by `CWeaponEffects::MarkTarget` (`0x742BF0`, called from
-`Cam.cpp:1118`). `CPed::SetAimFlag`/`ClearAimFlag` are reversed. Auto-aim helpers in `CWeapon`
+`CCam` and `CPlayerPed`). `CPed::SetAimFlag`/`ClearAimFlag` are reversed. Auto-aim helpers in `CWeapon`
 (`DoDoomAiming` reversed; `DoTankDoomAiming`, `DoDriveByAutoAiming`, `FindNearestTargetEntityWithScreenCoors` STUB)
 change the end point of a shot.
 
@@ -156,7 +157,7 @@ change the end point of a shot.
 
 ## 5. Firing in detail
 
-### 5.1 `CWeapon::Fire(firedBy, startPosn, barrelPosn, targetEnt, targetPosn, altPosn)` (`0x742300`, `Weapon.cpp:1649`)
+### 5.1 `CWeapon::Fire(firedBy, startPosn, barrelPosn, targetEnt, targetPosn, altPosn)` (`0x742300`)
 
 1. Weapon info for the shooter's skill. If `startPosn` is null, use `(0, 0, 0.6)` transformed by the shooter's matrix
    for both start and barrel. In first-person weapon mode, move the effect position 0.15 m sideways.
@@ -191,7 +192,7 @@ change the end point of a shot.
 and accuracy, calls `CWeapon::ProcessLineOfSight` (`0x73B300`: birds and oil fires react, then
 `CWorld::ProcessLineOfSight`), `CheckForShootingVehicleOccupant` (STUB), and for shotguns `SetUpPelletCol`
 (`0x73C710`, reversed) with `ms_PelletTestCol` (`0xC8A7DC`). Every hit goes to the reversed **`DoBulletImpact`**
-(`0x73B550`, `Weapon.cpp:479`):
+(`0x73B550`):
 
 - player shot: report `CRIME_FIRE_WEAPON`, update the hit and skill stats (`CStats::UpdateStatsWhenWeaponHit`) when
   the target is a valid enemy, a damageable car or a breakable object;
@@ -206,12 +207,12 @@ and accuracy, calls `CWeapon::ProcessLineOfSight` (`0x73B300`: birds and oil fir
   * damage` for negative `incrementalHit`; then blood Fx;
 - player: pad shake.
 
-`FireOneInstantHitRound` (`0x73AF00`, `Weapon.cpp:1959`) is a simpler version used by `CVehicle::FireFixedMachineGuns`, `CHeli::ProcessControl` and a script command: point light,
+`FireOneInstantHitRound` (`0x73AF00`) is a simpler version used by `CVehicle::FireFixedMachineGuns`, `CHeli::ProcessControl` and a script command: point light,
 line of sight, tracer, and damage to the ped or vehicle that was hit.
 
 ### 5.3 Projectiles
 
-`FireProjectile` (`0x741360`, reversed, `Weapon.cpp:1399`):
+`FireProjectile` (`0x741360`, reversed):
 
 - Rocket launchers: the player must be in a scoped camera mode. The projectile starts 1 m along the camera front
   (player) or the entity forward. With `RLAUNCHER_HS`, the player gets a homing target only when
@@ -235,12 +236,12 @@ heat-seeking rockets (`EvaluateTargetForHeatSeekingMissile`, `0x73E560`), makes 
 
 ### 5.4 Sniper bullets (`CBulletInfo`)
 
-`FireSniper` (`0x73AAC0`, reversed, `Weapon.cpp:279`) does not trace instantly. It adds a `CBulletInfo` at the camera
+`FireSniper` (`0x73AAC0`, reversed) does not trace instantly. It adds a `CBulletInfo` at the camera
 source with velocity `front * 16` (`AddBullet`, `0x736010`, lifetime 1000 ms), shakes the pad and camera, reports the
 crime, and adds `CEventGunShot` and `CEventGunShotWhizzedBy` to the global event group. It also cycles
 `CCoronas::MoonSize` when the shot points at the moon.
 
-`CBulletInfo::Update` (`0x7360D0`, `BulletInfo.cpp:63`) moves each bullet by `velocity * timeStep / 2` and tests the
+`CBulletInfo::Update` (`0x7360D0`) moves each bullet by `velocity * timeStep / 2` and tests the
 segment with `CWorld::ProcessLineOfSight` (including dead peds, tyres and bikers). Peds get `GenerateDamageEvent`
 plus blood, vehicles get `InflictDamage` or a tyre burst, objects get damage or a push, buildings record the model.
 For the sniper rifle it also reports the impact sound and passes the segment to `CHeli::TestSniperCollision`
@@ -248,23 +249,23 @@ For the sniper rifle it also reports the impact sound and passes the segment to 
 
 ### 5.5 Area effect (`CShotInfo`)
 
-`FireAreaEffect` (`0x73E800`, `Weapon.cpp:1259`) works out the shot direction (towards the target, along the
+`FireAreaEffect` (`0x73E800`) works out the shot direction (towards the target, along the
 3rd-person mouse camera for the player, or along the heading tilted by the player's look pitch), calls
-`CShotInfo::AddShot` (`0x739C30`, `ShotInfo.cpp:36`), then `DoWeaponEffect` (`0x73E690`), which creates or moves the
+`CShotInfo::AddShot` (`0x739C30`), then `DoWeaponEffect` (`0x73E690`), which creates or moves the
 "flamethrower" / "extinguisher" / "spraycan" particle system in `m_FxSystem`. The flamethrower also starts creeping
 fires about one shot in three, and every call reports `CRIME_FIRE_WEAPON`. A shot is a point that travels
 `m_Speed` per frame (randomised by `RandTable` when `bRandSpeed`, spread by `m_fSpread`) and lives `m_fLifespan`.
-`CShotInfo::Update` (`ShotInfo.cpp:80`) checks peds and cars near each shot: the flamethrower sets them on fire
+`CShotInfo::Update` (`0x739E60`) checks peds and cars near each shot: the flamethrower sets them on fire
 (`gFireManager.StartFire`) and damages them, the spraycan calls `CWorld::SprayPaintWorld` (tags), and the extinguisher
 calls `gFireManager.ExtinguishPointWithWater`. `GetFlameThrowerShotPosn` (`0x739DE0`) is used by the audio.
 
 ### 5.6 Explosions and fire
 
-`CExplosion::AddExplosion(victim, creator, type, pos, lifetime, usesSound, cameraShake, invisible)` (`0x736A50`,
-`Explosion.cpp:150`) takes a free slot, sets radius, propagation rate, expiry and damage percentage per type, plays
+`CExplosion::AddExplosion(victim, creator, type, pos, lifetime, usesSound, cameraShake, invisible)` (`0x736A50`)
+takes a free slot, sets radius, propagation rate, expiry and damage percentage per type, plays
 Fx and sound, shakes the camera and pads, and calls `CWorld::TriggerExplosion` (`0x56B790`), which runs
 `TriggerExplosionSectorList` (`0x567750`) over the nearby sectors: peds get damage events and are knocked over,
-vehicles and objects are damaged and pushed, bomb timers are processed. `CExplosion::Update` (`Explosion.cpp:416`)
+vehicles and objects are damaged and pushed, bomb timers are processed. `CExplosion::Update` (`0x737620`)
 runs `TriggerExplosion` for delayed explosions (non-zero `lifetime`) when their timer ends, grows the radius by
 `m_fPropagationRate`, adds point lights, sets peds, the world and cars on fire for molotovs
 (`CWorld::SetPedsOnFire`/`SetWorldOnFire`/`SetCarsOnFire`), adds random secondary rocket explosions to aircraft
@@ -273,8 +274,8 @@ explosions, and lets car and boat explosions start creeping fires (`CCreepingFir
 
 `CFireManager` (all 24 functions reversed): `StartFire(pos, ...)` (`0x539F00`), `StartFire(entity, creator, ...)`
 (`0x53A050`) for burning peds and cars, `StartScriptFire` (`0x53A270`), `ExtinguishPoint(WithWater)`,
-`FindNearestFire`, `GetNextFreeFire` (may extinguish an old fire). `Update` (`0x53AF00`, `FireManager.cpp:363`)
-calls `CFire::ProcessFire` (`0x53A570`, `Fire.cpp:248`). A fire follows the entity it burns, damages a burning
+`FindNearestFire`, `GetNextFreeFire` (may extinguish an old fire). `Update` (`0x53AF00`)
+calls `CFire::ProcessFire` (`0x53A570`). A fire follows the entity it burns, damages a burning
 vehicle (`InflictDamage` with `WEAPON_FLAMETHROWER`), sets the player and nearby vehicles on fire, sometimes spreads
 through `CCreepingFire` while it has generations left (`m_NumGenerationsAllowed`), merges with small fires next to
 it, and goes out when `m_TimeToBurn` passes.
@@ -282,7 +283,7 @@ it, and goes out when `m_TimeToBurn` passes.
 ### 5.7 Damage to peds
 
 ```
-CWeapon::GenerateDamageEvent(victim, creator, type, damage, piece, direction)   0x73A530, Weapon.cpp:158
+CWeapon::GenerateDamageEvent(victim, creator, type, damage, piece, direction)   0x73A530
  ├─ CPedDamageResponseCalculator calc{creator, damage, type, piece, false}      0x4AD3F0
  ├─ CEventDamage event{creator, now, type, piece, direction, false, victim->bInVehicle}   0x4AD830
  ├─ dead victim already in TASK_SIMPLE_DEAD: play the floor-hit anim, done
@@ -295,7 +296,7 @@ CWeapon::GenerateDamageEvent(victim, creator, type, damage, piece, direction)   
  ├─ melee weapon (or a falling object) and not in a car: event.ComputeAnim, play the hit anim now
  ├─ stealth mode for the silenced pistol or a stealth kill
  └─ victim->GetEventGroup().Add(event)   (not while doing a gang drive-by)
-         └─ later, in the victim's event handling: CEventHandler::ComputeDamageResponse (0x4C0170, EventHandler.cpp:846)
+         └─ later, in the victim's event handling: CEventHandler::ComputeDamageResponse (0x4C0170)
                         -> picks the response task: dying / falling when the ped was killed or knocked down,
                            otherwise a hit reaction or a reaction to the attacker
 ```
@@ -310,67 +311,68 @@ CWeapon::GenerateDamageEvent(victim, creator, type, damage, piece, direction)   
 - **Damage-only weapon types alias skill entries.** `GetWeaponInfo(type, STD)` returns `aWeaponInfo[type]`, so the
   damage-only types 47..58 (`WEAPON_FALL` = 54, `WEAPON_FLARE` = 58, ...) land on the POOR (47..57) and PRO (58)
   entries of the skill weapons. Code that reads `m_nWeaponFire` for any `eWeaponType` reads unrelated data; the
-  NOTSA guard in `GenerateDamageEvent` (`Weapon.cpp:216`) checks `TypeIsWeapon` first when bug fixes are enabled.
+  NOTSA guard in `GenerateDamageEvent` checks `TypeIsWeapon` first when bug fixes are enabled.
 - **`CWeaponInfo::m_nAmmoClip` is `uint16`**, and the original reads it sign-extended (`(__int16)` in `Fire`).
 - **Melee is not `Fire`.** No original caller passes a melee weapon to `CWeapon::Fire` (the 7 call sites are use-gun,
-  gang drive-by, throw-projectile and player-on-foot). The repo's `default: NOTSA_UNREACHABLE()` (`Weapon.cpp:1841`)
+  gang drive-by, throw-projectile and player-on-foot). The repo's `default: NOTSA_UNREACHABLE()` in `Fire`
   differs from the original, which treats an unknown type as "fired if `targetPosn` is not null". This is latent.
-- **`LaserScopeDot` (`0x73A8D0`) is hooked as reversed but its body is `NOTSA_UNREACHABLE()`** (`Weapon.cpp:273`).
+- **`LaserScopeDot` (`0x73A8D0`) is hooked as reversed but its body is `NOTSA_UNREACHABLE()`**.
   The original has no callers, so this is harmless unless some code starts calling it.
 - **`FireInstantHit` is still original**, but `DoBulletImpact`, `GenerateDamageEvent`, `ProcessLineOfSight` and
   `SetUpPelletCol` that it calls are reversed. A bug in those shows up on every gunshot.
 - **`CEventDamage` is built on the stack** and added by copy (`CEventGroup::Add` clones it). The response
   (`m_damageResponse`) must be computed before the add.
 - **Weapon audio sizes**: `CAEWeaponAudioEntity` is `0xA0` in the repo and `0xA8` in the IDB (see
-  [../BinaryMap.md](../BinaryMap.md) struct table). `CPed::m_weaponAudio` is a `CAEPedWeaponAudioEntity`, so check
-  both before you trust either size.
-- **`CPedDamageResponseCalculator::IsBleedingWeapon` is registered at `0x4B5C2A`** (`PedDamageResponseCalculator.cpp:15`,
-  `.Reversed = false`). That address is inside `ComputeDamageResponse` (`0x4B5AC0`-`0x4B5CEF`); the function was
+  [../BinaryMap.md](../BinaryMap.md) struct table); `CAEPedWeaponAudioEntity` is `0xA8` in the repo.
+  `CPed::m_weaponAudio` is a `CAEPedWeaponAudioEntity`, so check both before you trust either size. The reversed
+  `CAEWeaponAudioEntity` functions are dormant: its `InjectHooks()` is commented out in `InjectHooksMain` (see
+  [Audio.md](Audio.md)).
+- **`CPedDamageResponseCalculator::IsBleedingWeapon` is registered at `0x4B5C2A`** (`.Reversed = false`). That address is inside `ComputeDamageResponse` (`0x4B5AC0`-`0x4B5CEF`); the function was
   inlined and has no address of its own. Turning the hook on in the F7 menu would patch the middle of
   `ComputeDamageResponse`. Remove the registration (keep the body as an inline helper).
-- **(Bug, live) rocket launcher never fires at a target** (`Weapon.cpp:1795-1806`). `CanFire` returns
+- **(Bug, live) rocket launcher never fires at a target** (the `CanFire` lambda in `Fire`). `CanFire` returns
   `dist <= 8 && !firedBy->GetIsTypePed()`. It is only evaluated when `firedByPed` is set, so it is always false, and
   any call with a `targetEnt` or `targetPosn` returns "not fired". The original (`0x7425B3`) refuses only when the
   shooter is a ped, is **not the player**, and the target (entity first, else position) is within 8 m.
   `CTaskSimpleUseGun::FireGun` passes a target, so AI rocket peds are affected.
 - **(Bug, live) wrong next-shot delays in `Fire`**: pistol-class weapons in a vehicle return
-  `delay = (task == TASK_SIMPLE_GANG_DRIVEBY)` (`Weapon.cpp:1753`), the inverse of the original (no delay during a gang
-  drive-by). The flamethrower, spraycan and extinguisher return `delay = true` (`Weapon.cpp:1817-1827`); the original
+  `delay = (task == TASK_SIMPLE_GANG_DRIVEBY)`, the inverse of the original (no delay during a gang
+  drive-by). The flamethrower, spraycan and extinguisher return `delay = true`; the original
   sets no delay (`0x742768`).
-- **(Bug, live) clip refill in `Fire`** (`Weapon.cpp:1688`) uses the skill-specific clip size; the original
+- **(Bug, live) clip refill in `Fire`** uses the skill-specific clip size; the original
   (`0x742446`) uses the STD entry (`GetWeaponInfo(type, STD)->m_nAmmoClip`). `Reload` does use the skill size.
 - **(Bug, live) `FireProjectile`**:
-  - a rocket gets its aim direction only when **both** `targetEntity` and `targetPos` are set (`Weapon.cpp:1495`).
+  - a rocket gets its aim direction only when **both** `targetEntity` and `targetPos` are set.
     The original uses the entity if there is one, else the position;
-  - the "throw blocked" fallback for grenades and satchels (`Weapon.cpp:1521`) adds the projectile when
+  - the "throw blocked" fallback for grenades and satchels (`0x74193B`) adds the projectile when
     `TestSphereAgainstWorld` finds something. The original adds it when the sphere is **free**, and with force 0
     instead of `force`;
   - the heat-seeking target is kept whenever `PickTargetForHeatSeekingMissile` returns one. The original keeps it
     only when it is the same as `m_LastHSMissileTarget` and the button has been held for over 1.5 s (`0x74178B`),
     otherwise it fires a dumb `WEAPON_ROCKET`.
-- **(Bug, live) `CBulletInfo::Update`** (`BulletInfo.cpp:63`):
+- **(Bug, live) `CBulletInfo::Update`**:
   - the original destroys the bullet after any hit (`m_bExists = false`, `0x7360D0`); the repo keeps it flying, so a
     sniper bullet can pass through walls and hit several targets;
-  - `IsSphereVisible(colPoint.m_vecNormal, 1)` (`:140`, `:159`) should test `colPoint.m_vecPoint`;
+  - `IsSphereVisible(colPoint.m_vecNormal, 1)` (twice) should test `colPoint.m_vecPoint`;
   - the original clears `m_pCreator` when it is a ped that is no longer valid (`CPed::IsPointerValid`); the repo does
-    not, and then calls `info.m_pCreator->AsPed()` (`:103`).
+    not, and then calls `info.m_pCreator->AsPed()`.
   - Quirk to keep in mind when fixing: in the original the "hit something" variable is not reset between bullets,
     so after one bullet hits, the later bullets in the same `Update` are destroyed too.
-- **(Bug, live) `CPedDamageResponseCalculator::ComputeWillKillPed`** (`PedDamageResponseCalculator.cpp:124`) checks
+- **(Bug, live) `CPedDamageResponseCalculator::ComputeWillKillPed`** checks
   `CHEAT_NO_ONE_CAN_STOP_US` (index 77). The original (`0x4B3226`, byte `0x96916D` = `m_aCheatsActive + 0x3D`) checks
   index 61, `CHEAT_INFINITE_HEALTH`. If this was meant as a fix (the infinite-health entry has no PC cheat string), it
   should be a `notsa::bugfixes` switch.
 - **IDB/tool traps.** `CWorld::TriggerExplosionSectorList` is hooked as a template
-  (`World.cpp:49`) and shows as MISSING in `idb_coverage.py`. `CVehicle::InflictDamage` (`0x6D7C90`) has a body in
-  `Vehicle.cpp:3318` but its hook is commented out (`Vehicle.cpp:183`), so vehicles still take bullet damage through
+  (`CWorld::InjectHooks`) and shows as MISSING in `idb_coverage.py`. `CVehicle::InflictDamage` (`0x6D7C90`) has a body in
+  `Vehicle.cpp` but its hook is commented out in `CVehicle::InjectHooks`, so vehicles still take bullet damage through
   the original code.
 
 ---
 
 ## 7. What is left
 
-Numbers from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (cache of
-2026-10-12). Bytes are the sizes of functions not yet REVERSED.
+Numbers from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --class <Class>` (checked
+2026-10-14). Bytes are the sizes of functions not yet REVERSED.
 
 | Class | Functions | Reversed | Stub | No-hook | Known | Missing | Bytes left |
 |---|---|---|---|---|---|---|---|
@@ -405,7 +407,7 @@ Outside these classes: `CVehicle::InflictDamage` (KNOWN, 1,581 B, body exists), 
 
 ### Suggested order
 
-1. **Fix the live bugs in `Fire`, `FireProjectile`, `CBulletInfo::Update` and `ComputeWillKillPed`** (§6). They are
+1. **Fix the live bugs in `Fire`, `FireProjectile`, `CBulletInfo::Update` and `ComputeWillKillPed`** (section 6). They are
    small, and each one is visible in game: an AI ped with a rocket launcher, throwing a grenade against a wall,
    a heat-seeking lock that is shorter than 1.5 s, sniping through a wall, gang drive-by fire rate, flamethrower
    fire rate. Also drop the bogus `IsBleedingWeapon` registration.

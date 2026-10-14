@@ -4,7 +4,8 @@ description: >
   Create or complete a whole reversed GTA:SA class/struct in gta-reversed - memory layout with VALIDATE_SIZE /
   VALIDATE_OFFSET, vtable, static members via StaticRef, ctor/dtor wrappers, InjectHooks with every function
   registered, and registration in source/InjectHooksMain.cpp. Use when a class does not exist yet, when a class
-  has many `.Reversed = false` hooks to finish, or when a struct layout must be recovered.
+  has many `.Reversed = false` hooks to finish, or when a struct layout must be recovered. For a single function
+  use reverse-function.
 argument-hint: "<ClassName> [vtable address] [size]"
 ---
 
@@ -12,50 +13,56 @@ argument-hint: "<ClassName> [vtable address] [size]"
 
 Target: `$ARGUMENTS`
 
+Rules: `docs/ReversingRules.md` (layout R13-R15, hooks R8-R12), `docs/HookRegistration.md`, `docs/CodingGuidelines.md`.
+
 ## 1. Inventory
 
-1. Does it exist? `Glob source/game_sa/**/<Name>.h` and `Grep "class <Name>\b|struct <Name>\b"`.
-2. If it exists: `python .claude/skills/find-reversing-targets/scripts/list_unreversed.py --filter <File> --details`
-   to list what is missing, then reverse functions one by one with the **reverse-function** skill
-   (smallest / leaf functions first — they unblock callers).
-3. If it is new: decide the directory by subsystem — it determines the hook category
-   (`source/game_sa/Entity/Ped/...` → `RH_ScopedCategory("Entity/Ped")`; files directly in `source/game_sa`
-   → `RH_ScopedCategoryGlobal()`).
+1. Run `python .claude/skills/find-reversing-targets/scripts/class_dossier.py <Class> --ida` (drop `--ida` without
+   IDA). It prints the repo files, every method with status/size/address, the vtable, layout checks, dependencies
+   with a leaf-first order and callers.
+2. The class exists → reverse its functions one by one with **reverse-function**, smallest/leaf first.
+   `list_unreversed.py --filter <File> --details` lists the remaining hooks.
+3. The class is new → pick the directory by subsystem. It sets the hook category: files in
+   `source/game_sa/Entity/Ped/` use `RH_ScopedCategory("Entity/Ped")`; files directly in `source/game_sa/` use
+   `RH_ScopedCategoryGlobal()`.
+4. Virtual class → grep `docs/ai/Vtables.md` for `### <Class>`: vtable address, slot count, each slot's status.
 
-The vtable address, slot count and each slot's status for already-registered classes are in `docs/ai/Vtables.md`
-(grep `### <Class>`); use it to fill `RH_ScopedVirtualClass(cls, vtable, slots)` and to check `RH_ScopedVMTInstall` addresses.
+Many functions at once: the named workflow `.claude/workflows/reverse-class.js` (args `{cls, max, maxBytes}`) runs one
+`gta-reverser` per function in its own worktree, then reviews each. Start it only when the user asks.
 
-Shortcut: `python .claude/skills/find-reversing-targets/scripts/class_dossier.py <Class> --ida` prints most of this
-inventory in one go. For many functions at once, the named workflow `.claude/workflows/reverse-class.js`
-(args `{cls, max, maxBytes}`) runs one `gta-reverser` per function in a worktree and reviews each; start it only
-when the user asks.
+Done when: you have the list of functions to write, in order, and know whether the class is new.
 
 ## 2. Recover the layout (IDA)
 
-- Find the size: ctor/`operator new` call sites (`push 0xNN; call operator new`), pool sizes, `memset` in ctor,
-  array strides in loops (`imul reg, 0xNN`).
-- Find members: every `[this+0xNN]` access in ctor, dtor and methods. Note width (byte/word/dword/float) and use.
-- Vtable: the ctor writes it (`mov dword ptr [esi], offset off_86C5B4`). Count its entries for `nVirtFns`
-  (include inherited ones; compare with the base class's `RH_ScopedVirtualClass` count).
-- Tools: `decompile`, `disasm`, `xrefs_to_field`, `search_structs`, `type_inspect`, `read_struct`.
-- Cross-check with `docs/ai/TipsAndTricks.md` (§5/§6 contain recovered enums/structs).
+- **Size**: `operator new` call sites (`push 0xNN; call operator new`), pool sizes, `memset` in the ctor, array
+  strides (`imul reg, 0xNN`).
+- **Members**: every `[this+0xNN]` access in ctor, dtor and methods; note width (byte/word/dword/float) and use.
+  `xrefs_to_field`, `read_struct`, `search_structs`, `type_inspect` help.
+- **Vtable**: the ctor writes it (`mov dword ptr [esi], offset off_XXXXXX`). `nVirtFns` counts all entries,
+  inherited ones included; compare with the base class's `RH_ScopedVirtualClass` count.
+- **Cross-check**: `struct_check.py --type <Class>` (repo asserts vs IDB), `docs/ai/TipsAndTricks.md` §5-§6
+  (recovered enums and structs). The IDB is community-made and can be wrong: a mismatch means "look at both".
+
+Done when: every member has an offset you can justify and the total size is known.
 
 ## 3. Header template
+
+Addresses below are placeholders; take the real ones from IDA.
 
 ```cpp
 #pragma once
 
-#include "Base.h"          // or the base class header
+#include "FooBase.h"       // base class header
 
 class CEntity;             // forward declare instead of including when possible
 
 class NOTSA_EXPORT_VTABLE CFoo : public CFooBase { // NOTSA_EXPORT_VTABLE only for polymorphic classes
 public:
-    static inline auto& ms_Count = StaticRef<uint32>(0xC0FFEE); // statics reference the original address
+    static inline auto& ms_Count = StaticRef<uint32>(0xADDR); // statics reference the original
 
     int16    m_Id;         // 0x4
     uint8    m_Flags;      // 0x6
-    // ... (keep padding explicit if needed: uint8 _pad7;)
+    uint8    _pad7;        // keep unknown bytes as padding
     CVector  m_Pos;        // 0x8
     CEntity* m_Target;     // 0x14
 
@@ -63,13 +70,10 @@ public:
     static void InjectHooks();
 
     CFoo(int16 id);                      // 0xADDR
-    ~CFoo() override;                    // 0xADDR (or plain ~CFoo() if not virtual)
+    ~CFoo() override;                    // 0xADDR (plain ~CFoo() if not virtual)
 
     void Update();                       // 0xADDR
-    bool IsActive() const;               // 0xADDR  (const-correct!)
-
-    // NOTSA helpers go in a clearly marked section
-    auto GetPosition() const { return m_Pos; }
+    bool IsActive() const;               // 0xADDR
 
 private: // Wrappers for hooks
     // 0xADDR
@@ -84,16 +88,16 @@ private: // Wrappers for hooks
         return this;
     }
 
-    friend void InjectHooksMain(); // only needed because InjectHooks/wrappers are private
+    friend void InjectHooksMain(); // only because InjectHooks/wrappers are private
 };
 VALIDATE_SIZE(CFoo, 0x18);
-VALIDATE_OFFSET(CFoo, m_Pos, 0x8);   // add for every member you are not 100% sure about
+VALIDATE_OFFSET(CFoo, m_Pos, 0x8); // for every member you rely on
 ```
 
-Rules (docs/CodingGuidelines.md): classes use `m_`/`ms_`; plain structs use bare `PascalCase` members;
-fixed-width ints; `std::array` for arrays (`std::array<CVector, 4>` keeps layout); SA types over RW types
-(except `RwMatrix`); bitfields for flag bytes (`uint8 bFoo : 1;`); enums with explicit underlying type matching
-the member width (`enum eFooState : uint8`).
+Layout conventions (details in `docs/CodingGuidelines.md`): classes use `m_`/`ms_`, plain structs bare
+`PascalCase`; fixed-width ints; `std::array` for arrays; SA types over RW types (except `RwMatrix`); bitfields for
+flag bytes (`uint8 bFoo : 1;`); enums with an explicit underlying type matching the member width
+(`enum eFooState : uint8`).
 
 ## 4. Source template
 
@@ -103,47 +107,50 @@ the member width (`enum eFooState : uint8`).
 #include "Foo.h"
 
 void CFoo::InjectHooks() {
-    RH_ScopedVirtualClass(CFoo, 0x86C5B4, 6); // RH_ScopedClass(CFoo) if not polymorphic
-    RH_ScopedCategory("Entity/Object");       // follows the directory
+    RH_ScopedVirtualClass(CFoo, 0xVTBL, 6); // RH_ScopedClass(CFoo) if not polymorphic
+    RH_ScopedCategory("Entity/Object");     // follows the directory
 
-    RH_ScopedInstall(Constructor, 0x5EE7C0);
-    RH_ScopedVMTDestructorInstall(0x5EE830);  // or RH_ScopedInstall(Destructor, 0x...) for non-virtual
+    RH_ScopedInstall(Constructor, 0xADDR);
+    RH_ScopedVMTDestructorInstall(0xADDR);  // or RH_ScopedInstall(Destructor, 0xADDR) for non-virtual dtors
 
-    RH_ScopedInstall(Update, 0x5EF000);
-    RH_ScopedInstall(IsActive, 0x5EF100, { .Reversed = false }); // still a stub
-    RH_ScopedVMTInstall(Process, 0x5EF200);
+    RH_ScopedInstall(Update, 0xADDR);
+    RH_ScopedInstall(IsActive, 0xADDR, { .Reversed = false }); // still a stub
+    RH_ScopedVMTInstall(Process, 0xADDR);
 }
 
-// 0x5EE7C0
+// 0xADDR
 CFoo::CFoo(int16 id) :
     CFooBase{},
     m_Id{ id }
 {
 }
 
-// 0x5EF100
+// 0xADDR
 bool CFoo::IsActive() const {
-    return plugin::CallMethodAndReturn<bool, 0x5EF100, const CFoo*>(this);
+    return plugin::CallMethodAndReturn<bool, 0xADDR, const CFoo*>(this);
 }
 ```
 
-Stub forms for functions you are not reversing now (always with `{ .Reversed = false }`):
+Stubs for functions you are not reversing now (always installed with `{ .Reversed = false }`):
 - member: `plugin::CallMethod<0xADDR, CFoo*, Args...>(this, args...);`
 - member with return: `plugin::CallMethodAndReturn<Ret, 0xADDR, CFoo*, Args...>(this, args...);`
 - static/free: `plugin::Call<0xADDR, Args...>(args...);` / `plugin::CallAndReturn<Ret, 0xADDR, Args...>(args...);`
 
+Install macros for every case: **reverse-function** Phase 4.
+
 ## 5. Register the class
 
-1. Add `#include "Foo.h"` in `source/InjectHooksMain.cpp` near related includes.
-2. Call `CFoo::InjectHooks();` inside `InjectHooksMain()` in the matching subsystem group (base classes before
-   derived ones is a good habit).
-3. `friend void InjectHooksMain();` only if `InjectHooks` (or the wrappers it uses) is private.
-4. Add the `.cpp` to the build if needed — check whether `source/CMakeLists.txt` globs sources
-   (it usually does; re-run CMake configure for new files).
+1. `#include "Foo.h"` in `source/InjectHooksMain.cpp`, near related includes.
+2. `CFoo::InjectHooks();` inside `InjectHooksMain()`, in the matching subsystem group (base before derived).
+3. `friend void InjectHooksMain();` only if `InjectHooks` or its wrappers are private.
+4. New `.cpp` files are picked up by the `GLOB_RECURSE` in `source/CMakeLists.txt`; re-run the CMake configure step.
 
 ## 6. Verify
 
-- `python .claude/skills/review-reversal/scripts/check_hooks.py source/game_sa/.../Foo.cpp source/game_sa/.../Foo.h`
-- Build (`cmake --build build --config Debug --target gta_reversed`) — `VALIDATE_SIZE/OFFSET` failures show
-  up here as `static_assert`s.
-- Ask the **gta-reversal-reviewer** agent for a review.
+Done when:
+- `python .claude/skills/review-reversal/scripts/check_hooks.py <Foo.cpp> <Foo.h>` → no `[E]` (it also checks
+  `RH_ScopedVMTInstall` addresses against the GTA vtable: a wrong one throws at startup, R10-R11);
+- every reversed function passes **validate-against-binary**;
+- the build passes (`cmake --build build --config Debug --target gta_reversed`); `VALIDATE_SIZE/OFFSET` failures show
+  up as `static_assert`s;
+- the **gta-reversal-reviewer** agent has reviewed it.

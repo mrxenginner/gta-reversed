@@ -3,7 +3,7 @@
 How skinned clumps (peds, cutscene objects, animated objects) play animations: the anim blend system built around
 `CAnimManager`, `CAnimBlendAssociation` and the RpAnimBlend RenderWare plugin, anim groups and blocks, blending and
 callbacks, how tasks start and stop anims, and how IFP blocks are streamed. For who *decides* to play an anim see
-[Tasks.md](Tasks.md) (template 3) and [Peds.md](Peds.md) section 6; for the frame order see
+[Tasks.md](Tasks.md) ("Template 3: anim callback pattern") and [Peds.md](Peds.md) ("Subsystems that hang off peds"); for the frame order see
 [WorldStreamingPools.md](WorldStreamingPools.md). `source/game_sa/Animation/README.md` has a short object-model summary.
 
 All paths are relative to the repo root. Addresses are the ones written in the repo (`RH_*Install` or `// 0xADDR`) and
@@ -70,7 +70,7 @@ flowchart LR
 | Enums (`Enums/AnimationEnums.h`) | `AssocGroupId` (0..138, `ANIM_TOTAL_GROUPS` = 139), `AnimationId` (global ids, `ANIM_ID_WALK` = 0, `RUN`, `SPRINT`, `IDLE` = 3, ...) |
 | Group table (`Animation/AnimAssocDefinitions.cpp`, `AnimAssocAnimations.h`, `AnimAssocDescriptions.h`) | Names and descriptors of the 118 built-in groups (`aStdAnimDescs` `0x8A7788`, ...) |
 
-Globals (`AnimManager.h:24-36`):
+Globals (`AnimManager.h`):
 
 | Global | Address | Notes |
 |---|---|---|
@@ -86,25 +86,24 @@ Globals (`AnimManager.h:24-36`):
 
 ## 3. Groups, blocks and anim ids
 
-- **Initialise** (`0x5BF6B0`, `AnimManager.cpp:53`): counts to 0, `ms_numAnimAssocDefinitions = 118`, cache of 50,
+- **Initialise** (`0x5BF6B0`): counts to 0, `ms_numAnimAssocDefinitions = 118`, cache of 50,
   `ReadAnimAssociationDefinitions` (`0x5BC910`) parses `DATA\ANIMGRP.DAT` and appends the 21 walk-style groups
   (`man`, `shuffle`, `oldman`, ... `skate`, ids 118-138) with `AddAnimAssocDefinition` (`0x4D3BA0`) /
   `AddAnimToAssocDefinition` (`0x4D3C80`), all using `aStdAnimDescs` and `MODEL_MALE01`. Then
   `RegisterAnimBlock("ped")`.
-- **LoadAnimFiles** (`0x4D5620`, `AnimManager.cpp:572`): loads `ANIM\PED.IFP` (always resident), allocates the group
+- **LoadAnimFiles** (`0x4D5620`): loads `ANIM\PED.IFP` (always resident), allocates the group
   array and calls `CreateAnimAssocGroups` (`0x4D3CC0`).
-- **CreateAnimAssocGroups** (`AnimManager.cpp:298`): for every group whose block is loaded and which has no
+- **CreateAnimAssocGroups** (`0x4D3CC0`): for every group whose block is loaded and which has no
   associations yet, creates a temporary instance of the definition's model, `RpAnimBlendClumpInit`, and
   `CreateAssociations(blockName, clump, animNames, numAnims)` (`0x4CE6E0`) builds one static association per anim,
   mapping each sequence to a clump frame. Default flags from the `AnimDescriptor` table are OR-ed in. Called again
   every time a block is streamed in.
 - **Ids**: `AnimationId` values are global. A group covers the ids starting at its first descriptor
-  (`m_IdOffset = def->AnimDescr->AnimId`) and `GetAnimation(id)` returns `m_Anims[id - m_IdOffset]`
-  (`AnimBlendAssocGroup.cpp:187`). Groups that share a descriptor table (all walk styles use `aStdAnimDescs`) share the
+  (`m_IdOffset = def->AnimDescr->AnimId`) and `GetAnimation(id)` returns `m_Anims[id - m_IdOffset]`. Groups that share a descriptor table (all walk styles use `aStdAnimDescs`) share the
   same ids: `ANIM_ID_WALK` in `ANIM_GROUP_MAN` and in `ANIM_GROUP_DEFAULT` are different hierarchies with the same id.
-  A ped's walk style is `CPed::m_nAnimGroup` (`Ped.h:272`), from `CPedModelInfo::m_nAnimType`.
+  A ped's walk style is `CPed::m_nAnimGroup`, from `CPedModelInfo::m_nAnimType`.
 - **Blocks**: `RegisterAnimBlock(name)` (`0x4D3E50`) reserves a `CAnimBlock`; `CStreaming::LoadCdDirectory` registers one
-  per `.ifp` found in an IMG (`Streaming.cpp:1176`). `GetAnimationBlockIndex(name)` (`0x4D3990`) is how code finds
+  per `.ifp` found in an IMG. `GetAnimationBlockIndex(name)` (`0x4D3990`) is how code finds
   one. `GetFirstAssocGroup(name)` (`0x4D39B0`) gives the first group that uses the block.
 - **Named anims** (script `TASK_PLAY_ANIM`, `CTaskSimpleRunNamedAnim`) skip groups: `GetAnimation(name, block)`
   (`0x4D42F0`) finds the hierarchy and `AddAnimation(clump, hier, flags)` / `BlendAnimation(clump, hier, flags, delta)`
@@ -112,15 +111,15 @@ Globals (`AnimManager.h:24-36`):
 
 ### IFP files
 
-`LoadAnimFile(stream, compressed, uncompressedNames)` (`0x4D47F0`, `AnimManager.cpp:621`) dispatches on the fourcc:
+`LoadAnimFile(stream, compressed, uncompressedNames)` (`0x4D47F0`) dispatches on the fourcc:
 `ANP2`/`ANP3` (SA format, `LoadAnimFile_ANP23`) or `ANPK` (III/VC format, `LoadAnimFile_ANPK`, written from the
-gtamods docs and untested per the comment at `AnimManager.cpp:663`). Anims are loaded compressed unless their name is in
-`uncompressedNames` (cutscenes pass `ms_aUncompressedCutsceneAnims`, `CutsceneMgr.cpp:468`). `RemoveLastAnimFile`
+gtamods docs and untested per the comment in `LoadAnimFile_ANPK`). Anims are loaded compressed unless their name is in
+`uncompressedNames` (cutscenes pass `CCutsceneMgr::ms_aUncompressedCutsceneAnims`). `RemoveLastAnimFile`
 (`0x4D3ED0`) drops the newest block (cutscene anims).
 
 ### Compression and the LRU cache
 
-Hierarchies are stored compressed (`int16` key frames). `UncompressAnimation` (`0x4D41C0`, `AnimManager.cpp:398`) must
+Hierarchies are stored compressed (`int16` key frames). `UncompressAnimation` (`0x4D41C0`) must
 be called before an anim is evaluated: if the hierarchy is `m_bKeepCompressed` it only computes the total time; otherwise
 it uncompresses it and puts it at the head of `ms_AnimCache`. When the 50 links are used up the least recently used
 hierarchy is compressed back (`RemoveUncompressedData` `0x4CF760`). Every `BlendAnimation`, `AddAnimation`,
@@ -150,7 +149,7 @@ Association methods (`AnimBlendAssociation.cpp`): `Start(t)` (`0x4CEB70`, sets p
 another anim), `SetBlend(amount, delta)` (`0x4CEBA0`), `SetBlendTo(amount, delta)` (`0x4CEB80`,
 `delta = (amount - current) * delta`), `SetSpeed`, `SetFinishCallback` (`0x4CEBE0`), `SetDeleteCallback` (`0x4CEBC0`).
 
-### Flags (`eAnimationFlags`, `AnimBlendAssociation.h:19`)
+### Flags (`eAnimationFlags`, `AnimBlendAssociation.h`)
 
 | Flag | Value | Meaning |
 |---|---|---|
@@ -170,10 +169,10 @@ another anim), `SetBlend(amount, delta)` (`0x4CEBA0`), `SetBlendTo(amount, delta
 
 One callback slot per association (`m_nCallbackType`, `m_pCallbackFunc`, `m_pCallbackData`):
 
-- **Finish** (`SetFinishCallback`): called once by `UpdateTime` (`0x4D13D0`, `AnimBlendAssociation.cpp:263`) when a
+- **Finish** (`SetFinishCallback`): called once by `UpdateTime` (`0x4D13D0`) when a
   non-looped anim reaches its end, then reset to `CDefaultAnimCallback::DefaultAnimCB`. Also called by `UpdateBlend`
   if the association is auto-removed (blended out with `BLEND_AUTO_REMOVE`) before it finished.
-- **Delete** (`SetDeleteCallback`): called by `UpdateBlend` (`0x4D1490`, `AnimBlendAssociation.cpp:237`) right before
+- **Delete** (`SetDeleteCallback`): called by `UpdateBlend` (`0x4D1490`) right before
   an auto-remove `delete this`. **Not** called by the destructor (`0x4CECF0`), so not by
   `RpAnimBlendClumpRemoveAllAssociations` or when the clump is destroyed.
 - `m_pCallbackData` is a raw `void*`, almost always the task that started the anim.
@@ -184,33 +183,33 @@ The common pattern is `CTaskSimpleAnim` (`Tasks/TaskTypes/TaskSimpleAnim.cpp`, v
 (`CTaskSimpleRunAnim`, `CTaskSimpleRunNamedAnim`, ...):
 
 ```cpp
-// TaskSimpleRunAnim.cpp:67 (StartAnim, 0x61A950)
+// CTaskSimpleRunAnim::StartAnim (0x61A950)
 m_pAnim = CAnimManager::BlendAnimation(ped->GetRpClump(), m_nAnimGroup, m_nAnimId, m_fBlendDelta);
 m_pAnim->SetFinishCallback(CTaskSimpleAnim::FinishRunAnimCB, this);   // 0x61A8A0: m_bIsFinished = true, m_pAnim = nullptr
 ```
 
 - `ProcessPed` returns `m_bIsFinished`.
-- `MakeAbortable` (`0x61A790`, `TaskSimpleAnim.cpp:38`): sets `BLEND_AUTO_REMOVE`; partial anims get blend delta -4
+- `MakeAbortable` (`0x61A790`): sets `BLEND_AUTO_REMOVE`; partial anims get blend delta -4
   (-1000 for `ABORT_PRIORITY_IMMEDIATE`), full-body anims are replaced by blending `ANIM_ID_IDLE` of the ped's group
   back in. For URGENT/IMMEDIATE it resets the callback and forgets `m_pAnim`.
-- Destructor (`0x61A6F0`, `TaskSimpleAnim.cpp:20`): reset the callback, set `BLEND_AUTO_REMOVE`, blend out at -4 unless
+- Destructor (`0x61A6F0`): reset the callback, set `BLEND_AUTO_REMOVE`, blend out at -4 unless
   `m_bHoldLastFrame`.
 
-Peds also manage their movement anims directly: `CPed::SetModelIndex` (`Ped.cpp:3633`) calls `RpAnimBlendClumpInit`,
+Peds also manage their movement anims directly: `CPed::SetModelIndex` (`0x5E4880`) calls `RpAnimBlendClumpInit`,
 `RpAnimBlendClumpFillFrameArray(clump, m_apBones)`, `AddAnimation(clump, m_nAnimGroup, ANIM_ID_IDLE)` and points
-`m_PedPosition` at `m_vecAnimMovingShiftLocal` (`Ped.cpp:3670`); `CPed::SetMoveAnim` (`Ped.cpp:389`) blends walk/run/
-sprint. Vehicle enter/exit anims use the vehicle's anim group (`CVehicleAnimGroupData`, see Vehicles.md).
+`m_PedPosition` at `m_vecAnimMovingShiftLocal`; `CPed::SetMoveAnim` (`0x5E4A00`) blends walk/run/
+sprint. Vehicle enter/exit anims use the vehicle's anim group (`CVehicleAnimGroupData`, see [Vehicles.md](Vehicles.md)).
 
 ---
 
 ## 5. Per-frame flow
 
-1. `CWorld::Process` calls `CEntity::UpdateAnim()` on every moving entity not flagged for removal (`World.cpp:2201`;
-   cutscene objects at `:2189`; `CWorld::ProcessForAnimViewer` is the only other caller in the exe).
-2. `CEntity::UpdateAnim` (`0x535F00`, `Entity.cpp:1559`): returns unless the RW object is a clump with at least one
+1. `CWorld::Process` calls `CEntity::UpdateAnim()` on every moving entity not flagged for removal (cutscene
+   objects in an earlier loop of the same function; `CWorld::ProcessForAnimViewer` is the only other caller in the exe).
+2. `CEntity::UpdateAnim` (`0x535F00`): returns unless the RW object is a clump with at least one
    association. Off-screen test (`m_bOffscreen`, `GetIsOnScreen`); step is `CTimer::GetTimeStepInSeconds()`
    (cutscene objects: the non-clipped step, always "on screen"). Calls `RpAnimBlendClumpUpdateAnimations`.
-3. `RpAnimBlendClumpUpdateAnimations(clump, step, onScreen)` (`0x4D34F0`, `RpAnimBlend.cpp:1756`):
+3. `RpAnimBlendClumpUpdateAnimations(clump, step, onScreen)` (`0x4D34F0`):
    1. Set `gpAnimBlendClump`. For each association: `UpdateBlend(step)` (may delete it), `UncompressAnimation`, collect
       its node array (at most 11), and for synchronised anims accumulate `totalTime / speed * blend` and `blend`.
       Any non-synchronised anim sets `IncludePartial`.
@@ -222,32 +221,30 @@ sprint. Vehicle enter/exit anims use the vehicle's anim group (`CVehicleAnimGrou
       (`0x4D2E10`) and `NeedsKeyFrameUpdate` is set. Each callback blends the nodes of all associations into the
       bone's quaternion/translation, scaling non-partial anims by `1 - partial blend`.
    4. Root motion: frames with `HasVelocity` (the root, set in `RpAnimBlendClumpInit` `0x4D6720`) do not move the bone;
-      the translation delta is added to `*m_PedPosition` instead (`RpAnimBlend.cpp:722`). `HasZVelocity` adds Z too.
+      the translation delta is added to `*m_PedPosition` instead. `HasZVelocity` adds Z too.
    5. `UpdateTime` on every association (finish callbacks, looping, finish auto-remove), then `RwFrameUpdateObjects`.
-4. Skinned bone matrices are rebuilt later by `CEntity::UpdateRpHAnim` (`0x532B20`, `Entity.cpp:711`), called from
-   `CPed::PreRenderAfterTest` (`Ped.cpp:2844`) and by bone queries (`CPed::GetBonePosition`, `Ped.cpp:2072`).
+4. Skinned bone matrices are rebuilt later by `CEntity::UpdateRpHAnim` (`0x532B20`), called from
+   `CPed::PreRenderAfterTest` and by bone queries (`CPed::GetBonePosition`).
 5. The ped turns the extracted root motion into movement in its own update (`CPed::UpdatePosition` `0x5E1B10` adds the (clamped)
-   `m_vecAnimMovingShift - m_vecMoveSpeed` to the move speed, verified in the IDB; still a stub at `Ped.cpp:1691`).
+   `m_vecAnimMovingShift - m_vecMoveSpeed` to the move speed, verified in the IDB; still hooked `.Reversed = false`).
 
 ---
 
 ## 6. Streaming of anim blocks
 
-- Ids: block `i` is streaming model `IFPToModelId(i)` = 25575 + i (`Streaming.h:51,127`).
-- **Load**: `CStreaming::ConvertBufferToObject` IFP case (`Streaming.cpp:587`) calls `LoadAnimFile(stream, true)` and
+- Ids: block `i` is streaming model `IFPToModelId(i)` = 25575 + i (`RESOURCE_ID_IFP`, `Streaming.h`).
+- **Load**: `CStreaming::ConvertBufferToObject` IFP case calls `LoadAnimFile(stream, true)` and
   `CreateAnimAssocGroups()`, unless nobody needs the block any more.
 - **Dependencies**: requesting a model whose `GetAnimFileIndex() != -1` also requests its IFP with
-  `STREAMING_KEEP_IN_MEMORY` (`CStreaming::RequestModel`, `Streaming.cpp:1439`). A DFF whose IFP is not loaded yet is
-  re-requested (`Streaming.cpp:444-455`); while it loads, the model holds a ref (`AddAnimBlockRef` /
-  `RemoveAnimBlockRefWithoutDelete`, `Streaming.cpp:460,492`), and `CAtomicModelInfo`/`CClumpModelInfo` keep one
-  while their RW object exists (`AtomicModelInfo.cpp:69,116`, `ClumpModelInfo.cpp:81`).
+  `STREAMING_KEEP_IN_MEMORY` (`CStreaming::RequestModel`). A DFF whose IFP is not loaded yet is re-requested (in
+  `CStreaming::ConvertBufferToObject`); while it loads, the model holds a ref (`AddAnimBlockRef` /
+  `RemoveAnimBlockRefWithoutDelete`), and `CAtomicModelInfo`/`CClumpModelInfo` keep one while their RW object exists.
 - **Refs**: `AddAnimBlockRef` (`0x4D3FB0`) / `RemoveAnimBlockRef` (`0x4D3FD0`) only change `CAnimBlock::RefCnt`; they
   never load or unload. Associations with `ANIMATION_REFERENCE_BLOCK` hold one ref each.
 - **Unload**: `CStreaming::RemoveLeastUsedModel` frees an IFP only when `GetNumRefsToAnimBlock == 0` and no requested
-  model needs it (`Streaming.cpp:2284-2289`); `RemoveModel` then calls `CAnimManager::RemoveAnimBlock` (`0x4D3F40`,
-  `Streaming.cpp:2424`), which destroys the static associations of every group using the block and shuts down its
+  model needs it; `CStreaming::RemoveModel` then calls `CAnimManager::RemoveAnimBlock` (`0x4D3F40`), which destroys the static associations of every group using the block and shuts down its
   hierarchies.
-- **Task pattern** (`TaskComplexSitDownThenIdleThenStandUp.cpp:105-112`, `TaskComplexPartnerGreet` `0x6825B0`):
+- **Task pattern** (`CTaskComplexSitDownThenIdleThenStandUp`, `CTaskComplexPartnerGreet::StreamRequiredAnims` `0x6825B0`):
 
   ```cpp
   const auto idx = CAnimManager::GetAnimationBlockIndex("attractors");
@@ -265,46 +262,46 @@ sprint. Vehicle enter/exit anims use the vehicle's anim group (`CVehicleAnimGrou
 ## 7. Gotchas
 
 - **`RpAnimBlendClumpUpdateAnimations` runs original code.** It is hooked `.Reversed = false`
-  (`RpAnimBlend.cpp:1930`, "Unhooked for testing"), so the per-frame blend, the frame callbacks and root motion are
+  ("Unhooked for testing" in the `RpAnimBlend.cpp` `InjectHooks`), so the per-frame blend, the frame callbacks and root motion are
   GTA's. Our `FrameUpdateCallBackT` templates are only used if you enable it.
-- **`#ifdef` on a macro defined as 0** (`RpAnimBlend.cpp:634-639`): `USE_COPY_PASTE_FRAME_UPDATE` is `0` but tested with
+- **`#ifdef` on a macro defined as 0** (`RpAnimBlend.cpp`): `USE_COPY_PASTE_FRAME_UPDATE` is `0` but tested with
   `#ifdef`, so the copy-pasted R* frame callbacks are compiled and hooked with `HS::RedirectToGTA`, while
   `FrameUpdateCallBackW` tests it with `#if` and uses the templates. Probably meant to be `#if` in both places.
-- **The templates fix bugs unconditionally** (`constexpr bool IsFixBugs = true`, `RpAnimBlend.cpp:1508`), not through
+- **The templates fix bugs unconditionally** (`constexpr bool IsFixBugs = true` in `RpAnimBlend.cpp`), not through
   `notsa::bugfixes`. Make it switchable before enabling the update function.
 - **Delete callbacks are not called on `delete`.** Only an auto-remove in `UpdateBlend` calls them. A task that keeps an
   association pointer must also survive the clump being destroyed or `RemoveAllAssociations` being called (ped death,
   model change). Reset callbacks to `CDefaultAnimCallback::DefaultAnimCB` in the task destructor and `MakeAbortable`.
 - **`BLEND_AUTO_REMOVE` deletes inside the update.** Never keep an association pointer across frames without a finish
   or delete callback that clears it. `BlendAnimation` sets this flag on every anim it fades out.
-- **`CDefaultAnimCallback::DefaultAnimCB` is an inline function in our header** (`AnimBlendAssociation.h:45`), so its
+- **`CDefaultAnimCallback::DefaultAnimCB` is an inline function in our header** (`AnimBlendAssociation.h`), so its
   address differs from the original `0x4D1390`. Never compare `m_pCallbackFunc` against it; the save code that maps
   callbacks to ids (`FindCBFunctionID` `0x59C9E0`, table `CBArray` `0x8D0950`) has no callers in the exe.
 - **Lookup by id ignores the group.** `RpAnimBlendClumpGetAssociation(clump, ANIM_ID_WALK)` returns whichever
   `ANIM_ID_WALK` is first in the list, whatever walk style it came from.
-- **`m_PedPosition` is a `CVector*` but peds point it at a `CVector2D`** (`Ped.cpp:3670`, `Ped.h:273`). It is safe only
+- **`m_PedPosition` is a `CVector*` but peds point it at a `CVector2D`** (`m_vecAnimMovingShiftLocal`, set in `CPed::SetModelIndex`). It is safe only
   because peds never get `HasZVelocity`; only cutscene objects set it, and they point it at `m_vecMoveSpeed`
-  (`CutsceneObject.cpp:44-45`).
-- **The replacement table `ms_aAnimAssocDefinitionsX` is unused** (`AnimAssocDefinitions.cpp:9`); all code reads the
+  (`CutsceneObject.cpp`).
+- **The replacement table `ms_aAnimAssocDefinitionsX` is unused** (`AnimAssocDefinitions.cpp`); all code reads the
   original `ms_aAnimAssocDefinitions` at `0x8AA5A8`. Edit the exe-side data, not the X table, when testing.
-- **`ms_aAnimAssocDefinitions` is declared with 118 entries** (`AnimManager.h:25`) but 139 are used (the exe has room for
+- **`ms_aAnimAssocDefinitions` is declared with 118 entries** (`NUM_ANIM_ASSOC_GROUPS` in `AnimManager.h`) but 139 are used (the exe has room for
   145). Indexing past 118 is out of the declared bounds; widen the type if you add bounds checks.
 - **Anim ids are not unique per hierarchy**: groups sharing a descriptor table share ids. Use (group, id) pairs.
 - **Facial anims** (`ANIMATION_FACIAL`) only fade against other facial anims in `BlendAnimation(group, id)`, so they are
   never auto-removed by body anims.
 - Several flag names are uncertain (header comments). Do not rename them in a reversal PR.
-- **Open bug: `CAnimBlendClumpData` frees the wrong pointer.** `AnimBlendClumpData.cpp:28` (destructor, `0x4CF100`) and
-  `:35` (`SetNumberOfBones`, `0x4CF140`) call `CMemoryMgr::FreeAlign(&m_FrameDatas)`. The original passes
+- **Open bug: `CAnimBlendClumpData` frees the wrong pointer.** The destructor (`0x4CF100`) and `SetNumberOfBones`
+  (`0x4CF140`) call `CMemoryMgr::FreeAlign(&m_FrameDatas)`. The original passes
   `m_FrameDatas`. `FreeAlign` reads the real block pointer from the word before its argument, which here is
   `m_PedPosition`: the frame array leaks, and for a ped `CMemoryMgr::Free` is called on the address of
   `CPed::m_vecAnimMovingShiftLocal`. Both functions are hooked and active; the destructor runs from `ClumpAnimDestruct`
-  (`RpAnimBlend.cpp:24`) whenever a ped clump is destroyed.
-- **Open bug: `CAnimManager::StreamAnimBlock` is inverted** (`AnimManager.cpp:556-569`, NOTSA helper replacing the code
+  (`RpAnimBlend.cpp`) whenever a ped clump is destroyed.
+- **Open bug: `CAnimManager::StreamAnimBlock` is inverted** (NOTSA helper replacing the code
   of `CTaskComplexPartnerGreet::StreamRequiredAnims` `0x6825B0`). The original adds a ref / requests the block when it
   *should* be loaded and is not referenced yet, and removes the ref when it should *not* be loaded and is referenced.
   Ours does the opposite (removes a ref it never took, sets `isLoaded = false` in the first branch). Its only caller is
-  `TaskComplexPartnerGreet.cpp:41`.
-- **Open bug (minor): `AddAnimAssocDefinition`** (`AnimManager.cpp:266`, `0x4D3BA0`) does not skip already used slots and
+  `CTaskComplexPartnerGreet`.
+- **Open bug (minor): `AddAnimAssocDefinition`** (`0x4D3BA0`) does not skip already used slots and
   does not clear the next slot's name (`if (count < 145) defs[count].GroupName[0] = 0` in the original). No effect with
   the stock data, but the logic differs.
 - Minor: our `RpAnimBlendClumpUpdateAnimations` returns before setting `gpAnimBlendClump` for an empty list; the
@@ -328,7 +325,7 @@ Data from `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py 
 | `CDefaultAnimCallback` | 1 | 0 | 0 | 1 (`DefaultAnimCB` `0x4D1390`, empty) | 1 |
 | **Total (9 classes)** | **133** | **123 (92.5%)** | **3** | **7** | **~0.6 KB** |
 
-RpAnimBlend plugin (free functions, not in the class count): 38 hooked and active (`RpAnimBlend.cpp:1891-1928`),
+RpAnimBlend plugin (free functions, not in the class count): 38 hooked and active (`InjectHooks` at the end of `RpAnimBlend.cpp`),
 `RpAnimBlendClumpUpdateAnimations` hooked `.Reversed = false`, 4 frame callbacks hooked but redirected to GTA, 6
 velocity-extraction callbacks (`0x4D1680`-`0x4D27F0`, about 5.3 KB) reimplemented as templates but not hookable (they
 take arguments in `eax`), `RpAnimBlendClumpInitSkinned` (`0x4D6510`, `eax` argument), `RpAnimBlendClumpCheckKeyFrames`
@@ -351,7 +348,7 @@ Priorities:
    the copy-paste callbacks, then write a difftest (step one ped clump with a walk/run blend and compare bone key
    frames and `m_vecAnimMovingShiftLocal` with ULP tolerance).
 4. **`CAnimBlendAssocGroup::CreateAssociations(const char*, RpClump*)`** (`0x4CE5C0`, 277 bytes): the commented-out
-   install at `AnimBlendAssocGroup.cpp:34`.
+   install in `CAnimBlendAssocGroup::InjectHooks`.
 5. **`CTaskSimpleRunNamedAnim`** (`ProcessPed`, `Clone`, `GetTaskType` stubs, `StartAnim` `0x61BB10` and
    `FinishRunAnimMovePedCB` `0x61AAA0` commented out) - the script `TASK_PLAY_ANIM` path.
 6. Small items: hook `RemoveAnimBlockRef` (`0x4D3FD0`, identical body to `RemoveAnimBlockRefWithoutDelete`),

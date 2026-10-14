@@ -2,12 +2,12 @@
 
 How peds notice things (gun shots, collisions, threats, script commands...), how those "events" are queued,
 prioritised and turned into response tasks, and where decision makers fit in. Written for someone about to reverse
-an event class. For the general workflow see [../ReversingGuide.md](../ReversingGuide.md); for hook macros see
-[../HookRegistration.md](../HookRegistration.md).
+an event class. What happens to the response tasks is in [Tasks.md](Tasks.md). General rules are in
+[../ReversingRules.md](../ReversingRules.md) and [../ReversingGuide.md](../ReversingGuide.md).
 
-Directories: `source/game_sa/Events/` (≈90 event classes, groups, handler, scanners) and
-`source/game_sa/DecisionMakers/`. Event ids: `source/game_sa/Enums/eEventType.h`. Decision-maker event slots:
-`source/game_sa/Enums/eDecisionMakerEvents.h`.
+Paths are relative to `source/game_sa/`. Main folders: `Events/` (about 90 event classes, groups, handler, scanners)
+and `DecisionMakers/`. Event ids: `Enums/eEventType.h`. Decision-maker event slots: `Enums/eDecisionMakerEvents.h`.
+Addresses come from `RH_*Install`, `StaticRef` or `// 0xADDR` in the repo.
 
 ---
 
@@ -49,32 +49,32 @@ flowchart TD
 
 ---
 
-## 2. Key classes
+## 2. Key classes and files
 
 | Class | File | Role |
 |---|---|---|
-| `CEvent` | `Events/Event.h` | Abstract base. 0xC bytes: `m_nTimeActive` (ticks spent in a queue), `m_bValid` (keep regardless of lifetime). `operator new/delete` go through `GetEventPool()` (`Event.cpp:15-22`) |
+| `CEvent` | `Events/Event.h` | Abstract base. 0xC bytes: `m_nTimeActive` (ticks spent in a queue), `m_bValid` (keep regardless of lifetime). `operator new/delete` go through `GetEventPool()` |
 | `CEventEditableResponse` | `Events/EventEditableResponse.h` | Base for events whose response task id is picked by a decision maker. Adds `m_bAddToEventGroup`, `m_TaskId` (`WEnumS16<eTaskType>`), `m_FacialExpressionType`; size 0x14. Pure virtual `CloneEditable()` |
 | `CEventGroup` | `Events/EventGroup.h` | Fixed queue of 16 `CEvent*` (`TOTAL_EVENTS_PER_EVENTGROUP`), owned by a ped (`m_pPed`). Size 0x4C, vtable `0x85AAB0` |
-| `CEventGlobalGroup` | `Events/EventGlobalGroup.h` | `CEventGroup` with `m_pPed == nullptr`. Singleton through `GetEventGlobalGroup()` (`RwHelper.cpp:38`, `0x4ABA50`, pointer at `0xA9AF6C`) |
-| `CEventHandler` | `Events/EventHandler.h` | Per-ped. Picks the event, computes response tasks (≈60 `Compute*Response` methods, `EventHandler.cpp` is ~3,000 lines). Size 0x34. No vtable |
+| `CEventGlobalGroup` | `Events/EventGlobalGroup.h` | `CEventGroup` with `m_pPed == nullptr`. Singleton through `GetEventGlobalGroup()` (`RwHelper.cpp`, `0x4ABA50`, pointer at `0xA9AF6C`) |
+| `CEventHandler` | `Events/EventHandler.h` | Per-ped. Picks the event, computes response tasks (about 60 `Compute*Response` methods, ~3,000 lines). Size 0x34. No vtable |
 | `CEventHandlerHistory` | `Events/EventHandlerHistory.h` | What the ped is currently responding to: `m_CurrentTempEvent`, `m_CurrentNonTempEvent`, `m_StoredEventActive` (+ 2 s `m_StoreTimer`). Size 0x1C |
 | `CEventScanner` | `Events/EventScanner.h` | Per-ped container of periodic scanners (vehicle/object potential collision, attractor, ped acquaintance, sexy ped, nearby fire). Size 0xD4 |
-| `CCollisionEventScanner` | `Collision/CollisionEventScanner.h` | Turns physical collisions into events (`ScanForCollisionEvents`, stub `0x604500`) |
-| `CEventSource` | `Events/EventSource.h` | `ComputeEventSourceType(event, ped)`: classifies the event source for the decision maker (stub `0x4ABAC0`) |
+| `CCollisionEventScanner` | `Collision/CollisionEventScanner.h` | Turns physical collisions into events (`ScanForCollisionEvents`, NOHOOK stub `0x604500`) |
+| `CEventSource` | `Events/EventSource.h` | `ComputeEventSourceType(event, ped)`: classifies the event source for the decision maker (NOHOOK stub `0x4ABAC0`) |
 | `CEventGroupEvent` | `Events/EventGroupEvent.h` | Wraps another event (`m_event`) plus the originating ped for **ped-group** AI (`AffectsPed` always false) |
-| `CGroupEventHandler` | `Events/GroupEventHandler.h` | Group counterpart of `CEventHandler`: returns `CTaskAllocator*` per event type |
-| `CInformGroupEventQueue` / `CInformFriendsEventQueue` | `game_sa/InformGroupEventQueue.h`, `InformFriendsEventQueue.h` | Delayed propagation of an event to the ped's group / respected friends |
-| `CEventPool` | `Pools/EventPool.h` | `CPool<CEvent, CEventDamage>`, 200 slots (`Pools.cpp:82`), slot size = `sizeof(CEventDamage)` = 0x44 |
+| `CGroupEventHandler` | `Events/GroupEventHandler.h` | Group counterpart of `CEventHandler`: returns a `CTaskAllocator*` per event type |
+| `CInformGroupEventQueue` / `CInformFriendsEventQueue` | `InformGroupEventQueue.h`, `InformFriendsEventQueue.h` | Delayed propagation of an event to the ped's group / respected friends |
+| `CEventPool` | `Pools/EventPool.h` | `CPool<CEvent, CEventDamage>`, 200 slots (`CPools::Initialise`), slot size = `sizeof(CEventDamage)` = 0x44 |
 | `CDecisionMakerTypes` | `DecisionMakers/DecisionMakerTypes.h` | Singleton holding 20 decision makers + 5 defaults, `MakeDecision` (ped and group overloads) |
 | `CDecisionMaker` | `DecisionMakers/DecisionMaker.h` | 41 `CDecision`s, one per `eDecisionMakerEvents` slot (0x99C bytes) |
 | `CDecision` | `DecisionMakers/Decision.h` | Up to 6 task choices with per-relationship probabilities (0x3C bytes) |
 | `CDecisionMakerTypesFileLoader` | `DecisionMakers/DecisionMakerTypesFileLoader.h` | Loads `*.ped` / `*.grp` decision files |
 
-`CPedIntelligence` (`game_sa/PedIntelligence.h:42-60`) owns, per ped: `m_eventHandler`, `m_eventGroup`,
-`m_nDecisionMakerType`, `m_nDecisionMakerTypeInGroup`, `m_nEventId`/`m_nEventPriority` (last event recorded for
-scripts), `m_eventScanner`, `m_collisionScanner`. Accessors: `GetEventHandler()`, `GetEventGroup()`,
-`GetEventScanner()`; `CPed::GetEventGroup()` forwards to it.
+`CPedIntelligence` owns, per ped: `m_eventHandler`, `m_eventGroup`, `m_nDecisionMakerType`,
+`m_nDecisionMakerTypeInGroup`, `m_nEventId` / `m_nEventPriority` (last event recorded for scripts), `m_eventScanner`,
+`m_collisionScanner`. Accessors: `GetEventHandler()`, `GetEventGroup()`, `GetEventScanner()`; `CPed::GetEventGroup()`
+forwards to it.
 
 ---
 
@@ -85,26 +85,26 @@ scripts), `m_eventScanner`, `m_collisionScanner`. Accessors: `GetEventHandler()`
 Events are usually built **on the stack** and passed to `Add`, which stores a **clone**:
 
 ```cpp
-GetEventGlobalGroup()->Add(CEventGunShot{ ... });          // Weapon.cpp:942
-veh.m_pDriver->GetEventGroup().Add(CEventDraggedOutCar{ &veh, &ped, true }); // CarEnterExit.cpp:599
-m_eventGroup.Add(CEventScriptCommand{TASK_PRIMARY_PRIMARY, task, bAffectsPed}); // PedIntelligence.cpp:238
+GetEventGlobalGroup()->Add(CEventGunShot{ ... });                              // CWeapon::FireInstantHitFromCar2
+veh.m_pDriver->GetEventGroup().Add(CEventDraggedOutCar{ &veh, &ped, true });   // CCarEnterExit::MakeUndraggedDriverPedLeaveCar
+m_eventGroup.Add(CEventScriptCommand{TASK_PRIMARY_PRIMARY, task, bAffectsPed}); // CPedIntelligence::AddTaskPrimaryMaybeInGroup
 ```
 
-The templated `CEventGroup::Add(T event, bool)` overload (`EventGroup.h:46-49`) exists exactly for this. Heap events
-(`new CEventX`) land in the 200-slot event pool.
+The templated `CEventGroup::Add(T event, bool)` overload exists exactly for this. Heap events (`new CEventX`) land in
+the 200-slot event pool.
 
 Producers:
 - **Direct**: about 70 `GetEventGroup().Add(` call sites across `game_sa` (cheats, ped damage, car AI, ...).
 - **Global group**: noise-like events visible to everyone nearby (gun shots, `CEventSoundQuiet`, vehicle on fire,
-  `CEventDanger`, `CEventSeenPanickedPed`, `CEventCopCarBeingStolen`, `CEventVehicleHitAndRun`). Each frame
-  `CWorld::Process` (`World.cpp:2155-2179`) calls `AddEventsToPed` for every ped in the moving list,
-  `AddEventsToGroup` for every ped group, processes both inform queues, then `Flush`es the global group.
-- **Scanners**: `CPedIntelligence::Process` (`PedIntelligence.cpp:950`, `0x608260`) runs the vehicle/ped scanners,
-  then `m_eventScanner.ScanForEvents` (still `plugin::CallMethod<0x607E30>`), then `HandleEvents`.
-  `CPedIntelligence::ProcessFirst` (`0x6073A0`, line 919) runs `CPedStuckChecker::TestPedStuck` and
+  `CEventDanger`, `CEventSeenPanickedPed`, `CEventCopCarBeingStolen`, `CEventVehicleHitAndRun`). At the start of
+  `CWorld::Process` the game calls `AddEventsToPed` for every ped in the moving list, `AddEventsToGroup` for every ped
+  group, processes both inform queues, then `Flush`es the global group.
+- **Scanners**: `CPedIntelligence::Process` (`0x608260`) runs the vehicle/ped scanners, then
+  `m_eventScanner.ScanForEvents` (still `plugin::CallMethod<0x607E30>`), then `HandleEvents`.
+  `CPedIntelligence::ProcessFirst` (`0x6073A0`) runs `CPedStuckChecker::TestPedStuck` and
   `CCollisionEventScanner::ScanForCollisionEvents` into the same group.
 
-### 3.2 Queueing: `CEventGroup::Add` (`EventGroup.cpp:36-86`, `0x4AB420`)
+### 3.2 Queueing: `CEventGroup::Add` (`0x4AB420`)
 
 For a ped-owned group:
 1. If the event `HasEditableResponse()`:
@@ -132,17 +132,16 @@ Other `CEventGroup` members: `GetHighestPriorityEvent` (`0x4AB7C0`), `TickEvents
 ### 3.3 Scoring
 
 - **Priority**: every class returns a constant from `GetEventPriority()` (a few compute it, see §7). Higher wins.
-- `GetHighestPriorityEvent` (`EventGroup.cpp:106-124`): scans in queue order, takes an event if its priority is
-  `>=` the best so far (strictly `>` for `EVENT_SCRIPT_COMMAND`) **and** it `AffectsPed(m_pPed)`. So among equal
-  priorities the **last** queued wins, except script commands where the first wins.
-- `TakesPriorityOver(other)` defaults to `GetEventPriority() >= other.GetEventPriority()` (`Event.h:34`).
-  Overridden by e.g. `CEventGunShot` (a player shot beats an NPC shot, `EventGunShot.cpp:79-95`),
-  `CEventScriptCommand` (dead-ped commands beat `EVENT_DEATH`/`EVENT_DAMAGE`), `CEventStuckInAir`.
-- `CEventHandlerHistory::TakesPriorityOverCurrentEvent` (`EventHandlerHistory.cpp:116`, `0x4BC580`) compares the
-  candidate against the current non-temp event, else the current temp event (and the stored event).
-- Lifetime: `IsValid` defaults to `m_bValid || m_nTimeActive <= GetLifeTime()` (`Event.h:37`). Nearly every class
-  returns `GetLifeTime() == 0`, so an event survives only until the next `HandleEvents` unless added with
-  `bValid = true`.
+- `GetHighestPriorityEvent` scans in queue order and takes an event if its priority is `>=` the best so far
+  (strictly `>` for `EVENT_SCRIPT_COMMAND`) **and** it `AffectsPed(m_pPed)`. So among equal priorities the **last**
+  queued wins, except script commands where the first wins.
+- `TakesPriorityOver(other)` defaults to `GetEventPriority() >= other.GetEventPriority()` (`Event.h`). Overridden by
+  e.g. `CEventGunShot` (a player shot beats an NPC shot), `CEventScriptCommand` (dead-ped commands beat
+  `EVENT_DEATH` / `EVENT_DAMAGE`), `CEventStuckInAir`.
+- `CEventHandlerHistory::TakesPriorityOverCurrentEvent` (`0x4BC580`) compares the candidate against the current
+  non-temp event, else the current temp event (and the stored event).
+- Lifetime: `IsValid` defaults to `m_bValid || m_nTimeActive <= GetLifeTime()`. Nearly every class returns
+  `GetLifeTime() == 0`, so an event survives only until the next `HandleEvents` unless added with `bValid = true`.
 
 Sample of priorities (all from the headers' `GetEventPriority`):
 
@@ -162,9 +161,9 @@ Sample of priorities (all from the headers' `GetEventPriority`):
 
 Get the full list with `grep -n "GetEventPriority() const override" source/game_sa/Events/*.h`.
 
-### 3.4 Handling: `CEventHandler::HandleEvents` (`EventHandler.cpp:319-411`, `0x4C3F10`)
+### 3.4 Handling: `CEventHandler::HandleEvents` (`0x4C3F10`)
 
-Called from `CPedIntelligence::Process` (and from `ClearTasks`/`ProcessEventHandler`).
+Called from `CPedIntelligence::Process` (and from `ClearTasks` / `ProcessEventHandler`).
 1. `m_History.TickStoredEvent` (re-promotes the stored non-temp event when no temp event is running).
 2. Read the active primary task, temp / non-temp event-response tasks; `GetHighestPriorityEvent`; `TickEvents`.
 3. Clear history slots whose response task no longer exists.
@@ -179,11 +178,10 @@ Called from `CPedIntelligence::Process` (and from `ClearTasks`/`ProcessEventHand
 
 ### 3.5 Response tasks
 
-`ComputeEventResponseTask(CEvent*, CTask*)` (`EventHandler.cpp:2853`, `0x4C3870`) clears the five output slots and
-`switch`es on `GetEventType()` into a `Compute<Name>Response(event, tactive, tsimplest)` method. Each method fills
-some of:
+`ComputeEventResponseTask(CEvent*, CTask*)` (`0x4C3870`) clears the five output slots and `switch`es on
+`GetEventType()` into a `Compute<Name>Response(event, tactive, tsimplest)` method. Each method fills some of:
 
-| Member (`EventHandler.h:177-183`) | Installed by `SetEventResponseTask` (`0x4BC600`) as |
+| `CEventHandler` member | Installed by `SetEventResponseTask` (`0x4BC600`) as |
 |---|---|
 | `m_PhysicalResponseTask` | `AddTaskPhysResponse` |
 | `m_EventResponseTask` | `AddTaskEventResponseTemp` if `IsTemporaryEvent(event)` (`0x4BC370`: collisions, potential-walk-into-*, in air, area codes, escalator, fire nearby...), else `AddTaskEventResponseNonTemp` |
@@ -193,19 +191,19 @@ some of:
 
 Editable events also push their `m_FacialExpressionType` to the facial secondary task for 10 s.
 
-Typical response method: read `e->m_TaskId` (the decision maker's pick) and `new` the matching task, e.g.
-`ComputePedThreatResponse` (`EventHandler.cpp:1688`) maps `TASK_COMPLEX_KILL_PED_ON_FOOT` to
-`CTaskComplexKillPedOnFoot`, `TASK_SMART_FLEE_ENTITY_WALKING` to `CTaskComplexSmartFleeEntity`, etc.
-The static overload `ComputeEventResponseTask(const CPed&, const CEvent&)` (`0x4C4220`) runs a temporary handler
-and returns only the event-response task (used to ask "what would this ped do?").
+Typical response method: read `e->m_TaskId` (the decision maker's pick) and `new` the matching task. For example
+`ComputePedThreatResponse` maps `TASK_COMPLEX_KILL_PED_ON_FOOT` to `CTaskComplexKillPedOnFoot` and
+`TASK_SMART_FLEE_ENTITY_WALKING` to `CTaskComplexSmartFleeEntity`. The static overload
+`ComputeEventResponseTask(const CPed&, const CEvent&)` (`0x4C4220`) runs a temporary handler and returns only the
+event-response task (used to ask "what would this ped do?").
 
 ### 3.6 Groups and informing
 
-- `InformGroup` clones the event with `m_TaskId = TASK_NONE`, `m_bAddToEventGroup = false` and queues it in
-  `CInformGroupEventQueue` (`EventEditableResponse.cpp:125`). `CInformGroupEvent::Process` later wraps it in a
-  `CEventGroupEvent` and calls `CPedGroupIntelligence::AddEvent` (`PedGroupIntelligence.cpp:76`, `0x5F7470`), which
-  only accepts `CEventGroupEvent`, uses `ComputeResponseTaskType(CPedGroup*)` (group decision maker) and keeps the
-  highest-priority one. `CGroupEventHandler::ComputeEventResponseTasks` turns it into a `CTaskAllocator`.
+- `InformGroup` (`0x4B7DF0`) clones the event with `m_TaskId = TASK_NONE`, `m_bAddToEventGroup = false` and queues it
+  in `CInformGroupEventQueue`. `CInformGroupEvent::Process` later wraps it in a `CEventGroupEvent` and calls
+  `CPedGroupIntelligence::AddEvent` (`0x5F7470`), which only accepts `CEventGroupEvent`, uses
+  `ComputeResponseTaskType(CPedGroup*)` (group decision maker) and keeps the highest-priority one.
+  `CGroupEventHandler::ComputeEventResponseTasks` turns it into a `CTaskAllocator`.
 - `InformRespectedFriends` (`0x4B2B00`) re-adds a clone to nearby peds whose respect/like flags match, through
   `CInformFriendsEventQueue`.
 - `InformVehicleOccupants` (`0x4AC4A0`) adds a clone to driver and passengers when `DoInformVehicleOccupants(ped)`.
@@ -214,9 +212,9 @@ and returns only the event-response task (used to ask "what would this ped do?")
 
 ## 4. Virtual interface of `CEvent` (= vtable order)
 
-From `Events/Event.h:23-38`; `RH_ScopedVirtualClass(CEvent, 0x85AB38, 16)` (`Event.cpp:6`). Every event class
-uses vtable size **16** when deriving directly from `CEvent`, **17** when deriving from `CEventEditableResponse`
-(adds `CloneEditable`). `CEventScriptCommand` is also 17 (adds `CloneScriptTask`).
+From `Events/Event.h`; `RH_ScopedVirtualClass(CEvent, 0x85AB38, 16)`. Every event class uses vtable size **16** when
+deriving directly from `CEvent`, **17** when deriving from `CEventEditableResponse` (adds `CloneEditable`).
+`CEventScriptCommand` is also 17 (adds `CloneScriptTask`).
 
 | # | Signature | Default | Notes |
 |---|---|---|---|
@@ -238,12 +236,12 @@ uses vtable size **16** when deriving directly from `CEvent`, **17** when derivi
 | 15 | `bool CanBeInterruptedBySameEvent()` | `false` | Read by `CPedGroupIntelligence` |
 | 16 | `CEventEditableResponse* CloneEditable() const noexcept` | pure | Only in `CEventEditableResponse` subclasses |
 
-Non-virtual helpers: `GetSoundLevel`, static `CalcSoundLevelIncrement` (`0x4AC050`), `Tick`/`UnTick`.
+Non-virtual helpers: `GetSoundLevel`, static `CalcSoundLevelIncrement` (`0x4AC050`), `Tick` / `UnTick`.
 
-`CEventEditableResponse` non-virtuals (`EventEditableResponse.cpp`): `WillRespond` `0x4AC490`,
-`InformVehicleOccupants` `0x4AC4A0`, `InformRespectedFriends` `0x4B2B00`, `InformGroup` `0x4B7DF0`,
-`TriggerLookAt` `0x4AC5A0`, `ComputeResponseTaskType(CPed*, bool)` `0x4B56C0`,
-`ComputeResponseTaskType(CPedGroup*)` `0x4B57A0`, `ComputeResponseTaskOfType` `0x4B5730`.
+`CEventEditableResponse` non-virtuals: `WillRespond` `0x4AC490`, `InformVehicleOccupants` `0x4AC4A0`,
+`InformRespectedFriends` `0x4B2B00`, `InformGroup` `0x4B7DF0`, `TriggerLookAt` `0x4AC5A0`,
+`ComputeResponseTaskType(CPed*, bool)` `0x4B56C0`, `ComputeResponseTaskType(CPedGroup*)` `0x4B57A0`,
+`ComputeResponseTaskOfType` `0x4B5730`.
 
 ---
 
@@ -281,12 +279,13 @@ The `(path, eDecisionTypes, bool)` overload (`0x607D30`) loads into a temporary 
 
 ### 5.3 Making a decision
 
-`CDecisionMakerTypes::MakeDecision` has two overloads, **both still `plugin::Call` stubs** (`DecisionMakerTypes.cpp`):
+`CDecisionMakerTypes::MakeDecision` has two overloads, **both still hooked `plugin::Call` stubs**
+(`.Reversed = false`):
 - ped: `0x606E70` `(ped, eventType, eventSourceType, bInVehicle, avoid1, avoid2, avoid3, seek, bUseInGroupDM,
   int16& taskType, int16& facial)`;
 - group: `0x606F80`, returns the `eTaskType`.
 
-How the event code drives it (`EventEditableResponse.cpp:152-237`):
+How the event code drives it (`CEventEditableResponse::ComputeResponseTaskType` / `ComputeResponseTaskOfType`):
 - `ComputeResponseTaskType(ped, inGroup)` avoids the three "side effect" tasks (inform friends, inform group, look
   at) so the chosen task is the *real* response, and writes `m_TaskId` / `m_FacialExpressionType`.
 - `ComputeResponseTaskOfType(ped, X)` passes `X` as `seek` and returns whether the roll picked `X`. This is how
@@ -334,15 +333,15 @@ VALIDATE_SIZE(CEventDanger, 0x1C);
 
 Rules seen across the reversed classes:
 - Declare overrides **in the base vtable order** (§4) to make review against IDA easy.
-- Trivial getters (`GetEventType`, `GetEventPriority`, `GetLifeTime`, `Clone`/`CloneEditable`,
+- Trivial getters (`GetEventType`, `GetEventPriority`, `GetLifeTime`, `Clone` / `CloneEditable`,
   `GetLocalSoundLevel`, ...) stay inline in the header; their binary copies are tiny and usually not hooked.
 - Plain events override `Clone()`; editable events override **only** `CloneEditable()` and let
-  `CEventEditableResponse::Clone` copy `m_TaskId`/facial/`m_bAddToEventGroup`.
+  `CEventEditableResponse::Clone` copy `m_TaskId` / facial / `m_bAddToEventGroup`.
 - If you want `notsa::isa/dyn_cast<CEventX>`, add `static constexpr auto Type = EVENT_X;` and return it from
   `GetEventType` (`CEventScriptCommand`, `CEventGunAimedAt`, `CEventDamage`, `CEventGroupEvent`,
   `CEventGunShotWhizzedBy` do).
-- Entity pointers: `CEntity::SafeRegisterRef` in the ctor, `SafeCleanUpRef` in the dtor
-  (`EventGunShot.cpp:19-29`, `EventDanger.cpp:18-26`).
+- Entity pointers: `CEntity::SafeRegisterRef` in the ctor, `SafeCleanUpRef` in the dtor (see the `CEventGunShot` and
+  `CEventDanger` constructors and destructors).
 - Subclasses that only change type/priority reuse the base ctor: `using CEventAcquaintancePed::CEventAcquaintancePed;`
   (`EventSeenCop.h`).
 - Always end with `VALIDATE_SIZE`. Sizes must fit the event pool slot (0x44, `CEventDamage`).
@@ -360,22 +359,13 @@ void CEventGunShot::InjectHooks() {
     RH_ScopedVMTInstall(TakesPriorityOver, 0x4AC780);
     RH_ScopedVMTInstall(CloneEditable, 0x4B6B20);
 }
-
-CEventGunShot* CEventGunShot::Constructor(CEntity* e, CVector s, CVector t, bool n) {
-    this->CEventGunShot::CEventGunShot(e, s, t, n);
-    return this;
-}
-
-// 0x4AC610
-CEventGunShot::CEventGunShot(...) : CEventEditableResponse() { ... }
 ```
 
-- Constructors are hooked through a `Constructor` wrapper with `RH_ScopedInstall`; overloaded ctors are numbered
-  (`Constructor1` in `EventSeenCop.cpp`).
-- Virtuals use `RH_ScopedVMTInstall` (vtable slot swap). Older files also hook virtuals with plain
-  `RH_ScopedInstall` (`EventScriptCommand.cpp:13-19`); prefer VMT installs in new code.
-- Put `// 0xADDR` above every function, keep the category `"Events"` (or `"DecisionMakers"`).
-- Add `CEventX::InjectHooks();` to the `Events` lambda in `InjectHooksMain.cpp` (around line 1300). Lines written
+- Overloaded ctors get numbered wrappers (`Constructor1` in `EventSeenCop.cpp`).
+- Older files hook virtuals with plain `RH_ScopedInstall` (`CEventScriptCommand::InjectHooks`); prefer VMT installs
+  in new code.
+- Keep the category `"Events"` (or `"DecisionMakers"`).
+- Add `CEventX::InjectHooks();` to the `Events` lambda in `source/InjectHooksMain.cpp`. Lines written
   `// + CEventX::InjectHooks();` there mark classes that exist in C++ but register no hooks yet.
 - If the class has a dedicated response method, also check `CEventHandler::Compute<X>Response` and
   `CGroupEventHandler::ComputeResponse<X>`. The event is only half the behaviour.
@@ -385,8 +375,8 @@ CEventGunShot::CEventGunShot(...) : CEventEditableResponse() { ... }
 ## 7. Gotchas
 
 - **Every `Add` clones.** Both `CEventGroup::Add` and `CEventGlobalGroup::AddEventsToPed/ToGroup` clone; the latter
-  even clones *before* `Add` and deletes its copy (`EventGlobalGroup.cpp:29-44`). A wrong `Clone`/`CloneEditable`
-  (missing field) silently breaks every event that goes through a queue.
+  even clones *before* `Add` and deletes its copy. A wrong `Clone` / `CloneEditable` (missing field) silently breaks
+  every event that goes through a queue.
 - **Editable fields are copied by the base `Clone`, not by `CloneEditable`.** Don't duplicate that in subclasses.
 - **`Remove` leaves holes.** `m_count` is not decremented, and `GetEvents()` iterates the null slot.
   `GetHighestPriorityEvent` dereferences without a null check, so always `Reorganise()` after `Remove`, as
@@ -395,7 +385,7 @@ CEventGunShot::CEventGunShot(...) : CEventEditableResponse() { ... }
   event wins, except script commands (strict `>`).
 - **Lifetime 0 + `UnTick()`**: an event that cannot be responded to this frame survives only because
   `HandleEvents` calls `UnTick()`. `CEventScriptCommand::IsValid(ped)` ignores the lifetime and returns
-  `ped->IsAlive()` (`EventScriptCommand.cpp:76`), so script commands stay queued while the ped lives.
+  `ped->IsAlive()`, so script commands stay queued while the ped lives.
 - **Computed priorities.** `CEventScriptCommand::GetEventPriority` (`0x4B0B20`: 75 for dead-ped commands, 71 for
   die/swim/phone/looped anim, else 53) and `CEventStuckInAir::GetEventPriority` (75 or 63, depends on the handler's
   current event and queue length).
@@ -404,60 +394,60 @@ CEventGunShot::CEventGunShot(...) : CEventEditableResponse() { ... }
 - **`eEventType` has gaps** (no 0, 22-24, 29, 34, 40, 68, 78, 80, 82-87, 91, 95; `EVENT_TOTAL_NUM_EVENTS = 96`).
   Don't size arrays by counting enumerators.
 - **Missing `NOTSA_EXPORT_VTABLE`** on `CEventHealthLow`, `CEventHealthReallyLow`, `CEventHighAngerAtPlayer`,
-  `CEventPotentialWalkIntoBuilding`, `CEventSignalAtPed`, `CEventSoundLoud`. `RH_ScopedVirtualClass` finds our
-  vtable by class name (`ReversibleHooks.h:43-47`), so add the macro before hooking them.
+  `CEventPotentialWalkIntoBuilding`, `CEventSignalAtPed`, `CEventSoundLoud`. `RH_ScopedVirtualClass` finds our vtable
+  through the exported symbol (`FindVMTAddressByClassName` in `source/reversiblehooks/VMTInfo.cpp`), so add the macro
+  before hooking them.
 - **Unhooked but implemented.** Many event classes are complete in C++ (no `plugin::` calls) but have no
   `InjectHooks`, so the game's own code still runs the original version and ours runs only when *our* code
   constructs the event. Behaviour can differ without anything flagging it.
 - **Global group has no ped.** `CEventGlobalGroup` is built with `nullptr`; `Add` on it skips `AffectsPed`, decision
   makers and `RecordEventForScript`. Don't add ped-specific logic that assumes `m_pPed`.
-- **Group AI only accepts `CEventGroupEvent`** (`PedGroupIntelligence.cpp:77-80`). Plain events pushed by
+- **Group AI only accepts `CEventGroupEvent`** (`CPedGroupIntelligence::AddEvent`). Plain events pushed by
   `AddEventsToGroup` are ignored unless they are group events.
-- **Decision makers are mostly stubs.** `CDecisionMakerTypes` registers no hooks at all (`InjectHooks` is empty) and
-  every method forwards to GTA. `CDecision::InjectHooks` used to be missing from `InjectHooksMain`; it is now called
-  (its `plugin::Call` stubs are `.Reversed = false`). `UnloadDecisionMaker` is locked to GTA ("Causes esp check failure").
-  `CDecisionSimple` has no implementation.
-- **`eDecisionTypes` names are misleading.** `DEFAULT_DECISION_MAKER`/`PLAYER_DECISION_MAKER` are used as "ped file"
-  vs "group file" when loading, and `ReStart`/`LoadDefaultDecisionMaker` cast plain indices to it.
+- **Decision makers are mostly stubs.** Every `CDecisionMakerTypes` method is a hooked `.Reversed = false`
+  `plugin::Call` stub. `CDecision::Set` / `SetDefault` are stubs too (`Add`, `HasResponse` and `MakeDecision` are
+  not even hooked). `CDecisionMakerTypesFileLoader::UnloadDecisionMaker` is locked to GTA ("Causes esp check
+  failure"). `DecisionSimple.cpp` is empty.
+- **`eDecisionTypes` names are misleading.** `DEFAULT_DECISION_MAKER` / `PLAYER_DECISION_MAKER` are used as "ped file"
+  vs "group file" when loading, and `ReStart` / `LoadDefaultDecisionMaker` cast plain indices to it.
 - **Scanners are stubs.** `CEventScanner::ScanForEvents` (`0x607E30`),
   `CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents` (`0x603720`),
   `CCollisionEventScanner::ScanForCollisionEvents` (`0x604500`) and `CEventSource::ComputeEventSourceType`
-  (`0x4ABAC0`) are `plugin::Call` stubs with no hook (`InjectHooksMain.cpp:1380-1381` comments them out with `-`).
-  The standalone headers `NearbyFireScanner.h`, `ObjectPotentialCollisionScanner.h`, `PedAcquaintanceScanner.h`,
-  `SexyPedScanner.h`, `VehiclePotentialCollisionScanner.h` redefine classes already in `EventScanner.h` and are not
-  included anywhere; including one next to `EventScanner.h` is a redefinition error.
-- **Unfinished handler parts.** `CEventHandler::RecordActiveEvent`/`RecordPassiveEvent` are `assert(false)`;
+  (`0x4ABAC0`) are `plugin::Call` stubs with no hook (`InjectHooksMain.cpp` lists `CEventSource` and `CEventScanner`
+  as `// - ...` comments). The standalone headers `NearbyFireScanner.h`, `ObjectPotentialCollisionScanner.h`,
+  `PedAcquaintanceScanner.h`, `SexyPedScanner.h`, `VehiclePotentialCollisionScanner.h` redefine classes already in
+  `EventScanner.h` and are not included anywhere; including one next to `EventScanner.h` is a redefinition error.
+- **Unfinished handler parts.** `CEventHandler::RecordActiveEvent` / `RecordPassiveEvent` are `assert(false)`;
   `ComputeKnockOffBikeResponse` (`0x4B9FF0`), `ComputePedCollisionWithPedResponse` (`0x4BDB80`) and
   `ComputePedCollisionWithPlayerResponse` (`0x4BE7D0`) are `.Reversed = false` stubs; `ComputeVehicleHitAndRunResponse`
   has no address; `ComputePlayerWantedLevelResponse` is `NOTSA_UNREACHABLE` ("This event doesn't seem to exist").
   `ResetResponse` nulls the five task pointers without deleting them (commented as a possible bug).
-- **`CPedIntelligence::GetActivePrimaryTask`** (`PedIntelligence.cpp`, `0x4B85B0`) loops over three task slots but
-  always queries `TASK_PRIMARY_PHYSICAL_RESPONSE`. `HandleEvents` depends on it; check it if event handling looks off.
+- **`CPedIntelligence::GetActivePrimaryTask` always reads the PHYSICAL_RESPONSE slot**, and `HandleEvents` depends on
+  it (see [Tasks.md](Tasks.md) §7).
 - **The coverage tool undercounts events.** It matches by address, so inline header functions (`GetEventType`,
-  `Clone`, dtors) count as "missing" even when the C++ is complete.
+  `Clone`, dtors) count as MISSING even when the C++ is complete.
 
 ---
 
-## 8. Reversing status
+## 8. What is left
 
-From `python .claude/skills/find-reversing-targets/scripts/idb_coverage.py --classes 400 --filter Event` (cached IDB
-export). Summed over the 92 matching classes (85 are `CEvent*`, the rest are `CEventHandler`-related, scanners,
-`CInterestingEvents`, `CInformGroupEvent`, ...):
+Snapshot from `idb_coverage.py --classes 400 --filter Event`, summed over the 92 matching classes (85 are `CEvent*`,
+the rest are `CEventHandler`-related, scanners, `CInterestingEvents`, `CInformGroupEvent`, ...):
 
 | Status | Functions |
 |---|---|
-| total | 869 (≈38 KiB of code left) |
-| reversed | 293 |
+| total | 871 (about 38 KB of code left) |
+| reversed | 295 |
 | stub (`.Reversed = false`) | 9 |
-| nohook (`plugin::Call` without hook) | 4 |
-| known (address in repo, not hooked) | 32 |
-| missing (no address in repo) | 531 |
+| NOHOOK (`plugin::Call` without hook) | 4 |
+| KNOWN (address in repo, not hooked) | 32 |
+| MISSING (no address in repo) | 531 |
 
 The infrastructure is nearly done: `CEventHandler` 69/72, `CGroupEventHandler` 30/32, `CEventHandlerHistory` 10/11,
-`CEventGroup` 12/14, `CEventEditableResponse` 11/13. The biggest remaining chunks are `CEventHandler`
-(3 stubs, 7,891 bytes), `CCollisionEventScanner` (one 3,555-byte function), `CInterestingEvents` (2,541),
-`CGroupEventHandler` (2,412) and `CEventScanner` (1,395). Most of the "missing" count is per-event boilerplate
-(ctor, dtor, getters, `Clone`) without addresses.
+`CEventGroup` 12/14, `CEventEditableResponse` 11/13. The biggest remaining chunks are `CEventHandler` (3 stubs, 7,891
+bytes), `CCollisionEventScanner` (one 3,555-byte function), `CInterestingEvents` (2,541), `CGroupEventHandler`
+(2,412) and `CEventScanner` (1,395). Most of the MISSING count is per-event boilerplate (ctor, dtor, getters,
+`Clone`) without addresses.
 
 `--untouched 60 --filter Event` lists **19 classes with no address in the repo**. They all have C++ in the repo
 already (header and, for most, a `.cpp` without `plugin::` calls); what's missing is addresses, verification against
@@ -482,7 +472,7 @@ IDA and an `InjectHooks`:
 3. `CEventHealthLow`, `CEventHealthReallyLow`, `CEventHighAngerAtPlayer`: add `NOTSA_EXPORT_VTABLE` first.
 4. Then `CEventFireNearby`, `CEventInWater`, `CEventInteriorUseInfo`, `CEventVehicleThreat`, `CEventSexyVehicle`.
 
-Use `idb_coverage.py --class CEventRevived` (for example) to get the IDA function list, and add
-`// + CEventX::InjectHooks();` → `CEventX::InjectHooks();` in `InjectHooksMain.cpp`. Bigger behavioural targets
+Use `idb_coverage.py --class CEventRevived` (for example) to get the IDA function list, and turn
+`// + CEventX::InjectHooks();` into `CEventX::InjectHooks();` in `InjectHooksMain.cpp`. Bigger behavioural targets
 after that: the three `CEventHandler` stubs, `CEventScanner::ScanForEvents`, `CCollisionEventScanner`,
 `CEventSource::ComputeEventSourceType`, and `CDecisionMakerTypes::MakeDecision` (both overloads).
