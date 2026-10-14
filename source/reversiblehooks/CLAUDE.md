@@ -31,9 +31,9 @@ Guide: [../../docs/HookRegistration.md](../../docs/HookRegistration.md) (usage r
 ## Pitfalls
 - `VMTInfo` throws `std::runtime_error` when our vtable symbol is missing or the GTA address is not in the vtable
   (e.g. `CLodTimeModelInfo`, see `game_sa/Models/CLAUDE.md`). `check_hooks.py` catches most of these statically.
-- `InjectHooksMain()` runs from `DllMain` under the loader lock. `dllmain.cpp` now catches an escaping exception,
-  shows a message box and terminates (it used to hang). Still: never throw, wait on threads or load DLLs on the
-  install path; validate with `check_hooks.py` instead of relying on the catch.
+- `InjectHooksMain()` runs from `DllMain` under the loader lock. Nothing catches an escaping exception: the game
+  freezes at the console with no message. Never throw, wait on threads or load DLLs on the install path; validate
+  with `check_hooks.py` and start the game once.
 - `StackArgumentsToPreserve` / `PreserveRegisters` are for callers that rely on non-standard conventions;
   `PreserveRegisters` without `StackArgumentsToPreserve` throws at install time (`InstallStatic`).
 - Script-command hooks exist only with `NOTSA_WITH_SCRIPT_COMMAND_HOOKS`; otherwise `RH_ScopedInstallScriptCommand`

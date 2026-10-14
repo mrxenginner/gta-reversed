@@ -190,9 +190,8 @@ So everything above the buffer is ours, while the code that actually lays out an
 
 ## 6. Why `CHud` is special (hooks not registered)
 
-A comment at the end of `InjectHooksMain()` (`source/InjectHooksMain.cpp`, "Still NOT registered on purpose") lists
-classes whose `InjectHooks()` exists but is deliberately not called; `CHud` is the first one ("30 functions, untested
-in-game"). `CHud::InjectHooks` registers 38 functions:
+`CHud::InjectHooks()` exists but `InjectHooksMain()` deliberately doesn't call it, because it hasn't been tested in
+game yet. `CHud::InjectHooks` registers 38 functions:
 30 reversed and 8 `.Reversed = false` stubs. Because it is never called:
 
 - **No hook exists for any `CHud` function.** Nothing is patched at the original addresses and nothing appears under
@@ -216,8 +215,8 @@ in-game"). `CHud::InjectHooks` registers 38 functions:
 **Testing `CHud` before registering it:**
 
 1. Locally add `CHud::InjectHooks();` to `InjectHooksMain` (don't commit it yet). `InjectHooksMain` runs under the loader
-   lock; an exception thrown during registration is caught in `dllmain.cpp` (R11 in
-   [../ReversingRules.md](../ReversingRules.md)), so check `logs/log.log` after start-up.
+   lock; an exception thrown during registration freezes the game at the console (R11 in
+   [../ReversingRules.md](../ReversingRules.md)), so make sure the game starts and check `logs/log.log`.
 2. The direct calls from `Render2dStuff`/`Idle` bypass the hook. Only the patch at the GTA address follows the toggle.
    To A/B `CHud::Draw` itself in F7, switch it to GTA: in that state our function body is patched to jump to the
    original, so the direct call follows too (`RedirectToGTA`, see "How the project works" in [../ReversingGuide.md](../ReversingGuide.md)).

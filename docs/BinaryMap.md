@@ -84,9 +84,10 @@ How to read this:
 - **`dormant` (109 functions) is reversed code with no hook**, because its class's `InjectHooks()` is never
   called. Original code that calls such a function still runs the original; only our own C++ callers reach the
   reversed version (eg. `CHud::Draw` runs every frame because our `Render2dStuff` calls it directly), and it can't
-  be toggled in the F7 menu. The classes left this way on purpose are listed, with the reason, in the comment
-  "Still NOT registered on purpose" in `InjectHooksMain()`: `CHud`, `CMaths`, `CPedAttractor`, `CPedShelterAttractor`, `CConversationNode` and
-  `CLodTimeModelInfo` (its `InjectHooks` uses the wrong vtable, see [ai/CaseStudies.md](ai/CaseStudies.md) §8).
+  be toggled in the F7 menu. The classes left this way on purpose are `CHud` (not tested in game), `CMaths`
+  (`InitMathsTables` is a no-op, so the game's sin table would stay empty), `CPedAttractor`, `CPedShelterAttractor`,
+  `CConversationNode` and `CLodTimeModelInfo` (its `InjectHooks` uses the wrong vtable, see
+  [ai/CaseStudies.md](ai/CaseStudies.md) §8).
 - **`nohook` (117 functions) breaks the rule in `HookRegistration.md`.** These are `plugin::Call` stubs without an
   `RH_*Install`. `add_missing_hooks.py` registered the safe ones on 2026-10-12, which took this number down from 313.
   The rest are virtuals, constructors/destructors, templates, or functions defined outside their class's `.cpp`, so

@@ -73,8 +73,8 @@ isn't in the vtable named by `RH_ScopedVirtualClass(cls, vtable, slots)`. Static
 inherited functions use `RH_ScopedInstall`. Look the vtable up in [ai/Vtables.md](ai/Vtables.md).
 
 **R11. Nothing on the `InjectHooksMain` path may throw or wait.** It runs inside `DllMain` with the loader lock held. An
-exception there used to freeze the game at the console. It is now caught and reported in a message box, but the
-hooks are left half-installed. Test every new registration by starting the game once.
+exception there freezes the game at the console with no message (see [ai/CaseStudies.md](ai/CaseStudies.md) §8). Test
+every new registration by starting the game once.
 
 **R12. Don't hook a function whose signature we changed.** If our C++ signature differs from the original ABI (for
 example, it returns a struct where the original takes an out-parameter), hook a wrapper with the original signature.

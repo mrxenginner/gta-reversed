@@ -76,7 +76,7 @@ runs one `gta-reverser` per function in its own worktree/branch, then `gta-rever
   queries use `.claude/skills/find-reversing-targets/scripts/ida_rpc.py` (`export` -> `.claude/cache/idb_export.json`).
 - Only the game's own code is reversed function-by-function (region `0x401000-0x748000`); RenderWare, D3DX, libpng
   and the CRT are called, not reversed.
-- `InjectHooksMain` runs under the loader lock: nothing on that path may throw or wait (an escaping exception is caught
-  in `dllmain.cpp`, reported and the game terminates). `RH_ScopedVMTInstall` throws if the address is not in the class
+- `InjectHooksMain` runs under the loader lock: nothing on that path may throw or wait (an escaping exception freezes
+  the game at the console with no message). `RH_ScopedVMTInstall` throws if the address is not in the class
   vtable; `check_hooks.py` checks that.
 - Don't change unrelated code; one subject per PR.

@@ -126,7 +126,7 @@ the console with no message. `CLodTimeModelInfo` has the same problem: its `Inje
 contain the functions it installs, which is why it stays unregistered.
 **Lesson:** use `RH_ScopedVMTInstall` only for addresses that are in that class's vtable (R10, see
 [Vtables.md](Vtables.md)). Start the game once after adding hooks (R11). `check_hooks.py` now checks VMT addresses
-against the vtable when it can read `gta_sa.exe`, and `dllmain.cpp` reports such exceptions in a message box.
+against the vtable when it can read `gta_sa.exe`.
 
 ## 9. `CWorld::InjectHooks`: hook installed at the neighbour's address
 

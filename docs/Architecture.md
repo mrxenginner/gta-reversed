@@ -85,8 +85,8 @@ The Linux cross-build through msvc-wine lives in `contrib/msvc-wine/`.
    - then `CommandLine::PostHooksInjected()`, which applies `--use-gta-for` and friends, `--dump-hooks-to` and
      `--run-difftests`
 
-   An exception escaping `InjectHooksMain()` is caught in `DllMain`: it is logged, shown in a message box, and the
-   process is terminated (letting it escape would deadlock under the loader lock).
+   Nothing catches an exception escaping `InjectHooksMain()`. It ends in `exit()`, whose atexit handlers wait for
+   spdlog's worker thread, which can't start under the loader lock, so the game freezes at the console with no message.
 
 The game then reaches its `WinMain` (`0x748710`). That function is itself hooked, to `NOTSA_WinMain`
 (`source/app/platform/win/WinMain.cpp`), which runs: RenderWare/skeleton initialisation, SDL or Win32 window,
