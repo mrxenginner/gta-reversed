@@ -2296,19 +2296,19 @@ void CRadar::DrawBlips() {
                 case BLIP_OBJECT:
                 case BLIP_PICKUP:
                     if (DisplayThisBlip(trace.m_nBlipSprite, priority)) {
-                        DrawEntityBlip(i, isSprite);
+                        DrawEntityBlip(static_cast<int32>(i), isSprite);
                     }
                     break;
                 case BLIP_COORD:
                 case BLIP_CONTACT_POINT:
                     if (trace.m_nBlipSprite != RADAR_SPRITE_WAYPOINT && DisplayThisBlip(trace.m_nBlipSprite, priority)) {
-                        DrawCoordBlip(i, isSprite);
+                        DrawCoordBlip(static_cast<int32>(i), isSprite);
                     }
                     break;
                 case BLIP_SPOTLIGHT:
                 case BLIP_AIRSTRIP:
                     if (priority == 3 && (!CTheScripts::bPlayerIsOffTheMap || !FrontEndMenuManager.m_bDrawingMap)) {
-                        DrawEntityBlip(i, isSprite);
+                        DrawEntityBlip(static_cast<int32>(i), isSprite);
                     }
                     break;
                 default:
@@ -2325,7 +2325,7 @@ void CRadar::DrawBlips() {
             case BLIP_COORD:
             case BLIP_CONTACT_POINT:
                 if (trace.m_nBlipSprite == RADAR_SPRITE_WAYPOINT) {
-                    DrawCoordBlip(i, true);
+                    DrawCoordBlip(static_cast<int32>(i), true);
                 }
                 break;
             default:
@@ -2362,7 +2362,7 @@ void CRadar::DrawBlips() {
             const auto angle = [] {
                 const auto heading = FindPlayerHeading(0);
 
-                if (CCamera::GetActiveCamera().m_nMode == MODE_TOPDOWN) {
+                if (TheCamera.GetActiveCam().m_nMode == MODE_TOPDOWN) {
                     return heading + DegreesToRadians(180.0f);
                 } else {
                     return heading - m_fRadarOrientation - DegreesToRadians(180.0f);
