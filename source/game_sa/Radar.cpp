@@ -6,6 +6,8 @@
 */
 #include "StdInc.h"
 
+#include <numbers>
+
 #include "Radar.h"
 #include "EntryExitManager.h"
 
@@ -1904,10 +1906,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
             return;
         }
         searchlight = &CTheScripts::ScriptSearchLightArray[idx];
-        if (!searchlight) {
-            return;
-        }
-        coords = searchlight->m_Target;
+        coords      = searchlight->m_Target;
         break;
     }
 
@@ -1916,11 +1915,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         if (idx < 0) {
             return;
         }
-        auto* const pickup = &CPickups::aPickUps[idx];
-        if (!pickup) {
-            return;
-        }
-        coords = pickup->GetPosn();
+        coords = CPickups::aPickUps[idx].GetPosn();
         break;
     }
 
@@ -1947,7 +1942,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
             gAirstripSweepDrawnAt = (int16)-strip.radius;
         }
 
-        const auto heading = strip.direction * DegreesToRadians(1.0f);
+        const auto heading = DegreesToRadians(strip.direction);
         coords = trace.m_vPosition;
         coords.x += std::cos(heading) * (float)gAirstripSweepOffset;
         coords.y -= std::sin(heading) * (float)gAirstripSweepOffset;
@@ -1975,13 +1970,14 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         return;
     }
 
-    const CRGBA colour = GetRadarTraceColour(trace.m_nColour, trace.m_bBright, trace.m_bFriendly);
+    const auto  packedColour = GetRadarTraceColour(trace.m_nColour, trace.m_bBright, trace.m_bFriendly);
+    const CRGBA colour{ packedColour };
 
     // The pulsing sphere in the world, which shrinks until it is reset
     if ((trace.m_nBlipDisplayFlag == BLIP_DISPLAY_BOTH || trace.m_nBlipDisplayFlag == BLIP_DISPLAY_MARKERONLY)
      && CTheScripts::DbgFlag
     ) {
-        ShowRadarMarker(coords, GetRadarTraceColour(trace.m_nColour, trace.m_bBright, trace.m_bFriendly), trace.m_fSphereRadius);
+        ShowRadarMarker(coords, packedColour, trace.m_fSphereRadius);
         trace.m_fSphereRadius -= 0.1f;
         if (trace.m_fSphereRadius < 1.0f) {
             trace.m_fSphereRadius = 5.0f;
@@ -2013,6 +2009,16 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         return blipZ + 4.0f >= centre.z ? RADAR_TRACE_NORMAL : RADAR_TRACE_HIGH;
     };
 
+    const auto ShowTrace = [&](eRadarTraceHeight height) {
+        ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize, colour.r, colour.g, colour.b, colour.a, height);
+    };
+
+    //! Rotating sprites are `size` PS2 pixels wide and high
+    const auto DrawRotatingSprite = [](eRadarSprite sprite, CVector2D pos, float angle, float size, CRGBA spriteColour) {
+        DrawRotatingRadarSprite(RadarBlipSprites[sprite], pos.x, pos.y, angle,
+                                (uint32)SCREEN_STRETCH_X(size), (uint32)SCREEN_STRETCH_Y(size), spriteColour);
+    };
+
     // Zoomed in and on foot, most blips become an arrow pointing the way the thing is facing
     if (CTheScripts::RadarZoomValue && !FindPlayerVehicle()
      && trace.m_nBlipType != BLIP_OBJECT && trace.m_nBlipType != BLIP_PICKUP
@@ -2026,23 +2032,16 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
             return;
         }
 
-        const auto centre = FindPlayerCentreOfWorldForMap(0);
-        if (coords.z - 2.0f > centre.z) {
-            if (CTheScripts::RadarShowBlipOnAllLevels) {
-                ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize,
-                                         colour.r, colour.g, colour.b, colour.a, RADAR_TRACE_LOW);
-            }
-        } else if (coords.z + 4.0f >= centre.z) {
+        if (const auto height = HeightOf(coords.z); height == RADAR_TRACE_NORMAL) {
             // The map rotates with the player unless the camera is locked north
-            const auto angle = TheCamera.m_aCams[TheCamera.m_nActiveCam].m_nMode == MODE_TOPDOWN
-                ? facing + PI
-                : facing - (m_fRadarOrientation + PI);
-            DrawRotatingRadarSprite(RadarBlipSprites[RADAR_SPRITE_CENTRE], screenPos.x, screenPos.y, angle,
-                                    (uint32)SCREEN_STRETCH_X(8.0f), (uint32)SCREEN_STRETCH_Y(8.0f),
-                                    { colour.r, colour.g, colour.b, 255 });
+            // NOTE: The original loads the exact float pi (3.1415927f)
+            constexpr auto pi = std::numbers::pi_v<float>;
+            const auto angle  = TheCamera.GetActiveCam().m_nMode == MODE_TOPDOWN
+                ? facing + pi
+                : facing - (m_fRadarOrientation + pi);
+            DrawRotatingSprite(RADAR_SPRITE_CENTRE, screenPos, angle, 8.0f, { colour.r, colour.g, colour.b, 255 });
         } else if (CTheScripts::RadarShowBlipOnAllLevels) {
-            ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize,
-                                     colour.r, colour.g, colour.b, colour.a, RADAR_TRACE_HIGH);
+            ShowTrace(height);
         }
         return;
     }
@@ -2074,9 +2073,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
     } else if (isAirstrip) {
         // The light that marks where the runway is, at the runway's own position ...
         if (!FrontEndMenuManager.m_bDrawingMap && radarPos.Magnitude() < 0.9f && stripRange < 500.0f) {
-            DrawRotatingRadarSprite(RadarBlipSprites[RADAR_SPRITE_LIGHT], screenPos.x, screenPos.y, 0.0f,
-                                    (uint32)SCREEN_STRETCH_X(8.0f), (uint32)SCREEN_STRETCH_Y(8.0f),
-                                    { 255, 255, 255, 255 });
+            DrawRotatingSprite(RADAR_SPRITE_LIGHT, screenPos, 0.0f, 8.0f, { 255, 255, 255, 255 });
         }
 
         // ... and the runway arrow itself, which is drawn at the blip's own coordinates rather
@@ -2084,30 +2081,22 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         auto       stripRadar  = TransformRealWorldPointToRadarSpace(CVector2D{ trace.m_vPosition });
         LimitRadarPoint(stripRadar);
         const auto stripScreen = TransformRadarPointToScreenSpace(stripRadar);
+        const auto stripDir    = airstrip_table[airstrip_location].direction;
 
         if (FrontEndMenuManager.m_bDrawingMap) {
             // On the map it points the way the runway does, less the quarter turn the sprite has
             // built in - except at San Fierro, which is drawn as it is
-            const auto direction = airstrip_location == AIRSTRIP_SF_AIRPORT
-                ? airstrip_table[airstrip_location].direction
-                : airstrip_table[airstrip_location].direction - 90.0f;
-            DrawRotatingRadarSprite(RadarBlipSprites[RADAR_SPRITE_RUNWAY], stripScreen.x, stripScreen.y,
-                                    direction * DegreesToRadians(1.0f),
-                                    (uint32)SCREEN_STRETCH_X(16.0f), (uint32)SCREEN_STRETCH_Y(16.0f),
-                                    { 255, 255, 255, 255 });
+            const auto direction = airstrip_location == AIRSTRIP_SF_AIRPORT ? stripDir : stripDir - 90.0f;
+            DrawRotatingSprite(RADAR_SPRITE_RUNWAY, stripScreen, DegreesToRadians(direction), 16.0f, { 255, 255, 255, 255 });
             AddBlipToLegendList(false, RADAR_SPRITE_RUNWAY);
         } else {
             if (bDontDisplayAirstripThisFrame) {
                 return;
             }
-            DrawRotatingRadarSprite(RadarBlipSprites[RADAR_SPRITE_RUNWAY], stripScreen.x, stripScreen.y,
-                                    -m_fRadarOrientation - (airstrip_table[airstrip_location].direction - 90.0f) * DegreesToRadians(1.0f),
-                                    (uint32)SCREEN_STRETCH_X(16.0f), (uint32)SCREEN_STRETCH_Y(16.0f),
-                                    { 255, 255, 255, 255 });
+            DrawRotatingSprite(RADAR_SPRITE_RUNWAY, stripScreen, -m_fRadarOrientation - DegreesToRadians(stripDir - 90.0f), 16.0f, { 255, 255, 255, 255 });
         }
     } else {
-        ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize,
-                                 colour.r, colour.g, colour.b, colour.a, HeightOf(coords.z));
+        ShowTrace(HeightOf(coords.z));
     }
 
     if (!FrontEndMenuManager.m_bDrawingMap) {
