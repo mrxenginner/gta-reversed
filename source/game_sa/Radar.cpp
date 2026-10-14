@@ -149,7 +149,7 @@ void CRadar::InjectHooks() {
 
     RH_ScopedInstall(SetupAirstripBlips, 0x587D20); // TEST
     RH_ScopedInstall(DrawBlips, 0x588050);
-    // RH_ScopedInstall(ClipRadarPoly, 0x585040);
+    RH_ScopedInstall(ClipRadarPoly, 0x585040);
     RH_ScopedInstall(DrawAreaOnRadar, 0x5853D0);
     RH_ScopedOverloadedInstall(StreamRadarSections, "xy", 0x584C50, void (*)(int32, int32));
     RH_ScopedInstall(AddBlipToLegendList, 0x5859F0);
@@ -1115,9 +1115,107 @@ int32 LineRadarBoxCollision(CVector2D& result, const CVector2D& lineStart, const
     return intersectionSide;
 }
 
-// 0x585040
+/*!
+ * @brief Clip a four-point polygon to the radar's square, inserting whatever corners of the square
+ *        the polygon wraps around.
+ *
+ * Sutherland-Hodgman would walk the four edges of the box and clip the polygon against each in
+ * turn; this walks the polygon instead, and it only works because both are known to have exactly
+ * four points. A point inside the box is copied straight over. A point outside contributes the
+ * places where its two edges cross the box, and - between them - every corner of the box lying
+ * between those two crossings, which is what keeps the result a closed shape when the polygon
+ * passes right by a corner.
+ *
+ * @param out room for at least eight points
+ * @param in  four points
+ * @returns how many points `out` was filled with; zero if the polygon misses the radar entirely
+ *
+ * @addr 0x585040
+ */
 int32 CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in) {
-    return plugin::CallAndReturn<int32, 0x585040, CVector2D*, const CVector2D*>(out, in);
+    //! The radar box's corners, in the order `LineRadarBoxCollision` numbers its sides: corner `s`
+    //! is the one the walk arrives at after crossing side `s`.
+    static constexpr CVector2D CORNERS[4] = { { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f }, { -1.0f, -1.0f } };
+
+    bool inside[4];
+    for (auto i = 0; i < 4; i++) {
+        inside[i] = in[i].x >= -1.0f && in[i].x <= 1.0f && in[i].y >= -1.0f && in[i].y <= 1.0f;
+    }
+
+    auto numOut = 0;
+    auto from   = -1; // Which side the walk last entered the box through
+
+    for (auto i = 0; i < 4; i++) {
+        if (inside[i]) {
+            out[numOut++] = in[i];
+            continue;
+        }
+
+        // Where the edge back to the previous point crosses the box, if it does
+        const auto entered = LineRadarBoxCollision(out[numOut], in[i], in[(i - 1) & 3]);
+        if (entered != -1) {
+            from = entered;
+            numOut++;
+        }
+
+        // ... and where the edge on to the next point leaves it
+        auto* const leavePoint = &out[numOut];
+        const auto  left       = LineRadarBoxCollision(*leavePoint, in[i], in[(i + 1) & 3]);
+        if (left == -1) {
+            continue;
+        }
+
+        // Only when this point contributed no entry of its own is there a run of box corners to
+        // fill in; otherwise the two crossings are already next to each other.
+        if (entered == -1) {
+            if (from == -1) {
+                // Nothing has entered the box yet, so look back over the polygon's remaining edges
+                // for the one that does
+                CVector2D scratch;
+                for (auto k = 3; k >= i; k--) {
+                    const auto side = k != 0
+                        ? LineRadarBoxCollision(scratch, in[k], in[k - 1])
+                        : LineRadarBoxCollision(scratch, in[0], in[3]);
+                    if (side != -1) {
+                        from = side;
+                        break;
+                    }
+                }
+            }
+
+            // The corners between the two crossings go in ahead of the leaving point, which is
+            // pushed along to make room for them
+            const auto leave = *leavePoint;
+            auto*      write = leavePoint;
+            for (auto c = from; c != left; c = (c + 1) & 3) {
+                numOut++;
+                *write++ = CORNERS[c];
+            }
+            out[numOut] = leave;
+        }
+        numOut++;
+    }
+
+    if (numOut) {
+        return numOut;
+    }
+
+    // Nothing crossed and nothing was inside, which leaves one case: the polygon may be large
+    // enough to contain the whole radar. Both diagonals from point 0 are checked against the
+    // opposite points, and the box is emitted whole if the origin falls inside both.
+    const auto slope01 = (in[0].y - in[1].y) / (in[0].x - in[1].x);
+    const auto slope03 = (in[0].y - in[3].y) / (in[0].x - in[3].x);
+
+    if ((slope01 * in[3].x - in[3].y) * (slope01 * in[0].x - in[0].y) >= 0.0f
+     || (slope03 * in[1].x - in[1].y) * (slope03 * in[0].x - in[0].y) >= 0.0f
+    ) {
+        return numOut; // Zero
+    }
+
+    for (auto i = 0; i < 4; i++) {
+        out[i] = CORNERS[i];
+    }
+    return 4;
 }
 
 // 0x5853D0
