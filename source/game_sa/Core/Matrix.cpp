@@ -394,7 +394,7 @@ void CMatrix::ConvertToEulerAngles(float* pX, float* pY, float* pZ, uint32 uiFla
         if (cy > 0.0000019073486) { // Some epsilon?
             *pX = atan2(r12, r13);
             *pY = atan2(cy, fArr[iInd1][iInd1]);
-            *pZ = atan2(fArr[iInd2][iInd1], -fArr[iInd3][iInd1]); // NOTE: Was `fArr[iInd2][iInd3]` - fixed to match the original
+            *pZ = atan2(fArr[iInd2][iInd1], -fArr[iInd3][iInd1]);
         }
         else {
             *pX = atan2(-fArr[iInd2][iInd3], fArr[iInd2][iInd2]);
