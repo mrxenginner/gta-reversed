@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 16, 2026 at 12:15:05 UTC
-(Triggered by commit [3b293849](https://github.com/gta-reversed/gta-reversed/commit/3b2938491b50a0a365ddf2d6649663361685e2df))
+Last update was at Oct 16, 2026 at 19:19:39 UTC
+(Triggered by commit [13c4e4af](https://github.com/gta-reversed/gta-reversed/commit/13c4e4affca5ad2095a888cc77489febe7b3885c))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7509 out of 8289 functions done in 718 categories)
+## Stats (7511 out of 8289 functions done in 718 categories)
 
 #### Completely reversed categories (578/718) [81%]
 
@@ -606,7 +606,7 @@ Last update was at Oct 16, 2026 at 12:15:05 UTC
 - CInterestingEvents (2/7) [29%]<br />
 - CMenuSystem (20/21) [95%]<br />
 - CWeaponEffects (8/9) [89%]<br />
-- CPedList (3/7) [43%]<br />
+- CPedList (5/7) [71%]<br />
 - CRope (5/7) [71%]<br />
 - CRopes (9/11) [82%]<br />
 - CGenericGameStorage (5/19) [26%]<br />

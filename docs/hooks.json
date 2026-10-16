@@ -2102,7 +2102,7 @@
   {
     "Category": "CPedList",
     "Name": "BuildListOfPedsOfPedType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedList",
@@ -2112,7 +2112,7 @@
   {
     "Category": "CPedList",
     "Name": "RemovePedsThatDontListenToPlayer",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CBouncingPanel",
