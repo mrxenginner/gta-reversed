@@ -143,7 +143,7 @@ void CCamera::InjectHooks() {
 
     RH_ScopedGlobalInstall(CamShakeNoPos, 0x50A970);
     RH_ScopedInstall(UpdateSoundDistances, 0x515BD0, { .Reversed = false });
-    RH_ScopedOverloadedInstall(IsSphereVisible, "constCVectorRef-float-RwMatrixPtr", 0x420C40, bool(CCamera::*)(const CVector&, float, RwMatrix*), { .Reversed = false });
+    RH_ScopedOverloadedInstall(IsSphereVisible, "", 0x420C40, bool(CCamera::*)(const CVector&, float, RwMatrix*), { .Reversed = false });
     RH_ScopedOverloadedInstall(ProcessShake, "void", 0x51A6F0, void(CCamera::*)(), { .Reversed = false });
 }
 
