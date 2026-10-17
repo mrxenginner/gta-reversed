@@ -2,6 +2,21 @@
 
 #include <extensions/CommandLine.h>
 
+#include "CoverPoint.h"
+#include "Credits.h"
+#include "IdleCam.h"
+#include "MemoryMgr.h"
+#include "SearchLight.h"
+#include "VehicleSaveStructure.h"
+#include "Conversations/ConversationForPed.h"
+#include "Conversations/PedToPlayerConversations.h"
+#include "DecisionMakers/Decision.h"
+#include "Tasks/TaskComplexUseSequence.h"
+#include "Tasks/TaskSequences.h"
+#include "Tasks/TaskTimer.h"
+#include "Tasks/TaskTypes/TaskComplexChat.h"
+#include "Entity/Ped/PlayerSkin.h"
+
 // Audio
 // -- General
 #include "AEAudioEnvironment.h"
@@ -139,10 +154,10 @@
 #include "InteriorManager_c.h"
 #include "Checkpoint.h"
 #include "Checkpoints.h"
-#include "IKChain_c.h"
-#include "IKChainManager_c.h"
-#include "BoneNode_c.h"
-#include "BoneNodeManager_c.h"
+#include "Ragdoll/IKChain.h"
+#include "Ragdoll/IKChainManager.h"
+#include "Ragdoll/BoneNode.h"
+#include "Ragdoll/BoneNodeManager.h"
 #include "TheScripts.h"
 #include "RunningScript.h"
 #include "Scripted2dEffects.h"
@@ -294,6 +309,7 @@
 #include "TaskSimpleGiveCPR.h"
 #include "TaskSimpleCarSetPedInAsPassenger.h"
 #include "TaskComplexDriveFireTruck.h"
+#include "Interior/TaskInteriorLieInBed.h"
 #include "TaskSimpleSwim.h"
 #include "TaskComplexWalkRoundObject.h"
 #include "TaskSimplePause.h"
@@ -513,6 +529,7 @@
 #include "EventAreaCodes.h"
 #include "EventLeaderEntryExit.h"
 #include "Formation.h"
+#include "ProjectileInfo.h"
 
 #include "Plugins/BreakablePlugin/BreakablePlugin.h"
 
@@ -524,14 +541,15 @@
 #include <RealTimeShadowManager.h>
 
 #include "extensions/utility.hpp"
-#include "extensions/CommandLine.h"
 #include <RenderBuffer.hpp>
 
-#include "reversiblehooks/RootHookCategory.h"
-
+#ifndef NOTSA_STANDALONE
 #include "WindowedMode.hpp"
+#endif
 
 void InjectHooksMain() {
+    const auto now = std::chrono::high_resolution_clock::now();
+
     /**
     * We have `NOTSA_STANDALONE` macro to be able to dump all hooks without actually writing to memory,
     * it is used by the CI to automatically update the docs.
@@ -539,10 +557,6 @@ void InjectHooksMain() {
     **/
 
     #ifndef NOTSA_STANDALONE
-        HookInstall(0x53E230, &Render2dStuff);   // [ImGui] This one shouldn't be reversible, it contains imgui debug menu logic, and makes game unplayable without
-        HookInstall(0x541DD0, CPad::UpdatePads); // [ImGui] Changes logic of the function and shouldn't be toggled on/off
-        HookInstall(0x459F70, CVehicleRecording::Render); // [ImGui] Debug stuff rendering
-
         #ifdef NOTSA_WINDOWED_MODE
             notsa::InjectWindowedModeHooks();
         #endif
@@ -625,6 +639,7 @@ void InjectHooksMain() {
     CGroupEventHandler::InjectHooks();
     CVehicleRecording::InjectHooks();
     CBrightLights::InjectHooks();
+    CPointLights::InjectHooks();
     CShinyTexts::InjectHooks();
     CPedTaskPair::InjectHooks();
     CDirectory::InjectHooks();
@@ -834,6 +849,7 @@ void InjectHooksMain() {
     CCustomBuildingDNPipeline::InjectHooks();
     CCustomCarEnvMapPipeline::InjectHooks();
     CConversations::InjectHooks();
+    CProjectileInfo::InjectHooks();
 
     const auto Pools = [] {
         CPools::InjectHooks();
@@ -955,7 +971,7 @@ void InjectHooksMain() {
             CTaskInteriorBeInOffice::InjectHooks();
             CTaskInteriorBeInShop::InjectHooks();
             CTaskInteriorGoToInfo::InjectHooks();
-        // CTaskInteriorLieInBed::InjectHooks();
+            CTaskInteriorLieInBed::InjectHooks();
             CTaskInteriorShopKeeper::InjectHooks();
             CTaskInteriorSitAtDesk::InjectHooks();
         // CTaskInteriorSitInChair::InjectHooks();
@@ -1456,13 +1472,27 @@ void InjectHooksMain() {
     Vehicle();
     Interior();
     Scripts();
+
+    CCoverPoint::InjectHooks();
+    CCredits::InjectHooks();
+    CIdleCam::InjectHooks();
+    CMemoryMgr::InjectHooks();
+    CSearchLight::InjectHooks();
+    CVehicleSaveStructure::InjectHooks();
+    CConversationForPed::InjectHooks();
+    CPedToPlayerConversations::InjectHooks();
+    CDecision::InjectHooks();
+    CTaskComplexUseSequence::InjectHooks();
+    CTaskSequences::InjectHooks();
+    CTaskTimer::InjectHooks();
+    CTaskComplexChat::InjectHooks();
+    CPlayerSkin::InjectHooks();
+
+    NOTSA_LOG_INFO("InjectedHooksMain(): Finished in {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - now).count());
+
+    CommandLine::PostHooksInjected();
+
 #if _DEBUG
     CCurves::TestCurves();
 #endif
-}
-
-void InjectHooksMain(HMODULE hThisDLL) {
-    ReversibleHooks::OnInjectionBegin(hThisDLL);
-    InjectHooksMain();
-    ReversibleHooks::OnInjectionEnd();
 }

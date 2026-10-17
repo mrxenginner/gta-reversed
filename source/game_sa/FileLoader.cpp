@@ -85,6 +85,7 @@ void CFileLoader::InjectHooks() {
     RH_ScopedInstall(LoadObjectTypes, 0x5B8400);
 
     RH_ScopedGlobalInstall(LinkLods, 0x5B51E0); 
+    RH_ScopedInstall(Load2dEffect, 0x5B7670, { .Reversed = false });
 }
 
 // copy textures from dictionary to baseDictionary
@@ -1418,16 +1419,15 @@ void CFileLoader::LoadLevel(const char* levelFileName) {
 // IPL -> OCCL
 // 0x5B4C80
 void CFileLoader::LoadOcclusionVolume(const char* line, const char* filename) {
-    float fRotX = 0.0F, fRotY = 0.0F;
-    uint32 nFlags = 0;
-    float fCenterX, fCenterY, fBottomZ, fWidth, fLength, fHeight, fRotZ;
-    VERIFY(sscanf_s(line, "%f %f %f %f %f %f %f %f %f %d ", &fCenterX, &fCenterY, &fBottomZ, &fWidth, &fLength, &fHeight, &fRotX, &fRotY, &fRotZ, &nFlags) == 10);
+    uint32 flags = 0;
+    float centerX, centerY, bottomZ, width, length, height, rotZ, rotY = 0.f, rotX = 0.f;
+    VERIFY(sscanf_s(line, "%f %f %f %f %f %f %f %f %f %u ", &centerX, &centerY, &bottomZ, &width, &length, &height, &rotZ, &rotY, &rotX, &flags) == 10); // yes, it's z, y, x, BUGFIX: Using %u instead of %d
     COcclusion::AddOne(
-        fCenterX, fCenterY, fHeight * 0.5F + fBottomZ,
-        fWidth, fLength, fHeight,
-        fRotX, fRotY, fRotZ,
-        nFlags,
-        std::string_view{filename}.ends_with("int.ipl")
+        centerX, centerY, height * 0.5F + bottomZ,
+        width, length, height,
+        rotZ, rotY, rotX,
+        flags,
+        std::string_view{ filename }.ends_with("int.ipl")
     );
 }
 
