@@ -61,14 +61,15 @@ void CPedList::BuildListFromGroup_NotInCar_NoLeader(CPedGroupMembership* group) 
 
 // 0x69A3B0
 void CPedList::BuildListOfPedsOfPedType(int32 pedType) {
-    CPedPool* pool = GetPedPool();
     m_count = 0;
 
-    assert(pool != nullptr);
-
-    for (auto& ped : pool->GetAllValid()) {
-        if (ped.m_nPedType == pedType) {
-            AddMember(&ped);
+    // NOTE: The original code iterates the pool backwards (last slot first),
+    // which affects which peds make it into the list if there are more than 30.
+    for (auto i = GetPedPool()->GetSize(); i-- > 0;) {
+        if (auto* const ped = GetPedPool()->GetAt(i)) {
+            if (ped->m_nPedType == (ePedType)pedType && m_count < m_peds.size()) {
+                AddMember(ped);
+            }
         }
     }
 
@@ -101,14 +102,12 @@ void CPedList::RemovePedsAttackingPedType(int32 pedType) {
 
 // 0x69A420
 void CPedList::RemovePedsThatDontListenToPlayer() {
-    const uint32 count = m_count;
-
-    for (uint32 i = 0; i < count; ++i) {
-        if (const CPed* ped = m_peds[i]; ped && ped->bDoesntListenToPlayerGroupCommands) {
+    // NOTE: Going backwards, so `m_count` being modified inside the loop doesn't matter
+    for (auto i = (int32)m_count; i-- > 0;) {
+        if (m_peds[i]->bDoesntListenToPlayerGroupCommands) {
             RemoveMemberNoFill(i);
         }
     }
-
     FillUpHoles();
 }
 
