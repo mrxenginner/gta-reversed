@@ -347,7 +347,7 @@ void CMatrix::ForceUpVector(CVector vecUp) {
 
 void CMatrix::ConvertToEulerAngles(float* pX, float* pY, float* pZ, uint32 uiFlags)
 {
-    constexpr auto EPSILON = std::scalbn(1.0f, -19);
+    const auto EPSILON = std::scalbn(1.0f, -19);
     
     float fArr[3][3];
 
