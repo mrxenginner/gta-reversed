@@ -6,7 +6,6 @@
 */
 #include "StdInc.h"
 
-#include <numbers>
 #include <reversiblebugfixes/Bugs.hpp>
 
 #include "Radar.h"
@@ -18,17 +17,6 @@ constexpr std::array<airstrip_info, NUM_AIRSTRIPS> airstrip_table = { // 0x8D06E
     airstrip_info{ { +1478.0f,  +1461.0f }, 90.0f,  1200.0f }, // AIRSTRIP_LV_AIRPORT
     airstrip_info{ { +175.00f,  +2502.0f }, 180.0f, 1000.0f }  // AIRSTRIP_VERDANT_MEADOWS
 };
-
-//! 0xBAA370 - set while the runway arrow has already been drawn where the sweep now is
-static bool bDontDisplayAirstripThisFrame{}; //!< 0xBAA370
-//! 0xBAA374 - when the sweep last stepped, on the paused clock
-static uint32 gAirstripSweepSteppedAt{}; //!< 0xBAA374
-//! 0xBAA378 - where the sweep was the last time it was actually on the radar
-static int16 gAirstripSweepDrawnAt{}; //!< 0xBAA378
-//! 0xBAA37C - how far along the runway the sweep marker currently is, in metres from its middle
-static int16 gAirstripSweepOffset{}; //!< 0xBAA37C
-//! 0xBAA380 - which of the two above have been seeded from the runway's length yet
-static uint32 gAirstripSweepSeeded{}; //!< 0xBAA380
 
 // Array of TXD slot indices for each radar section's texture
 // Index using y, x (In that order)
@@ -1173,8 +1161,8 @@ int32 CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in) {
         }
 
         // ... and where the edge on to the next point leaves it
-        auto* const leavePoint = &out[numOut];
-        const auto  left       = LineRadarBoxCollision(*leavePoint, in[i], in[(i + 1) & 3]);
+        auto&      leavePoint = out[numOut];
+        const auto left       = LineRadarBoxCollision(leavePoint, in[i], in[(i + 1) & 3]);
         if (left == -1) {
             continue;
         }
@@ -1207,8 +1195,8 @@ int32 CRadar::ClipRadarPoly(CVector2D* out, const CVector2D* in) {
 
             // The corners between the two crossings go in ahead of the leaving point, which is
             // pushed along to make room for them
-            const auto leave = *leavePoint;
-            auto*      write = leavePoint;
+            const auto leave = leavePoint;
+            auto*      write = &leavePoint;
             for (auto c = from; c != left; c = (c + 1) & 3) {
                 assert(c >= -1 && c < 4);
                 numOut++;
@@ -1860,6 +1848,10 @@ void CRadar::DrawCoordBlip(int32 blipIndex, bool isSprite) {
  * @addr 0x587000
  */
 void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
+    static bool s_DontDisplayAirstripThisFrame{}; // 0xBAA370 - set while the runway arrow has already been drawn where the sweep now is
+
+    constexpr auto AIRSTRIP_BLIP_RANGE = 500.0f; //!< How close the player's aircraft must be for the airstrip blip to show
+
     auto& trace = ms_RadarTrace[blipIndex];
 
     CEntity*            entity      = nullptr; //!< What the facing arrow is taken from, when there is one
@@ -1934,44 +1926,39 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         // to a player already flying near it
         const auto& strip   = airstrip_table[airstrip_location];
         const auto  planePos = FindPlayerVehicle()->GetPosition();
-        stripRange = std::sqrt(sq(strip.position.y - planePos.y) + sq(strip.position.x - planePos.x));
+        stripRange = DistanceBetweenPoints2D(strip.position, planePos);
 
         isAirstrip = true;
-        if (stripRange >= 500.0f) {
-            bDontDisplayAirstripThisFrame = false;
+        if (stripRange >= AIRSTRIP_BLIP_RANGE) {
+            s_DontDisplayAirstripThisFrame = false;
             break;
         }
 
-        // Both ends of the sweep start at the far end of the runway, seeded the first time through
-        if (!(gAirstripSweepSeeded & 1)) {
-            gAirstripSweepSeeded |= 1;
-            gAirstripSweepOffset  = (int16)-strip.radius;
-        }
-        if (!(gAirstripSweepSeeded & 2)) {
-            gAirstripSweepSeeded |= 2;
-            gAirstripSweepDrawnAt = (int16)-strip.radius;
-        }
+        // Both ends of the sweep start at the far end of the runway (init guard at 0xBAA380)
+        static uint32 s_AirstripSweepSteppedAt{};                    // 0xBAA374 - when the sweep last stepped, on the paused clock
+        static int16  s_AirstripSweepOffset  = (int16)-strip.radius; // 0xBAA37C - how far along the runway the sweep marker currently is, in metres from its middle
+        static int16  s_AirstripSweepDrawnAt = (int16)-strip.radius; // 0xBAA378 - where the sweep was the last time it was actually on the radar
 
         const auto heading = DegreesToRadians(strip.direction);
         coords = trace.m_vPosition;
-        coords.x += std::cos(heading) * (float)gAirstripSweepOffset;
-        coords.y -= std::sin(heading) * (float)gAirstripSweepOffset;
+        coords.x += std::cos(heading) * (float)s_AirstripSweepOffset;
+        coords.y -= std::sin(heading) * (float)s_AirstripSweepOffset;
 
         // Step the marker on once it has either left the radar or gone stale
         const auto onRadar = TransformRealWorldPointToRadarSpace(CVector2D{ coords }).Magnitude();
-        if (onRadar >= 0.9f || CTimer::GetTimeInMSPauseMode() - gAirstripSweepSteppedAt > 3) {
-            gAirstripSweepOffset += 100;
-            if ((float)gAirstripSweepOffset > strip.radius) {
-                gAirstripSweepOffset = (int16)-strip.radius; // Back to the far end
+        if (onRadar >= 0.9f || CTimer::GetTimeInMSPauseMode() - s_AirstripSweepSteppedAt > 3) {
+            s_AirstripSweepOffset += 100;
+            if ((float)s_AirstripSweepOffset > strip.radius) {
+                s_AirstripSweepOffset = (int16)-strip.radius; // Back to the far end
             }
-            if (gAirstripSweepDrawnAt == gAirstripSweepOffset) {
-                bDontDisplayAirstripThisFrame = false;
+            if (s_AirstripSweepDrawnAt == s_AirstripSweepOffset) {
+                s_DontDisplayAirstripThisFrame = false;
             }
             if (onRadar < 0.9f) {
-                gAirstripSweepDrawnAt         = gAirstripSweepOffset;
-                bDontDisplayAirstripThisFrame = true;
+                s_AirstripSweepDrawnAt         = s_AirstripSweepOffset;
+                s_DontDisplayAirstripThisFrame = true;
             }
-            gAirstripSweepSteppedAt = CTimer::GetTimeInMSPauseMode();
+            s_AirstripSweepSteppedAt = CTimer::GetTimeInMSPauseMode();
         }
         break;
     }
@@ -1980,14 +1967,14 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         return;
     }
 
-    const auto  packedColour = GetRadarTraceColour(trace.m_nColour, trace.m_bBright, trace.m_bFriendly);
-    const CRGBA colour{ packedColour };
+    const auto  packedColor = GetRadarTraceColour(trace.m_nColour, trace.m_bBright, trace.m_bFriendly);
+    const CRGBA color{ packedColor };
 
     // The pulsing sphere in the world, which shrinks until it is reset
     if ((trace.m_nBlipDisplayFlag == BLIP_DISPLAY_BOTH || trace.m_nBlipDisplayFlag == BLIP_DISPLAY_MARKERONLY)
      && CTheScripts::DbgFlag
     ) {
-        ShowRadarMarker(coords, packedColour, trace.m_fSphereRadius);
+        ShowRadarMarker(coords, packedColor, trace.m_fSphereRadius);
         trace.m_fSphereRadius -= 0.1f;
         if (trace.m_fSphereRadius < 1.0f) {
             trace.m_fSphereRadius = 5.0f;
@@ -2020,13 +2007,13 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
     };
 
     const auto ShowTrace = [&](eRadarTraceHeight height) {
-        ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize, colour.r, colour.g, colour.b, colour.a, height);
+        ShowRadarTraceWithHeight(screenPos.x, screenPos.y, trace.m_nBlipSize, color.r, color.g, color.b, color.a, height);
     };
 
     //! Rotating sprites are `size` PS2 pixels wide and high
-    const auto DrawRotatingSprite = [](eRadarSprite sprite, CVector2D pos, float angle, float size, CRGBA spriteColour) {
+    const auto DrawRotatingSprite = [](eRadarSprite sprite, CVector2D pos, float angle, float size, CRGBA spriteColor) {
         DrawRotatingRadarSprite(RadarBlipSprites[sprite], pos.x, pos.y, angle,
-                                (uint32)SCREEN_STRETCH_X(size), (uint32)SCREEN_STRETCH_Y(size), spriteColour);
+                                (uint32)SCREEN_STRETCH_X(size), (uint32)SCREEN_STRETCH_Y(size), spriteColor);
     };
 
     // Zoomed in and on foot, most blips become an arrow pointing the way the thing is facing
@@ -2044,12 +2031,10 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
 
         if (const auto height = HeightOf(coords.z); height == RADAR_TRACE_NORMAL) {
             // The map rotates with the player unless the camera is locked north
-            // NOTE: The original loads the exact float pi (3.1415927f)
-            constexpr auto pi = std::numbers::pi_v<float>;
-            const auto angle  = TheCamera.GetActiveCam().m_nMode == MODE_TOPDOWN
-                ? facing + pi
-                : facing - (m_fRadarOrientation + pi);
-            DrawRotatingSprite(RADAR_SPRITE_CENTRE, screenPos, angle, 8.0f, { colour.r, colour.g, colour.b, 255 });
+            const auto angle = TheCamera.GetActiveCam().m_nMode == MODE_TOPDOWN
+                ? facing + PI
+                : facing - (m_fRadarOrientation + PI);
+            DrawRotatingSprite(RADAR_SPRITE_CENTRE, screenPos, angle, 8.0f, { color.r, color.g, color.b, 255 });
         } else if (CTheScripts::RadarShowBlipOnAllLevels) {
             ShowTrace(height);
         }
@@ -2082,7 +2067,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
         }
     } else if (isAirstrip) {
         // The light that marks where the runway is, at the runway's own position ...
-        if (!FrontEndMenuManager.m_bDrawingMap && radarPos.Magnitude() < 0.9f && stripRange < 500.0f) {
+        if (!FrontEndMenuManager.m_bDrawingMap && radarPos.Magnitude() < 0.9f && stripRange < AIRSTRIP_BLIP_RANGE) {
             DrawRotatingSprite(RADAR_SPRITE_LIGHT, screenPos, 0.0f, 8.0f, { 255, 255, 255, 255 });
         }
 
@@ -2100,7 +2085,7 @@ void CRadar::DrawEntityBlip(int32 blipIndex, uint8 isSprite) {
             DrawRotatingSprite(RADAR_SPRITE_RUNWAY, stripScreen, DegreesToRadians(direction), 16.0f, { 255, 255, 255, 255 });
             AddBlipToLegendList(false, RADAR_SPRITE_RUNWAY);
         } else {
-            if (bDontDisplayAirstripThisFrame) {
+            if (s_DontDisplayAirstripThisFrame) {
                 return;
             }
             DrawRotatingSprite(RADAR_SPRITE_RUNWAY, stripScreen, -m_fRadarOrientation - DegreesToRadians(stripDir - 90.0f), 16.0f, { 255, 255, 255, 255 });
