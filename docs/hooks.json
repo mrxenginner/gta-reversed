@@ -24972,7 +24972,7 @@
   {
     "Category": "CTaskComplexGoToPointAiming",
     "Name": "CreateSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAiming",
