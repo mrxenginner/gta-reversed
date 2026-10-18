@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 18, 2026 at 16:54:44 UTC
-(Triggered by commit [4bece456](https://github.com/gta-reversed/gta-reversed/commit/4bece456cf8fb589a281ce0d66ef50f0341916a9))
+Last update was at Oct 18, 2026 at 22:10:26 UTC
+(Triggered by commit [3b4d8f9f](https://github.com/gta-reversed/gta-reversed/commit/3b4d8f9f8b7ed4d73d8d339f2c6a5ee113c05b74))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7518 out of 8289 functions done in 718 categories)
+## Stats (7520 out of 8289 functions done in 718 categories)
 
-#### Completely reversed categories (580/718) [81%]
+#### Completely reversed categories (581/718) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -302,6 +302,7 @@ Last update was at Oct 18, 2026 at 16:54:44 UTC
 - CTaskAllocatorAttack (5)<br />
 - CTaskAllocatorPlayerCommandAttack (3)<br />
 - CTaskComplexUseClosestFreeScriptedAttractorRun (4)<br />
+- CTaskComplexUseClosestFreeScriptedAttractorSprint (4)<br />
 - CTaskComplexEvasiveDiveAndGetUp (9)<br />
 - CTaskSimpleLeaveGroup (2)<br />
 - CTaskComplexDiveFromAttachedEntityAndGetUp (7)<br />
@@ -598,7 +599,7 @@ Last update was at Oct 18, 2026 at 16:54:44 UTC
 
 </details>
 
-#### Partially reversed categories (130/718) [18%]
+#### Partially reversed categories (129/718) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -667,7 +668,6 @@ Last update was at Oct 18, 2026 at 16:54:44 UTC
 - CPedGroupDefaultTaskAllocatorSitInLeaderCar (1/2) [50%]<br />
 - CPedGroupDefaultTaskAllocatorRandom (1/2) [50%]<br />
 - CTaskAllocatorKillThreatsBasic (5/6) [83%]<br />
-- CTaskComplexUseClosestFreeScriptedAttractorSprint (2/4) [50%]<br />
 - CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
 - CTaskSimpleChoking (5/7) [71%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />

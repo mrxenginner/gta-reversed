@@ -23617,12 +23617,12 @@
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractorSprint",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractorSprint",
     "Name": "GetTaskType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractor",
