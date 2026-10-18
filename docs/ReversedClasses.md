@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 18, 2026 at 22:10:26 UTC
-(Triggered by commit [3b4d8f9f](https://github.com/gta-reversed/gta-reversed/commit/3b4d8f9f8b7ed4d73d8d339f2c6a5ee113c05b74))
+Last update was at Oct 18, 2026 at 23:06:15 UTC
+(Triggered by commit [7b8415ac](https://github.com/gta-reversed/gta-reversed/commit/7b8415ace09e240ef90904c60b92f80d4c2accc2))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7520 out of 8289 functions done in 718 categories)
+## Stats (7522 out of 8289 functions done in 718 categories)
 
 #### Completely reversed categories (581/718) [81%]
 
@@ -669,7 +669,7 @@ Last update was at Oct 18, 2026 at 22:10:26 UTC
 - CPedGroupDefaultTaskAllocatorRandom (1/2) [50%]<br />
 - CTaskAllocatorKillThreatsBasic (5/6) [83%]<br />
 - CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
-- CTaskSimpleChoking (5/7) [71%]<br />
+- CTaskSimpleChoking (6/7) [86%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
@@ -707,7 +707,7 @@ Last update was at Oct 18, 2026 at 22:10:26 UTC
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - RpAnimBlend (42/43) [98%]<br />
-- CDecision (1/3) [33%]<br />
+- CDecision (2/3) [67%]<br />
 - CCustomBuildingDNPipeline (14/16) [88%]<br />
 - CConversations (10/11) [91%]<br />
 - CPedToPlayerConversations (2/3) [67%]<br />

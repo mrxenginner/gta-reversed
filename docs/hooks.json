@@ -23692,7 +23692,7 @@
   {
     "Category": "CTaskSimpleChoking",
     "Name": "MakeAbortable",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleChoking",
@@ -32762,7 +32762,7 @@
   {
     "Category": "CDecision",
     "Name": "SetDefault",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CDecision",
