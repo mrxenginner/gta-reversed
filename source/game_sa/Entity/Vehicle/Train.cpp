@@ -287,7 +287,7 @@ CTrain* CTrain::FindCaboose(CTrain* train) {
 CTrain* CTrain::FindEngine(CTrain* train) {
     assert(train != nullptr);
     auto* carriage = train;
-    while (auto* const prev = carriage->m_pNextCarriage) {
+    while (auto* const prev = carriage->m_pPrevCarriage) {
         carriage = prev;
     }
     return carriage;
