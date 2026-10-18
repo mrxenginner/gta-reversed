@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 18, 2026 at 14:40:58 UTC
-(Triggered by commit [a3c33697](https://github.com/gta-reversed/gta-reversed/commit/a3c3369774960bd46a96fa6f3b4336c8d22a1106))
+Last update was at Oct 18, 2026 at 15:34:54 UTC
+(Triggered by commit [dff44674](https://github.com/gta-reversed/gta-reversed/commit/dff44674e63020a39f9649e3255c77e4702aca00))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7514 out of 8289 functions done in 718 categories)
+## Stats (7515 out of 8289 functions done in 718 categories)
 
 #### Completely reversed categories (579/718) [81%]
 
@@ -672,7 +672,7 @@ Last update was at Oct 18, 2026 at 14:40:58 UTC
 - CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
-- CTaskLeanOnVehicle (3/5) [60%]<br />
+- CTaskLeanOnVehicle (4/5) [80%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexDestroyCar (8/9) [89%]<br />
 - CTaskComplexDragPedFromCar (1/2) [50%]<br />

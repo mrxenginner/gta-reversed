@@ -23907,7 +23907,7 @@
   {
     "Category": "CTaskLeanOnVehicle",
     "Name": "MakeAbortable",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskLeanOnVehicle",
