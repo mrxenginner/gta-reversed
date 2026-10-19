@@ -15640,6 +15640,21 @@
     "IsReversed": true
   },
   {
+    "Category": "CLines",
+    "Name": "RenderLineNoClipping-",
+    "IsReversed": true
+  },
+  {
+    "Category": "CLines",
+    "Name": "RenderLineWithClipping-",
+    "IsReversed": true
+  },
+  {
+    "Category": "CLines",
+    "Name": "ImmediateLine2D-",
+    "IsReversed": true
+  },
+  {
     "Category": "CSprite",
     "Name": "Initialise",
     "IsReversed": true
@@ -23617,12 +23632,12 @@
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractorSprint",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractorSprint",
     "Name": "GetTaskType",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexUseClosestFreeScriptedAttractor",
@@ -23692,7 +23707,7 @@
   {
     "Category": "CTaskSimpleChoking",
     "Name": "MakeAbortable",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimpleChoking",
@@ -23907,7 +23922,7 @@
   {
     "Category": "CTaskLeanOnVehicle",
     "Name": "MakeAbortable",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskLeanOnVehicle",
@@ -24197,7 +24212,7 @@
   {
     "Category": "CTaskComplexDragPedFromCar",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexDrivePointRoute",
@@ -24972,7 +24987,7 @@
   {
     "Category": "CTaskComplexGoToPointAiming",
     "Name": "CreateSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAiming",
@@ -25012,7 +25027,7 @@
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
@@ -25022,12 +25037,17 @@
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "CreateNextSubTask",
-    "IsReversed": false
+    "IsReversed": true
+  },
+  {
+    "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
+    "Name": "CreateSubTask",
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
@@ -32762,7 +32782,7 @@
   {
     "Category": "CDecision",
     "Name": "SetDefault",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CDecision",
@@ -38431,6 +38451,11 @@
   },
   {
     "Category": "CAutomobile",
+    "Name": "SetModelIndex",
+    "IsReversed": true
+  },
+  {
+    "Category": "CAutomobile",
     "Name": "Teleport",
     "IsReversed": true
   },
@@ -39428,6 +39453,11 @@
     "Category": "CTrain",
     "Name": "AddNearbyPedAsRandomPassenger",
     "IsReversed": false
+  },
+  {
+    "Category": "CTrain",
+    "Name": "SetModelIndex",
+    "IsReversed": true
   },
   {
     "Category": "CTrain",
@@ -41397,17 +41427,17 @@
   {
     "Category": "CScriptResourceManager",
     "Name": "AddToResourceManager",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CScriptResourceManager",
     "Name": "RemoveFromResourceManager",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CScriptResourceManager",
     "Name": "HasResourceBeenRequested",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CMemoryMgr",

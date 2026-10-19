@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 17, 2026 at 20:52:32 UTC
-(Triggered by commit [78baff41](https://github.com/gta-reversed/gta-reversed/commit/78baff4154d12d5ac4360e97539a28c29344a2ae))
+Last update was at Oct 19, 2026 at 05:44:57 UTC
+(Triggered by commit [2f62d4b7](https://github.com/gta-reversed/gta-reversed/commit/2f62d4b72d0c79591e197e48f8caca832aeebc5f))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7513 out of 8289 functions done in 718 categories)
+## Stats (7532 out of 8295 functions done in 719 categories)
 
-#### Completely reversed categories (579/718) [81%]
+#### Completely reversed categories (583/719) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -159,6 +159,7 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - ModelIndices (2)<br />
 - CWaterCannons (4)<br />
 - CWaterCannon (5)<br />
+- CLines (3)<br />
 - CSprite (15)<br />
 - CPlaneTrail (3)<br />
 - CPlaneTrails (4)<br />
@@ -302,6 +303,7 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CTaskAllocatorAttack (5)<br />
 - CTaskAllocatorPlayerCommandAttack (3)<br />
 - CTaskComplexUseClosestFreeScriptedAttractorRun (4)<br />
+- CTaskComplexUseClosestFreeScriptedAttractorSprint (4)<br />
 - CTaskComplexEvasiveDiveAndGetUp (9)<br />
 - CTaskSimpleLeaveGroup (2)<br />
 - CTaskComplexDiveFromAttachedEntityAndGetUp (7)<br />
@@ -309,6 +311,7 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CTaskComplexDestroyCarArmed (10)<br />
 - CTaskComplexDestroyCarMelee (10)<br />
 - CTaskComplexDieInCar (6)<br />
+- CTaskComplexDragPedFromCar (2)<br />
 - CTaskComplexDrivePointRoute (7)<br />
 - CTaskComplexEnterCarAsDriverTimed (9)<br />
 - CTaskComplexEnterCarAsPassengerTimed (9)<br />
@@ -586,7 +589,7 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CAECutsceneTrackManager (8)<br />
 - CAESoundManager (14)<br />
 - CAEUserRadioTrackManager (15)<br />
-- CAutomobile (99)<br />
+- CAutomobile (100)<br />
 - CBoat (23)<br />
 - CHeli (11)<br />
 - CTrailer (13)<br />
@@ -594,10 +597,11 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - FurnitureManager_c (7)<br />
 - InteriorManager_c (21)<br />
 - CStreamedScripts (12)<br />
+- CScriptResourceManager (4)<br />
 
 </details>
 
-#### Partially reversed categories (131/718) [18%]
+#### Partially reversed categories (128/719) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -666,20 +670,18 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CPedGroupDefaultTaskAllocatorSitInLeaderCar (1/2) [50%]<br />
 - CPedGroupDefaultTaskAllocatorRandom (1/2) [50%]<br />
 - CTaskAllocatorKillThreatsBasic (5/6) [83%]<br />
-- CTaskComplexUseClosestFreeScriptedAttractorSprint (2/4) [50%]<br />
 - CTaskComplexUseClosestFreeScriptedAttractor (6/8) [75%]<br />
-- CTaskSimpleChoking (5/7) [71%]<br />
+- CTaskSimpleChoking (6/7) [86%]<br />
 - CTaskGangHasslePed (2/5) [40%]<br />
 - CTaskGangHassleVehicle (2/8) [25%]<br />
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
-- CTaskLeanOnVehicle (3/5) [60%]<br />
+- CTaskLeanOnVehicle (4/5) [80%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexDestroyCar (8/9) [89%]<br />
-- CTaskComplexDragPedFromCar (1/2) [50%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
-- CTaskComplexGoToPointAiming (5/8) [62%]<br />
-- CTaskComplexGoToPointAndStandStillAndAchieveHeading (3/7) [43%]<br />
+- CTaskComplexGoToPointAiming (6/8) [75%]<br />
+- CTaskComplexGoToPointAndStandStillAndAchieveHeading (7/8) [88%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexKillCriminal (9/11) [82%]<br />
@@ -706,7 +708,7 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - RpAnimBlend (42/43) [98%]<br />
-- CDecision (1/3) [33%]<br />
+- CDecision (2/3) [67%]<br />
 - CCustomBuildingDNPipeline (14/16) [88%]<br />
 - CConversations (10/11) [91%]<br />
 - CPedToPlayerConversations (2/3) [67%]<br />
@@ -725,17 +727,16 @@ Last update was at Oct 17, 2026 at 20:52:32 UTC
 - CMonsterTruck (5/11) [45%]<br />
 - CPlane (14/23) [61%]<br />
 - CQuadBike (11/12) [92%]<br />
-- CTrain (20/40) [50%]<br />
+- CTrain (21/41) [51%]<br />
 - CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CRunningScript (24/39) [62%]<br />
 - CTheScripts (68/69) [99%]<br />
 - CScripted2dEffects (4/5) [80%]<br />
-- CScriptResourceManager (1/4) [25%]<br />
 
 </details>
 
-#### Not-at-all reversed categories (8/718) [1%]
+#### Not-at-all reversed categories (8/719) [1%]
 
 <details>
 <summary>See list of categories</summary>
