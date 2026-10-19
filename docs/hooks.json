@@ -38431,6 +38431,11 @@
   },
   {
     "Category": "CAutomobile",
+    "Name": "SetModelIndex",
+    "IsReversed": true
+  },
+  {
+    "Category": "CAutomobile",
     "Name": "Teleport",
     "IsReversed": true
   },
@@ -39428,6 +39433,11 @@
     "Category": "CTrain",
     "Name": "AddNearbyPedAsRandomPassenger",
     "IsReversed": false
+  },
+  {
+    "Category": "CTrain",
+    "Name": "SetModelIndex",
+    "IsReversed": true
   },
   {
     "Category": "CTrain",
