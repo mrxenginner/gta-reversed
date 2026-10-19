@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 04:49:37 UTC
-(Triggered by commit [f5f40eb1](https://github.com/gta-reversed/gta-reversed/commit/f5f40eb16800ff740add7055b3db6292d07f48a0))
+Last update was at Oct 19, 2026 at 05:44:57 UTC
+(Triggered by commit [2f62d4b7](https://github.com/gta-reversed/gta-reversed/commit/2f62d4b72d0c79591e197e48f8caca832aeebc5f))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7528 out of 8294 functions done in 719 categories)
+## Stats (7532 out of 8295 functions done in 719 categories)
 
 #### Completely reversed categories (583/719) [81%]
 
@@ -681,7 +681,7 @@ Last update was at Oct 19, 2026 at 04:49:37 UTC
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAiming (6/8) [75%]<br />
-- CTaskComplexGoToPointAndStandStillAndAchieveHeading (3/7) [43%]<br />
+- CTaskComplexGoToPointAndStandStillAndAchieveHeading (7/8) [88%]<br />
 - CTaskComplexGoToPointAnyMeans (3/7) [43%]<br />
 - CTaskComplexGotoDoorAndOpen (3/7) [43%]<br />
 - CTaskComplexKillCriminal (9/11) [82%]<br />

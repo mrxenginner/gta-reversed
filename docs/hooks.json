@@ -25027,7 +25027,7 @@
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "Clone",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
@@ -25037,12 +25037,17 @@
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "CreateNextSubTask",
-    "IsReversed": false
+    "IsReversed": true
+  },
+  {
+    "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
+    "Name": "CreateSubTask",
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
