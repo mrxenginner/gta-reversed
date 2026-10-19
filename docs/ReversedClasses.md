@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 03:31:36 UTC
-(Triggered by commit [9293c636](https://github.com/gta-reversed/gta-reversed/commit/9293c636b2465e809c2fd492ca4a315df8d2b56f))
+Last update was at Oct 19, 2026 at 04:49:37 UTC
+(Triggered by commit [f5f40eb1](https://github.com/gta-reversed/gta-reversed/commit/f5f40eb16800ff740add7055b3db6292d07f48a0))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7524 out of 8291 functions done in 718 categories)
+## Stats (7528 out of 8294 functions done in 719 categories)
 
-#### Completely reversed categories (581/718) [81%]
+#### Completely reversed categories (583/719) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -159,6 +159,7 @@ Last update was at Oct 19, 2026 at 03:31:36 UTC
 - ModelIndices (2)<br />
 - CWaterCannons (4)<br />
 - CWaterCannon (5)<br />
+- CLines (3)<br />
 - CSprite (15)<br />
 - CPlaneTrail (3)<br />
 - CPlaneTrails (4)<br />
@@ -310,6 +311,7 @@ Last update was at Oct 19, 2026 at 03:31:36 UTC
 - CTaskComplexDestroyCarArmed (10)<br />
 - CTaskComplexDestroyCarMelee (10)<br />
 - CTaskComplexDieInCar (6)<br />
+- CTaskComplexDragPedFromCar (2)<br />
 - CTaskComplexDrivePointRoute (7)<br />
 - CTaskComplexEnterCarAsDriverTimed (9)<br />
 - CTaskComplexEnterCarAsPassengerTimed (9)<br />
@@ -599,7 +601,7 @@ Last update was at Oct 19, 2026 at 03:31:36 UTC
 
 </details>
 
-#### Partially reversed categories (129/718) [18%]
+#### Partially reversed categories (128/719) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -676,7 +678,6 @@ Last update was at Oct 19, 2026 at 03:31:36 UTC
 - CTaskLeanOnVehicle (4/5) [80%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
 - CTaskComplexDestroyCar (8/9) [89%]<br />
-- CTaskComplexDragPedFromCar (1/2) [50%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAiming (6/8) [75%]<br />
@@ -735,7 +736,7 @@ Last update was at Oct 19, 2026 at 03:31:36 UTC
 
 </details>
 
-#### Not-at-all reversed categories (8/718) [1%]
+#### Not-at-all reversed categories (8/719) [1%]
 
 <details>
 <summary>See list of categories</summary>

@@ -15640,6 +15640,21 @@
     "IsReversed": true
   },
   {
+    "Category": "CLines",
+    "Name": "RenderLineNoClipping-",
+    "IsReversed": true
+  },
+  {
+    "Category": "CLines",
+    "Name": "RenderLineWithClipping-",
+    "IsReversed": true
+  },
+  {
+    "Category": "CLines",
+    "Name": "ImmediateLine2D-",
+    "IsReversed": true
+  },
+  {
     "Category": "CSprite",
     "Name": "Initialise",
     "IsReversed": true
@@ -24197,7 +24212,7 @@
   {
     "Category": "CTaskComplexDragPedFromCar",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexDrivePointRoute",
