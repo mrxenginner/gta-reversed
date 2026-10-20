@@ -6907,12 +6907,12 @@
   {
     "Category": "CCollision",
     "Name": "CalculateTrianglePlanes-CColModelPtr",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCollision",
     "Name": "RemoveTrianglePlanes-CColModelPtr",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTrafficLights",
