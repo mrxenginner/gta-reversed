@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 19, 2026 at 22:01:03 UTC
-(Triggered by commit [6d7cd905](https://github.com/gta-reversed/gta-reversed/commit/6d7cd9053e82e2949d862eebb12d7b9820eb3af5))
+Last update was at Oct 20, 2026 at 17:47:45 UTC
+(Triggered by commit [9e550191](https://github.com/gta-reversed/gta-reversed/commit/9e55019149f198a9a7d67bb6ce04243589876f26))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7534 out of 8296 functions done in 719 categories)
+## Stats (7535 out of 8296 functions done in 719 categories)
 
-#### Completely reversed categories (584/719) [81%]
+#### Completely reversed categories (585/719) [81%]
 
 <details>
 <summary>See list of categories</summary>
@@ -140,6 +140,7 @@ Last update was at Oct 19, 2026 at 22:01:03 UTC
 - CGamma (2)<br />
 - CHudColours (5)<br />
 - CTxdStore (26)<br />
+- CEntityScanner (4)<br />
 - CPedType (13)<br />
 - CAcquaintance (5)<br />
 - CWeather (13)<br />
@@ -602,7 +603,7 @@ Last update was at Oct 19, 2026 at 22:01:03 UTC
 
 </details>
 
-#### Partially reversed categories (127/719) [18%]
+#### Partially reversed categories (126/719) [18%]
 
 <details>
 <summary>See list of categories</summary>
@@ -643,7 +644,6 @@ Last update was at Oct 19, 2026 at 22:01:03 UTC
 - CEntryExit (10/11) [91%]<br />
 - CPlayerInfo (25/28) [89%]<br />
 - CCarEnterExit (27/32) [84%]<br />
-- CEntityScanner (3/4) [75%]<br />
 - CPathFind (54/62) [87%]<br />
 - CPedStats (4/5) [80%]<br />
 - CPedGeometryAnalyser (9/38) [24%]<br />
