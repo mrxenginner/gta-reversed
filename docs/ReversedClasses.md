@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 20:29:34 UTC
-(Triggered by commit [398f0a7f](https://github.com/gta-reversed/gta-reversed/commit/398f0a7f82b953af9c94d6eb11b879fcd6e94df8))
+Last update was at Oct 20, 2026 at 21:53:45 UTC
+(Triggered by commit [520eb825](https://github.com/gta-reversed/gta-reversed/commit/520eb8254ab762c49f255e557345c74274c5cd3b))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7537 out of 8296 functions done in 719 categories)
+## Stats (7539 out of 8296 functions done in 719 categories)
 
-#### Completely reversed categories (586/719) [82%]
+#### Completely reversed categories (587/719) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -23,6 +23,7 @@ Last update was at Oct 20, 2026 at 20:29:34 UTC
 - CFileMgr (17)<br />
 - CLoadedCarGroup (8)<br />
 - RenderBuffer (4)<br />
+- CPedGroup (12)<br />
 - CPedGroupMembership (18)<br />
 - RwHelper (24)<br />
 - CPad (76)<br />
@@ -604,12 +605,11 @@ Last update was at Oct 20, 2026 at 20:29:34 UTC
 
 </details>
 
-#### Partially reversed categories (125/719) [17%]
+#### Partially reversed categories (124/719) [17%]
 
 <details>
 <summary>See list of categories</summary>
 - CPedGroupPlacer (1/4) [25%]<br />
-- CPedGroup (10/12) [83%]<br />
 - CPopCycle (14/15) [93%]<br />
 - CInterestingEvents (2/7) [29%]<br />
 - CMenuSystem (20/21) [95%]<br />

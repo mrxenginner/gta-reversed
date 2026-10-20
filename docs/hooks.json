@@ -737,7 +737,7 @@
   {
     "Category": "CPedGroup",
     "Name": "PlayerGaveCommand_Gather",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGroup",
@@ -757,7 +757,7 @@
   {
     "Category": "CPedGroup",
     "Name": "FindDistanceToFurthestMember",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGroup",
