@@ -17627,7 +17627,7 @@
   {
     "Category": "CCarFXRenderer",
     "Name": "InitialiseDirtTexture",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarFXRenderer",

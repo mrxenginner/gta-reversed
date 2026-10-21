@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 21:10:24 UTC
-(Triggered by commit [a365b2cc](https://github.com/gta-reversed/gta-reversed/commit/a365b2cc8ef4ea4a9fe76c1f8665e4d2dc336cad))
+Last update was at Oct 21, 2026 at 21:53:04 UTC
+(Triggered by commit [77704dfb](https://github.com/gta-reversed/gta-reversed/commit/77704dfbdd0eb6b0b137e13fba529dd37378610b))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7602 out of 8321 functions done in 722 categories)
+## Stats (7603 out of 8321 functions done in 722 categories)
 
-#### Completely reversed categories (595/722) [82%]
+#### Completely reversed categories (596/722) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -192,6 +192,7 @@ Last update was at Oct 21, 2026 at 21:10:24 UTC
 - RwCore (4)<br />
 - Common (9)<br />
 - CCarAI (25)<br />
+- CCarFXRenderer (10)<br />
 - FxSystemBP_c (10)<br />
 - FxSphere_c (4)<br />
 - FxMemoryPool_c (5)<br />
@@ -613,7 +614,7 @@ Last update was at Oct 21, 2026 at 21:10:24 UTC
 
 </details>
 
-#### Partially reversed categories (119/722) [16%]
+#### Partially reversed categories (118/722) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -661,7 +662,6 @@ Last update was at Oct 21, 2026 at 21:10:24 UTC
 - CRealTimeShadowManager (5/7) [71%]<br />
 - CShadows (21/31) [68%]<br />
 - CCam (20/45) [44%]<br />
-- CCarFXRenderer (9/10) [90%]<br />
 - FxSystem_c (31/35) [89%]<br />
 - FxPrimBP_c (1/2) [50%]<br />
 - FxInfoManager_c (4/5) [80%]<br />
