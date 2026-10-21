@@ -118,7 +118,11 @@ void CPedList::ClearUnused() {
 }
 
 void CPedList::AddMember(CPed* ped) {
-    if (m_count < MAX_NUM_PEDS_IN_LIST) { m_peds[m_count++] = ped; }
+    if (m_count < m_peds.size()) { 
+        m_peds[m_count++] = ped;
+    } else {
+        NOTSA_LOG_WARN("List is full, can't add more peds");
+    }
 }
 
 // Must call FillUpHoles afterwards!
