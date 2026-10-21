@@ -86,13 +86,10 @@ void CPedList::RemovePedsAttackingPedType(int32 pedType) {
         assert(ped != nullptr);
 
         const auto* killTask = ped->GetTaskManager().Find<CTaskComplexKillPedOnFoot>(false);
-        const CPed* target = nullptr;
-
-        if (killTask != nullptr) {
-            target = killTask->m_target;
-        }
-
-        if (killTask == nullptr || target == nullptr || target->m_nPedType != pedType) {
+        const CPed* target = killTask
+            ? killTask->m_target
+            : nullptr;
+        if (!killTask || !target || target->m_nPedType != pedType) {
             RemoveMemberNoFill(i);
         }
     }
