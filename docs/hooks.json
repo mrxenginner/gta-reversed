@@ -14751,13 +14751,13 @@
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "CanPedJumpObstacle-",
-    "IsReversed": false
+    "Name": "CanPedJumpObstacle-LoS",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "CanPedJumpObstacle-contacted",
-    "IsReversed": false
+    "Name": "CanPedJumpObstacle-Contacted",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
@@ -14767,17 +14767,17 @@
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "CanPedTargetPoint",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeBuildingHitPoints",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeClearTarget",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
@@ -14786,13 +14786,13 @@
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "ComputeClosestSurfacePoint-posn",
-    "IsReversed": false
+    "Name": "ComputeClosestSurfacePoint-pos",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeClosestSurfacePoint-rect",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
@@ -14812,12 +14812,12 @@
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityBoundingBoxCornersUncached",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityBoundingBoxPlanes",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
@@ -14837,7 +14837,7 @@
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityBoundingBoxSegmentPlanesUncached",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
@@ -14847,97 +14847,97 @@
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityBoundingSphere",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "ComputeMoveDirToAvoidEntity",
-    "IsReversed": false
+    "Name": "ComputeMoveDirToAvoidEntity-OG",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityDirs",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityHitSide-1",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityHitSide-2",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeEntityHitSide-3",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputePedHitSide-physical",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "ComputePedHitSide-posn",
-    "IsReversed": false
+    "Name": "ComputePedHitSide-pos",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputePedShotSide",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
-    "Name": "ComputeRouteRoundEntityBoundingBox-1",
-    "IsReversed": false
+    "Name": "ComputeRouteRoundEntityBoundingBox-Entity",
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeRouteRoundEntityBoundingBox-2",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "ComputeRouteRoundSphere",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "GetIsLineOfSightClear-ped",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "GetIsLineOfSightClear-v3d",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "GetNearestPed",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "IsEntityBlockingTarget",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "IsInAir",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "IsWanderPathClear",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedGeometryAnalyser",
     "Name": "LiesInsideBoundingBox",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CIplStore",
