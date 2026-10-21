@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 02:25:31 UTC
-(Triggered by commit [24dcba74](https://github.com/gta-reversed/gta-reversed/commit/24dcba7496f234d182c1407b26fe358adce324cd))
+Last update was at Oct 21, 2026 at 03:21:59 UTC
+(Triggered by commit [dc2957fb](https://github.com/gta-reversed/gta-reversed/commit/dc2957fb37d39c4a99b0c229b163ae064ee9c52f))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7541 out of 8297 functions done in 720 categories)
+## Stats (7546 out of 8301 functions done in 721 categories)
 
-#### Completely reversed categories (589/720) [82%]
+#### Completely reversed categories (591/721) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -196,6 +196,7 @@ Last update was at Oct 21, 2026 at 02:25:31 UTC
 - FxEmitterPrt_c (1)<br />
 - Fx_c (8)<br />
 - CPedAttractorPedPlacer (1)<br />
+- CPedShelterAttractor (4)<br />
 - CCopPed (7)<br />
 - CPlayerSkin (4)<br />
 - CCivilianPed (3)<br />
@@ -475,6 +476,7 @@ Last update was at Oct 21, 2026 at 02:25:31 UTC
 - CTaskSimpleGiveCPR (6)<br />
 - CTaskComplexDriveFireTruck (6)<br />
 - CTaskSimpleSwim (11)<br />
+- CTaskComplexWalkRoundObject (2)<br />
 - CTaskSimplePause (4)<br />
 - CTaskSimpleThrowProjectile (9)<br />
 - CTaskSimpleGoToPoint (6)<br />
@@ -607,7 +609,7 @@ Last update was at Oct 21, 2026 at 02:25:31 UTC
 
 </details>
 
-#### Partially reversed categories (123/720) [17%]
+#### Partially reversed categories (122/721) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -700,7 +702,6 @@ Last update was at Oct 21, 2026 at 02:25:31 UTC
 - CTaskSimpleJetPack (13/14) [93%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
 - CTaskComplexSunbathe (2/8) [25%]<br />
-- CTaskComplexWalkRoundObject (1/2) [50%]<br />
 - CTaskComplexKillPedOnFoot (1/2) [50%]<br />
 - CTaskComplexWalkRoundCar (9/13) [69%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
@@ -737,7 +738,7 @@ Last update was at Oct 21, 2026 at 02:25:31 UTC
 
 </details>
 
-#### Not-at-all reversed categories (8/720) [1%]
+#### Not-at-all reversed categories (8/721) [1%]
 
 <details>
 <summary>See list of categories</summary>

@@ -18195,6 +18195,26 @@
     "IsReversed": true
   },
   {
+    "Category": "CPedShelterAttractor",
+    "Name": "GetDisplacement",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedShelterAttractor",
+    "Name": "ComputeAttractPos",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedShelterAttractor",
+    "Name": "ComputeAttractHeading",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedShelterAttractor",
+    "Name": "BroadcastDeparture",
+    "IsReversed": true
+  },
+  {
     "Category": "CCopPed",
     "Name": "Constructor",
     "IsReversed": true
@@ -30737,7 +30757,7 @@
   {
     "Category": "CTaskComplexWalkRoundObject",
     "Name": "CreateRouteTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskSimplePause",
