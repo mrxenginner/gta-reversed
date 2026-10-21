@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 06:08:36 UTC
-(Triggered by commit [dc9745dc](https://github.com/gta-reversed/gta-reversed/commit/dc9745dc70b7769b72c4dc6f34db76ed6c11b47e))
+Last update was at Oct 21, 2026 at 14:42:11 UTC
+(Triggered by commit [dbd0e71e](https://github.com/gta-reversed/gta-reversed/commit/dbd0e71e0a53ae066322f986b3762d902b97e35a))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7547 out of 8301 functions done in 721 categories)
+## Stats (7552 out of 8301 functions done in 721 categories)
 
 #### Completely reversed categories (592/721) [82%]
 
@@ -633,7 +633,7 @@ Last update was at Oct 21, 2026 at 06:08:36 UTC
 - CWaterLevel (25/35) [71%]<br />
 - CWeapon (35/41) [85%]<br />
 - CStats (32/51) [63%]<br />
-- CCarCtrl (21/110) [19%]<br />
+- CCarCtrl (26/110) [24%]<br />
 - CGarage (4/18) [22%]<br />
 - CGarages (21/27) [78%]<br />
 - CPostEffects (35/38) [92%]<br />

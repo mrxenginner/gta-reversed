@@ -8412,7 +8412,7 @@
   {
     "Category": "CCarCtrl",
     "Name": "FindIntersection2Lines",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarCtrl",
@@ -8437,22 +8437,22 @@
   {
     "Category": "CCarCtrl",
     "Name": "FindPercDependingOnDistToLink",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarCtrl",
     "Name": "FindSequenceElement",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarCtrl",
     "Name": "FindSpeedMultiplier",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarCtrl",
     "Name": "FindSpeedMultiplierWithSpeedFromNodes",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CCarCtrl",
