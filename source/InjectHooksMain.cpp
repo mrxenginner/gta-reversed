@@ -593,6 +593,7 @@ void InjectHooksMain() {
     CMenuSystem::InjectHooks();
     CCarFXRenderer::InjectHooks();
     CPedAttractorManager::InjectHooks();
+    CPedAttractor::InjectHooks();
     CPedAttractorPedPlacer::InjectHooks();
     CPedShelterAttractor::InjectHooks();
     BoneNode_c::InjectHooks();
