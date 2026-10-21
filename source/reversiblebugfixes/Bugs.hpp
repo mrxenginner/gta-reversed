@@ -132,4 +132,10 @@ inline const ReversibleBugFix CObjectData_SetObjectData_UninitializedPhysics{
     .Description = "Give an object with no object.dat entry the default elasticity and buoyancy - neither SetObjectData nor CPhysical's constructor sets them, so they held the pool slot's leftovers and could launch a vehicle that touched the object to infinity",
     .Credit      = "mrxenginner"
 };
+inline const ReversibleBugFix CObject_Render_DetachedPartRendering{
+    .Name        = "CObject::Render - Detached car part rendering",
+    .Description = "Detached car parts share their materials with the vehicle model, but nothing applies the vehicle's colours and paintjob to them, "
+                   "so they were rendered with the placeholder colours. Apply them before rendering the part, and render both of its sides",
+    .Credit      = "SilentPatch Contributors"
+};
 };

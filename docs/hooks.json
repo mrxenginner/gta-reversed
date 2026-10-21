@@ -7142,17 +7142,17 @@
   {
     "Category": "CPedDamageResponseCalculator",
     "Name": "AccountForPedDamageStats",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedDamageResponseCalculator",
     "Name": "AccountForPedArmour",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedDamageResponseCalculator",
     "Name": "ComputeWillForceDeath",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedDamageResponseCalculator",
@@ -7161,13 +7161,8 @@
   },
   {
     "Category": "CPedDamageResponseCalculator",
-    "Name": "IsBleedingWeapon",
-    "IsReversed": false
-  },
-  {
-    "Category": "CPedDamageResponseCalculator",
     "Name": "ComputeDamageResponse",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CPedClothesDesc",
