@@ -24077,7 +24077,7 @@
   {
     "Category": "CTaskComplexDestroyCar",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexDestroyCarArmed",

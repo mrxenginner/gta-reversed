@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 20, 2026 at 23:37:04 UTC
-(Triggered by commit [85a86355](https://github.com/gta-reversed/gta-reversed/commit/85a8635594be5d0c935560bbbc0dca2537439bd2))
+Last update was at Oct 21, 2026 at 02:25:31 UTC
+(Triggered by commit [24dcba74](https://github.com/gta-reversed/gta-reversed/commit/24dcba7496f234d182c1407b26fe358adce324cd))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7540 out of 8297 functions done in 720 categories)
+## Stats (7541 out of 8297 functions done in 720 categories)
 
-#### Completely reversed categories (588/720) [82%]
+#### Completely reversed categories (589/720) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -312,6 +312,7 @@ Last update was at Oct 20, 2026 at 23:37:04 UTC
 - CTaskSimpleLeaveGroup (2)<br />
 - CTaskComplexDiveFromAttachedEntityAndGetUp (7)<br />
 - CTaskComplexCarSlowBeDraggedOut (11)<br />
+- CTaskComplexDestroyCar (9)<br />
 - CTaskComplexDestroyCarArmed (10)<br />
 - CTaskComplexDestroyCarMelee (10)<br />
 - CTaskComplexDieInCar (6)<br />
@@ -606,7 +607,7 @@ Last update was at Oct 20, 2026 at 23:37:04 UTC
 
 </details>
 
-#### Partially reversed categories (124/720) [17%]
+#### Partially reversed categories (123/720) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -678,7 +679,6 @@ Last update was at Oct 20, 2026 at 23:37:04 UTC
 - CTaskGoToVehicleAndLean (2/7) [29%]<br />
 - CTaskLeanOnVehicle (4/5) [80%]<br />
 - CTaskComplexCarSlowBeDraggedOutAndStandUp (3/9) [33%]<br />
-- CTaskComplexDestroyCar (8/9) [89%]<br />
 - CTaskComplexGangJoinRespond (2/7) [29%]<br />
 - CTaskComplexGoToAttractor (2/5) [40%]<br />
 - CTaskComplexGoToPointAiming (6/8) [75%]<br />
