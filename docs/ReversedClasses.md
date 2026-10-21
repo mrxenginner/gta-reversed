@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 22:35:02 UTC
-(Triggered by commit [9c573863](https://github.com/gta-reversed/gta-reversed/commit/9c57386323c5c543462da19864fe04aa0441220d))
+Last update was at Oct 21, 2026 at 23:32:38 UTC
+(Triggered by commit [f5c9d80e](https://github.com/gta-reversed/gta-reversed/commit/f5c9d80e2ab063d380eb4a888be9c116b8556bb6))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7610 out of 8324 functions done in 722 categories)
+## Stats (7614 out of 8323 functions done in 722 categories)
 
-#### Completely reversed categories (597/722) [83%]
+#### Completely reversed categories (598/722) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -89,6 +89,7 @@ Last update was at Oct 21, 2026 at 22:35:02 UTC
 - CCover (16)<br />
 - CVehicleAnimGroup (5)<br />
 - CVehicleAnimGroupData (5)<br />
+- CPedDamageResponseCalculator (6)<br />
 - CPedClothesDesc (7)<br />
 - CTimer (13)<br />
 - CTagManager (19)<br />
@@ -615,7 +616,7 @@ Last update was at Oct 21, 2026 at 22:35:02 UTC
 
 </details>
 
-#### Partially reversed categories (117/722) [16%]
+#### Partially reversed categories (116/722) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -634,7 +635,6 @@ Last update was at Oct 21, 2026 at 22:35:02 UTC
 - CClothes (10/11) [91%]<br />
 - CPopulation (64/66) [97%]<br />
 - CPedGroupIntelligence (26/27) [96%]<br />
-- CPedDamageResponseCalculator (2/7) [29%]<br />
 - CWaterLevel (25/35) [71%]<br />
 - CWeapon (35/41) [85%]<br />
 - CStats (32/51) [63%]<br />
