@@ -16547,7 +16547,7 @@
   {
     "Category": "CIdleCam",
     "Name": "ProcessFOVZoom",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CIdleCam",
