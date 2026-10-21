@@ -5597,7 +5597,7 @@
   {
     "Category": "SurfaceInfos_c",
     "Name": "LoadAdhesiveLimits",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CRenderer",

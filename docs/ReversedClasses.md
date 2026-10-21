@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 03:21:59 UTC
-(Triggered by commit [dc2957fb](https://github.com/gta-reversed/gta-reversed/commit/dc2957fb37d39c4a99b0c229b163ae064ee9c52f))
+Last update was at Oct 21, 2026 at 06:08:36 UTC
+(Triggered by commit [dc9745dc](https://github.com/gta-reversed/gta-reversed/commit/dc9745dc70b7769b72c4dc6f34db76ed6c11b47e))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7546 out of 8301 functions done in 721 categories)
+## Stats (7547 out of 8301 functions done in 721 categories)
 
-#### Completely reversed categories (591/721) [82%]
+#### Completely reversed categories (592/721) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -75,6 +75,7 @@ Last update was at Oct 21, 2026 at 03:21:59 UTC
 - CMouseControllerState (3)<br />
 - CReferences (4)<br />
 - CShotInfo (5)<br />
+- SurfaceInfos_c (48)<br />
 - CRenderer (33)<br />
 - CObjectData (2)<br />
 - CObjectSaveStructure (2)<br />
@@ -609,7 +610,7 @@ Last update was at Oct 21, 2026 at 03:21:59 UTC
 
 </details>
 
-#### Partially reversed categories (122/721) [17%]
+#### Partially reversed categories (121/721) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -627,7 +628,6 @@ Last update was at Oct 21, 2026 at 03:21:59 UTC
 - CClothesBuilder (15/23) [65%]<br />
 - CClothes (10/11) [91%]<br />
 - CPopulation (64/66) [97%]<br />
-- SurfaceInfos_c (47/48) [98%]<br />
 - CPedGroupIntelligence (26/27) [96%]<br />
 - CPedDamageResponseCalculator (2/7) [29%]<br />
 - CWaterLevel (25/35) [71%]<br />
