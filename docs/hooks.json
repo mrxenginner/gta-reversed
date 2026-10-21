@@ -10431,16 +10431,6 @@
   },
   {
     "Category": "CFont",
-    "Name": "PrintChar",
-    "IsReversed": false
-  },
-  {
-    "Category": "CFont",
-    "Name": "ParseToken",
-    "IsReversed": true
-  },
-  {
-    "Category": "CFont",
     "Name": "SetScale",
     "IsReversed": true
   },
@@ -10536,8 +10526,23 @@
   },
   {
     "Category": "CFont",
+    "Name": "PrintChar",
+    "IsReversed": true
+  },
+  {
+    "Category": "CFont",
+    "Name": "GetNextSpace",
+    "IsReversed": true
+  },
+  {
+    "Category": "CFont",
+    "Name": "ParseToken",
+    "IsReversed": true
+  },
+  {
+    "Category": "CFont",
     "Name": "RenderFontBuffer",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CFont",
@@ -10552,7 +10557,7 @@
   {
     "Category": "CFont",
     "Name": "ProcessCurrentString",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CFont",
@@ -10571,7 +10576,12 @@
   },
   {
     "Category": "CFont",
-    "Name": "PrintString",
+    "Name": "PrintString-null-terminated",
+    "IsReversed": true
+  },
+  {
+    "Category": "CFont",
+    "Name": "PrintString-ranged",
     "IsReversed": true
   },
   {
@@ -10592,11 +10602,16 @@
   {
     "Category": "CFont",
     "Name": "FindSubFontCharacter",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CFont",
-    "Name": "GetLetterIdPropValue",
+    "Name": "GetScriptLetterSize",
+    "IsReversed": true
+  },
+  {
+    "Category": "CFont",
+    "Name": "GetLetterIdPropValue-",
     "IsReversed": true
   },
   {
