@@ -18190,6 +18190,106 @@
     "IsReversed": true
   },
   {
+    "Category": "CPedAttractor",
+    "Name": "Constructor",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "Destructor",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "SetTaskForPed",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "RegisterPed",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "DeRegisterPed",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "IsRegisteredWithPed",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "IsAtHeadOfQueue",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "GetTaskForPed",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "GetQueueSlot",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "GetHeadOfQueue",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "GetTailOfQueue",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "HasEmptySlot",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "ComputeDeltaPos",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "ComputeDeltaHeading",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "ComputeAttractTime",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "ComputeAttractPos-v",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "ComputeAttractHeading-v",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "BroadcastDeparture",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "BroadcastArrival",
+    "IsReversed": true
+  },
+  {
+    "Category": "CPedAttractor",
+    "Name": "AbortPedTasks",
+    "IsReversed": true
+  },
+  {
     "Category": "CPedAttractorPedPlacer",
     "Name": "PlacePedAtEffect",
     "IsReversed": true

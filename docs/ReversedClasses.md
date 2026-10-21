@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 21, 2026 at 14:42:11 UTC
-(Triggered by commit [dbd0e71e](https://github.com/gta-reversed/gta-reversed/commit/dbd0e71e0a53ae066322f986b3762d902b97e35a))
+Last update was at Oct 21, 2026 at 16:26:30 UTC
+(Triggered by commit [16664bb7](https://github.com/gta-reversed/gta-reversed/commit/16664bb7fd8d102fdf327f6ebf27ecc8f3466b1a))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7552 out of 8301 functions done in 721 categories)
+## Stats (7572 out of 8321 functions done in 722 categories)
 
-#### Completely reversed categories (592/721) [82%]
+#### Completely reversed categories (593/722) [82%]
 
 <details>
 <summary>See list of categories</summary>
@@ -196,6 +196,7 @@ Last update was at Oct 21, 2026 at 14:42:11 UTC
 - FxManager_c (25)<br />
 - FxEmitterPrt_c (1)<br />
 - Fx_c (8)<br />
+- CPedAttractor (20)<br />
 - CPedAttractorPedPlacer (1)<br />
 - CPedShelterAttractor (4)<br />
 - CCopPed (7)<br />
@@ -610,7 +611,7 @@ Last update was at Oct 21, 2026 at 14:42:11 UTC
 
 </details>
 
-#### Partially reversed categories (121/721) [17%]
+#### Partially reversed categories (121/722) [17%]
 
 <details>
 <summary>See list of categories</summary>
@@ -738,7 +739,7 @@ Last update was at Oct 21, 2026 at 14:42:11 UTC
 
 </details>
 
-#### Not-at-all reversed categories (8/721) [1%]
+#### Not-at-all reversed categories (8/722) [1%]
 
 <details>
 <summary>See list of categories</summary>
