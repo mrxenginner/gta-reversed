@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 91%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 22, 2026 at 00:57:08 UTC
-(Triggered by commit [d0ab9e2b](https://github.com/gta-reversed/gta-reversed/commit/d0ab9e2b9ed15695b97be9c1ae37caa239a8b915))
+Last update was at Oct 22, 2026 at 09:42:19 UTC
+(Triggered by commit [a366ad66](https://github.com/gta-reversed/gta-reversed/commit/a366ad665b947e6be7cd0fcbebc2352b0b8b2b91))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7615 out of 8323 functions done in 722 categories)
+## Stats (7616 out of 8324 functions done in 722 categories)
 
 #### Completely reversed categories (599/722) [83%]
 
@@ -605,7 +605,7 @@ Last update was at Oct 22, 2026 at 00:57:08 UTC
 - CAECutsceneTrackManager (8)<br />
 - CAESoundManager (14)<br />
 - CAEUserRadioTrackManager (15)<br />
-- CAutomobile (100)<br />
+- CAutomobile (101)<br />
 - CBoat (23)<br />
 - CHeli (11)<br />
 - CTrailer (13)<br />

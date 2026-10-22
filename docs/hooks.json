@@ -38486,6 +38486,11 @@
   },
   {
     "Category": "CAutomobile",
+    "Name": "DoHeliDustEffect",
+    "IsReversed": true
+  },
+  {
+    "Category": "CAutomobile",
     "Name": "Fix",
     "IsReversed": true
   },
