@@ -127,6 +127,11 @@ inline const ReversibleBugFix CPedGeometryAnalyser_ComputeRouteRoundSphere_Ambig
     .Description = "Fix missing setting of detour target when the ped is on the edge of the sphere in `CPedGeometryAnalyser::ComputeRouteRoundSphere`",
     .Credit      = "Pirulax"
 };
+inline const ReversibleBugFix CObjectData_SetObjectData_UninitializedPhysics{
+    .Name        = "Physics of objects without object.dat data",
+    .Description = "Give an object with no object.dat entry the default elasticity and buoyancy - neither SetObjectData nor CPhysical's constructor sets them, so they held the pool slot's leftovers and could launch a vehicle that touched the object to infinity",
+    .Credit      = "mrxenginner"
+};
 inline const ReversibleBugFix CObject_Render_DetachedPartRendering{
     .Name        = "CObject::Render - Detached car part rendering",
     .Description = "Detached car parts share their materials with the vehicle model, but nothing applies the vehicle's colours and paintjob to them, "
