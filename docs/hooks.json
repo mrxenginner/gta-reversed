@@ -30572,7 +30572,7 @@
   {
     "Category": "CTaskComplexSunbathe",
     "Name": "MakeAbortable",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexSunbathe",

@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 25, 2026 at 13:55:30 UTC
-(Triggered by commit [08a10b0a](https://github.com/gta-reversed/gta-reversed/commit/08a10b0a88b9da61dd5a4f7e5753e92a03008379))
+Last update was at Oct 25, 2026 at 19:11:27 UTC
+(Triggered by commit [655b6d5f](https://github.com/gta-reversed/gta-reversed/commit/655b6d5fd71f7fe2afdf4bf292eff69a58a8ba33))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7622 out of 8324 functions done in 722 categories)
+## Stats (7623 out of 8324 functions done in 722 categories)
 
 #### Completely reversed categories (600/722) [83%]
 
@@ -703,7 +703,7 @@ Last update was at Oct 25, 2026 at 13:55:30 UTC
 - CTaskUtilityLineUpPedWithCar (2/5) [40%]<br />
 - CTaskSimpleJetPack (13/14) [93%]<br />
 - CTaskComplexPlayHandSignalAnim (3/9) [33%]<br />
-- CTaskComplexSunbathe (2/8) [25%]<br />
+- CTaskComplexSunbathe (3/8) [38%]<br />
 - CTaskComplexKillPedOnFoot (1/2) [50%]<br />
 - CTaskComplexWalkRoundCar (9/13) [69%]<br />
 - CTaskComplexKillPedFromBoat (2/7) [29%]<br />
