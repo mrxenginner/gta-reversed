@@ -1,17 +1,17 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 25, 2026 at 12:48:23 UTC
-(Triggered by commit [e158f1ca](https://github.com/gta-reversed/gta-reversed/commit/e158f1ca5a04a500d11e33a21bb66114ea631504))
+Last update was at Oct 25, 2026 at 13:55:30 UTC
+(Triggered by commit [08a10b0a](https://github.com/gta-reversed/gta-reversed/commit/08a10b0a88b9da61dd5a4f7e5753e92a03008379))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7621 out of 8324 functions done in 722 categories)
+## Stats (7622 out of 8324 functions done in 722 categories)
 
-#### Completely reversed categories (599/722) [83%]
+#### Completely reversed categories (600/722) [83%]
 
 <details>
 <summary>See list of categories</summary>
@@ -535,6 +535,7 @@ Last update was at Oct 25, 2026 at 12:48:23 UTC
 - BreakablePlugin (6)<br />
 - RtAnim (1)<br />
 - CDecisionMakerTypesFileLoader (7)<br />
+- CDecision (3)<br />
 - CText (9)<br />
 - CMissionTextOffsets (1)<br />
 - CData (2)<br />
@@ -617,7 +618,7 @@ Last update was at Oct 25, 2026 at 12:48:23 UTC
 
 </details>
 
-#### Partially reversed categories (115/722) [16%]
+#### Partially reversed categories (114/722) [16%]
 
 <details>
 <summary>See list of categories</summary>
@@ -711,7 +712,6 @@ Last update was at Oct 25, 2026 at 12:48:23 UTC
 - CTaskComplexArrestPed (4/7) [57%]<br />
 - CScriptsForBrains (3/10) [30%]<br />
 - RpAnimBlend (42/43) [98%]<br />
-- CDecision (2/3) [67%]<br />
 - CCustomBuildingDNPipeline (14/16) [88%]<br />
 - CConversations (10/11) [91%]<br />
 - CPedToPlayerConversations (2/3) [67%]<br />
