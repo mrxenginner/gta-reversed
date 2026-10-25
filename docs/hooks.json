@@ -25142,12 +25142,12 @@
   {
     "Category": "CTaskComplexGoToPointAiming",
     "Name": "CreateFirstSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAiming",
     "Name": "ControlSubTask",
-    "IsReversed": false
+    "IsReversed": true
   },
   {
     "Category": "CTaskComplexGoToPointAndStandStillAndAchieveHeading",
