@@ -55,10 +55,13 @@ void CTheZones::ResetZonesRevealed() {
 // NOTSA
 bool& CTheZones::GetZoneWasVisited(CVector2D pos) {
 #ifdef FIX_BUGS
-    return ZonesVisited[(size_t)((std::clamp(pos.x, -2999.f, 2999.f) + 3000.f) / 600.f)][9LL - (size_t)((std::clamp(pos.y, -2999.f, 2999.f) + 3000.f) / 600.f)];
-#else
-    return ZonesVisited[10 * (size_t)((pos.x + 3000.f) / 600.f) - (size_t)((pos.y + 3000.f) / 600.f) + 9];
+    pos.x = std::clamp(pos.x, -2999.f, 2999.f);
+    pos.y = std::clamp(pos.y, -2999.f, 2999.f);
 #endif
+    // Ten 600 unit cells either way, the second index counts down from the top of the map
+    const auto x = (size_t)((pos.x + 3000.f) / 600.f);
+    const auto y = (size_t)((pos.y + 3000.f) / 600.f);
+    return ZonesVisited.at(x).at(9 - y);
 }
 
 // NOTSA
