@@ -36,6 +36,7 @@ void CTheZones::InjectHooks() {
     RH_ScopedGlobalOverloadedInstall(GetZoneInfo, "", 0x572400, CZoneInfo*(*)(const CVector& point, CZone**));
     RH_ScopedGlobalInstall(FindSmallestZoneForPosition, 0x572360);
     RH_ScopedGlobalInstall(GetLevelFromPosition, 0x572300);
+    RH_ScopedGlobalInstall(SetCurrentZoneAsUnlocked, 0x572800);
     RH_ScopedGlobalInstall(ZoneIsEntirelyContainedWithinOtherZone, 0x572220);
 
 }
@@ -241,7 +242,17 @@ void CTheZones::Init() {
 // Unlock the current zone
 // 0x572800
 void CTheZones::SetCurrentZoneAsUnlocked() {
-    ((void(__cdecl*)())0x572800)();
+    const auto pos = FindPlayerCoors();
+    m_CurrLevel = GetLevelFromPosition(pos);
+
+    // Nothing is revealed while the player is off the map, inside an interior, or standing in a
+    // zone the script has taken control of.
+    if (CTheScripts::bPlayerIsOffTheMap || CGame::currArea || GetCurrentZoneLockedOrUnlocked({ pos.x, pos.y })) {
+        return;
+    }
+    
+    GetZoneWasVisited({ pos.x, pos.y }) = true;
+    ZonesRevealed++;
 }
 
 // Creates a zone
