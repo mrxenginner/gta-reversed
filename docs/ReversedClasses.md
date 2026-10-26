@@ -1,15 +1,15 @@
 # Reimplementation progress (*): 92%
 This file is updated automatically every time the `hooks.json` file is updated (which happens every time there are changes to hooks made by a commit), and shows the current progress of reversed categories in the project.
 
-Last update was at Oct 26, 2026 at 19:11:30 UTC
-(Triggered by commit [1ce6c3e3](https://github.com/gta-reversed/gta-reversed/commit/1ce6c3e37c8b1769a6e262d123b47e7376dc286e))
+Last update was at Oct 26, 2026 at 19:49:48 UTC
+(Triggered by commit [6d8cf7ff](https://github.com/gta-reversed/gta-reversed/commit/6d8cf7ff217a605d65412b92975eb8ea0ab168ea))
 
 ## (*) Disclaimers
 **The progress** is based on the number of functions we have documented and reimplemented, so it might not completely reflect the actual progress, it's meant to be a rough estimate.
 
 **The percentages and the number of categories** shown here may not be completely accurate, because not all categories and functions are documented yet.
 
-## Stats (7626 out of 8324 functions done in 722 categories)
+## Stats (7628 out of 8325 functions done in 722 categories)
 
 #### Completely reversed categories (602/722) [83%]
 
@@ -582,7 +582,7 @@ Last update was at Oct 26, 2026 at 19:11:30 UTC
 - CAEStreamThread (14)<br />
 - CAudioEngine (82)<br />
 - CAudioZones (5)<br />
-- CAECollisionAudioEntity (17)<br />
+- CAECollisionAudioEntity (18)<br />
 - CAEDoorAudioEntity (6)<br />
 - CAEExplosionAudioEntity (3)<br />
 - CAEFireAudioEntity (7)<br />
@@ -730,7 +730,7 @@ Last update was at Oct 26, 2026 at 19:11:30 UTC
 - CMonsterTruck (5/11) [45%]<br />
 - CPlane (14/23) [61%]<br />
 - CQuadBike (11/12) [92%]<br />
-- CTrain (21/41) [51%]<br />
+- CTrain (22/41) [54%]<br />
 - CVehicle (145/149) [97%]<br />
 - InteriorGroup_c (2/24) [8%]<br />
 - CRunningScript (24/39) [62%]<br />
